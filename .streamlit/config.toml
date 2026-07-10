@@ -1,0 +1,73 @@
+# ═══ Thème Value Bet Analyzer — sombre, financier, accent émeraude ═══
+
+[theme]
+base = "dark"
+primaryColor = "#34D399"             # Vert émeraude — la couleur de la value
+backgroundColor = "#0F172A"          # Ardoise profonde
+secondaryBackgroundColor = "#1E293B" # Ardoise plus claire (widgets, cartes)
+codeBackgroundColor = "#1E293B"
+textColor = "#F1F5F9"
+linkColor = "#60A5FA"
+borderColor = "#334155"
+codeTextColor = "#CBD5E1"
+showWidgetBorder = true
+showSidebarBorder = true
+baseRadius = "8px"
+buttonRadius = "8px"
+
+# Typographie — Inter pour tout, JetBrains Mono pour les chiffres/code
+font = "'Inter':https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+headingFont = "'Inter':https://fonts.googleapis.com/css2?family=Inter:wght@600;700&display=swap"
+codeFont = "'JetBrains Mono':https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
+baseFontSize = 14
+baseFontWeight = 400
+codeFontSize = "13px"
+headingFontSizes = ["28px", "22px", "18px", "16px", "14px", "12px"]
+headingFontWeights = [700, 600, 600, 600, 500, 500]
+linkUnderline = false
+
+# Couleurs sémantiques (gains/pertes/alertes)
+greenColor = "#34D399"
+redColor = "#F87171"
+yellowColor = "#FBBF24"
+orangeColor = "#FB923C"
+blueColor = "#60A5FA"
+violetColor = "#A78BFA"
+grayColor = "#94A3B8"
+
+# Palette des graphiques
+chartCategoricalColors = [
+    "#34D399",
+    "#F87171",
+    "#60A5FA",
+    "#FBBF24",
+    "#A78BFA",
+    "#38BDF8",
+    "#94A3B8",
+    "#FB923C",
+]
+
+chartSequentialColors = [
+    "#064E3B",
+    "#065F46",
+    "#047857",
+    "#059669",
+    "#10B981",
+    "#34D399",
+    "#6EE7B7",
+    "#A7F3D0",
+    "#D1FAE5",
+    "#ECFDF5",
+]
+
+# Tableaux
+dataframeBorderColor = "#334155"
+dataframeHeaderBackgroundColor = "#1E293B"
+
+[theme.sidebar]
+backgroundColor = "#0B1120"
+secondaryBackgroundColor = "#1E293B"
+codeBackgroundColor = "#1E293B"
+textColor = "#F1F5F9"
+borderColor = "#334155"
+primaryColor = "#34D399"

@@ -40,55 +40,24 @@ from modules.backtester import Backtester
 # ══════════════════════════════════════════════════════
 
 st.set_page_config(
-    page_title="⚽ Value Bet Analyzer — Betclic CI",
-    page_icon="⚽",
+    page_title="Value Bet Analyzer — Betclic CI",
+    page_icon=":material/sports_soccer:",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# CSS personnalisé
-st.markdown("""
-<style>
-    .main-header {
-        font-size: 2.5rem;
-        font-weight: bold;
-        text-align: center;
-        padding: 1rem;
-        background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
-        color: white;
-        border-radius: 10px;
-        margin-bottom: 2rem;
-    }
-    .value-bet-card {
-        background: linear-gradient(135deg, #0a3d0a, #1a5c1a);
-        padding: 1.5rem;
-        border-radius: 10px;
-        border-left: 5px solid #00ff00;
-        margin: 1rem 0;
-        color: white;
-    }
-    .no-value-card {
-        background: linear-gradient(135deg, #3d0a0a, #5c1a1a);
-        padding: 1rem;
-        border-radius: 10px;
-        border-left: 5px solid #ff4444;
-        margin: 1rem 0;
-        color: white;
-    }
-    .metric-card {
-        background: #1e1e2e;
-        padding: 1rem;
-        border-radius: 8px;
-        text-align: center;
-    }
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 2rem;
-    }
-    .stTabs [data-baseweb="tab"] {
-        font-size: 1.1rem;
-    }
-</style>
-""", unsafe_allow_html=True)
+# Couleurs du thème (alignées sur .streamlit/config.toml)
+COLOR_GREEN = "#34D399"
+COLOR_RED = "#F87171"
+
+
+def page_header(icon: str, title: str, caption: str = ""):
+    """En-tête de page uniforme : icône Material + titre + sous-titre."""
+
+    st.title(f":material/{icon}: {title}")
+    if caption:
+        st.caption(caption)
+    st.space("small")
 
 
 # ══════════════════════════════════════════════════════
@@ -117,34 +86,13 @@ def get_kelly_calculator(bankroll):
 #  SIDEBAR
 # ══════════════════════════════════════════════════════
 
-def render_sidebar():
-    """Affiche la barre latérale avec les paramètres."""
+def render_sidebar_settings():
+    """Réglages dans la barre latérale (sous la navigation)."""
 
     with st.sidebar:
-        st.image("https://img.icons8.com/color/96/football2--v1.png", width=80)
-        st.title("⚽ Value Bet Analyzer")
-        st.caption("Betclic Côte d'Ivoire — v2.2 · 25 marchés")
+        st.caption("Betclic Côte d'Ivoire · v3.0 · 25 marchés")
 
-        st.divider()
-
-        # Navigation
-        page = st.radio(
-            "📍 Navigation",
-            [
-                "🏠 Analyse de Matchs",
-                "📸 Upload Captures",
-                "✍️ Saisie Manuelle",
-                "📊 Tableau de Bord",
-                "📈 Backtesting",
-                "⚙️ Paramètres"
-            ],
-            index=0
-        )
-
-        st.divider()
-
-        # Paramètres rapides
-        st.subheader("💰 Bankroll")
+        st.subheader(":material/account_balance_wallet: Bankroll")
         bankroll = st.number_input(
             "Montant (FCFA)",
             min_value=10000,
@@ -154,7 +102,7 @@ def render_sidebar():
             format="%d"
         )
 
-        st.subheader("🎯 Seuils")
+        st.subheader(":material/tune: Seuils")
         min_value = st.slider(
             "Value minimum (%)",
             min_value=1, max_value=30,
@@ -167,21 +115,23 @@ def render_sidebar():
             value=int(ValueBetConfig.MIN_CONFIDENCE_SCORE)
         )
 
-        st.divider()
-
-        # Infos
+        # Performance globale
         db = init_modules()["db"]
         stats = db.get_performance_stats()
 
         if stats.get("total_bets", 0) > 0:
-            st.metric("📊 Paris enregistrés", stats["total_bets"])
+            st.space("small")
             st.metric(
-                "📈 ROI Global",
+                "Paris enregistrés", stats["total_bets"], border=True
+            )
+            st.metric(
+                "ROI global",
                 f"{stats.get('roi', 0):.1f}%",
-                delta=f"{stats.get('total_profit', 0):+,.0f} FCFA"
+                delta=f"{stats.get('total_profit', 0):+,.0f} FCFA",
+                border=True,
             )
 
-        return page, bankroll, min_value / 100, min_confidence
+        return bankroll, min_value / 100, min_confidence
 
 
 # ══════════════════════════════════════════════════════
@@ -191,15 +141,10 @@ def render_sidebar():
 def page_upload_screenshots(bankroll, min_value, min_confidence):
     """Page d'upload et d'analyse des captures d'écran."""
 
-    st.markdown(
-        '<div class="main-header">📸 Upload des Captures Betclic</div>',
-        unsafe_allow_html=True
-    )
-
-    st.info(
-        "📌 Envoyez vos captures d'écran de Betclic Côte d'Ivoire. "
-        "Le logiciel extraira automatiquement les matchs et les cotes "
-        "pour les analyser."
+    page_header(
+        "photo_camera", "Upload des captures Betclic",
+        "Dépose tes captures d'écran — les matchs, cotes et marchés sont "
+        "extraits et fusionnés automatiquement."
     )
 
     # Upload
@@ -211,20 +156,21 @@ def page_upload_screenshots(bankroll, min_value, min_confidence):
     )
 
     if uploaded_files:
-        st.success(f"✅ {len(uploaded_files)} fichier(s) chargé(s)")
+        st.caption(f":material/check_circle: {len(uploaded_files)} fichier(s) chargé(s)")
 
         # Afficher les miniatures
         cols = st.columns(min(len(uploaded_files), 5))
         for i, file in enumerate(uploaded_files[:5]):
             with cols[i]:
                 img = Image.open(file)
-                st.image(img, caption=file.name, use_container_width=True)
+                st.image(img, caption=file.name, width="stretch")
 
         if len(uploaded_files) > 5:
             st.caption(f"... et {len(uploaded_files) - 5} autre(s)")
 
         # Bouton d'analyse
-        if st.button("🚀 Lancer l'analyse", type="primary", use_container_width=True):
+        if st.button("Lancer l'analyse", type="primary",
+                     icon=":material/rocket_launch:", width="stretch"):
 
             # Sauvegarder les images temporairement
             os.makedirs(OCRConfig.SCREENSHOTS_DIR, exist_ok=True)
@@ -254,12 +200,14 @@ def page_upload_screenshots(bankroll, min_value, min_confidence):
             all_matches = merge_matches(all_matches)
 
             if all_matches:
-                st.success(f"✅ {len(all_matches)} match(s) extraits !")
+                st.success(f"{len(all_matches)} match(s) extraits !",
+                           icon=":material/check_circle:")
 
                 # Analyser les matchs
                 analyze_matches_ui(all_matches, bankroll, min_value, min_confidence)
             else:
-                st.error("❌ Aucun match détecté dans les captures.")
+                st.error("Aucun match détecté dans les captures.",
+                         icon=":material/error:")
 
 
 # ══════════════════════════════════════════════════════
@@ -269,9 +217,10 @@ def page_upload_screenshots(bankroll, min_value, min_confidence):
 def page_manual_entry(bankroll, min_value, min_confidence):
     """Page de saisie manuelle des matchs et cotes."""
 
-    st.markdown(
-        '<div class="main-header">✍️ Saisie Manuelle des Matchs</div>',
-        unsafe_allow_html=True
+    page_header(
+        "edit_note", "Saisie manuelle des matchs",
+        "Entre les cotes Betclic à la main — seuls le 1X2 est obligatoire, "
+        "chaque marché ajouté élargit la recherche de value."
     )
 
     # Nombre de matchs à saisir
@@ -283,7 +232,7 @@ def page_manual_entry(bankroll, min_value, min_confidence):
     all_matches = []
 
     for i in range(num_matches):
-        st.subheader(f"⚽ Match {i+1}")
+        st.subheader(f":material/sports_soccer: Match {i+1}")
 
         col1, col2 = st.columns(2)
 
@@ -324,7 +273,8 @@ def page_manual_entry(bankroll, min_value, min_confidence):
         # Marchés supplémentaires (expansible)
         extras_input = {}
 
-        with st.expander("📈 Marchés supplémentaires (optionnel)"):
+        with st.expander("Buts du match et BTTS (optionnel)",
+                         icon=":material/sports_soccer:"):
             col_d, col_e = st.columns(2)
             with col_d:
                 extras_input["over_2_5"] = st.number_input(
@@ -341,7 +291,8 @@ def page_manual_entry(bankroll, min_value, min_confidence):
                     "BTTS Non", min_value=0.0,
                     value=0.0, step=0.05, key=f"bn_{i}")
 
-        with st.expander("🆕 Buts par équipe (optionnel)"):
+        with st.expander("Buts par équipe (optionnel)",
+                         icon=":material/groups:"):
             st.caption("Marché Betclic « Nombre de buts de l'équipe »")
             col_h, col_a2 = st.columns(2)
             for side, label, col in (("home", "Domicile", col_h),
@@ -357,7 +308,8 @@ def page_manual_entry(bankroll, min_value, min_confidence):
                             f"- de {line_txt}", min_value=0.0, value=0.0,
                             step=0.05, key=f"{side}u{line}_{i}")
 
-        with st.expander("🆕 Buts par mi-temps (optionnel)"):
+        with st.expander("Buts par mi-temps (optionnel)",
+                         icon=":material/timer:"):
             st.caption("Nombre de buts du match en 1ère / 2ème mi-temps")
             col_h1, col_h2 = st.columns(2)
             for half, label, col in (("h1", "1ère mi-temps", col_h1),
@@ -373,7 +325,8 @@ def page_manual_entry(bankroll, min_value, min_confidence):
                             f"- de {line_txt}", min_value=0.0, value=0.0,
                             step=0.05, key=f"{half}u{line}_{i}")
 
-        with st.expander("🆕 Tirs cadrés par équipe (optionnel)"):
+        with st.expander("Tirs cadrés par équipe (optionnel)",
+                         icon=":material/gps_fixed:"):
             st.caption("Choisis la ligne affichée par Betclic (ex. 3.5)")
             col_sh, col_sa = st.columns(2)
             for side, label, col in (("home", "Domicile", col_sh),
@@ -408,8 +361,8 @@ def page_manual_entry(bankroll, min_value, min_confidence):
 
     # Bouton d'analyse
     if all_matches:
-        if st.button("🚀 Analyser tous les matchs", type="primary",
-                      use_container_width=True):
+        if st.button("Analyser tous les matchs", type="primary",
+                     icon=":material/rocket_launch:", width="stretch"):
             analyze_matches_ui(all_matches, bankroll, min_value, min_confidence)
 
 
@@ -498,66 +451,65 @@ def display_results(analyses, bankroll):
     matches_with_value = sum(1 for a in analyses if a.has_value)
     total_vb = sum(a.total_value_bets for a in analyses)
 
-    st.markdown("---")
-    st.subheader("📋 Résumé de l'analyse")
-
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("⚽ Matchs analysés", total_matches)
-    col2.metric("✅ Matchs avec value", matches_with_value)
-    col3.metric("🎰 Value bets trouvés", total_vb)
+    st.space("medium")
+    st.subheader(":material/summarize: Résumé de l'analyse")
 
     total_stake = sum(
         vb.recommended_stake
         for a in analyses for vb in a.value_bets
     )
+
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Matchs analysés", total_matches, border=True)
+    col2.metric("Matchs avec value", matches_with_value, border=True)
+    col3.metric("Value bets trouvés", total_vb, border=True)
     col4.metric(
-        "💰 Investissement total",
-        f"{total_stake:,.0f} FCFA"
+        "Investissement conseillé",
+        f"{total_stake:,.0f} FCFA",
+        border=True,
     )
 
-    st.markdown("---")
+    st.space("small")
 
     # ── Détail par match ──
     for analysis in analyses:
 
-        # Couleur selon la value
-        if analysis.has_value:
-            icon = "🟢"
-        else:
-            icon = "🔴"
+        exp_icon = (":material/trending_up:" if analysis.has_value
+                    else ":material/do_not_disturb_on:")
+        vb_note = (f"{analysis.total_value_bets} value bet(s)"
+                   if analysis.has_value else "pas de value")
 
         with st.expander(
-            f"{icon} {analysis.home_team} vs {analysis.away_team} "
-            f"— {analysis.competition} "
-            f"({'✅ ' + str(analysis.total_value_bets) + ' value bet(s)' if analysis.has_value else '❌ Pas de value'})",
-            expanded=analysis.has_value
+            f"{analysis.home_team} vs {analysis.away_team}"
+            + (f" — {analysis.competition}" if analysis.competition else "")
+            + f" · {vb_note}",
+            expanded=analysis.has_value,
+            icon=exp_icon,
         ):
 
             # Probabilités 1X2
             col1, col2 = st.columns([3, 2])
 
             with col1:
-                st.caption("📊 Probabilités Modèle vs Betclic")
+                st.caption("Probabilités modèle vs Betclic")
 
                 probs_1x2 = analysis.model_probs.get("1X2", {})
 
+                # Colonnes numériques → barres de progression et
+                # mise en forme via column_config
                 data = {
-                    "Résultat": ["1 (Domicile)", "X (Nul)", "2 (Extérieur)"],
-                    "Modèle": [
-                        f"{probs_1x2.get('1', 0)*100:.1f}%",
-                        f"{probs_1x2.get('X', 0)*100:.1f}%",
-                        f"{probs_1x2.get('2', 0)*100:.1f}%",
-                    ],
+                    "Marché": ["1 (Domicile)", "X (Nul)", "2 (Extérieur)"],
+                    "Modèle": [probs_1x2.get(k, 0) * 100
+                               for k in ("1", "X", "2")],
                     "Betclic": [
-                        f"{1/analysis.odds.get('1', 99)*100:.1f}%" if analysis.odds.get('1', 0) > 0 else "—",
-                        f"{1/analysis.odds.get('X', 99)*100:.1f}%" if analysis.odds.get('X', 0) > 0 else "—",
-                        f"{1/analysis.odds.get('2', 99)*100:.1f}%" if analysis.odds.get('2', 0) > 0 else "—",
+                        (100 / analysis.odds[k])
+                        if analysis.odds.get(k, 0) > 0 else None
+                        for k in ("1", "X", "2")
                     ],
                     "Cote": [
-                        f"{analysis.odds.get('1', 0):.2f}",
-                        f"{analysis.odds.get('X', 0):.2f}",
-                        f"{analysis.odds.get('2', 0):.2f}",
-                    ]
+                        analysis.odds.get(k, 0) or None
+                        for k in ("1", "X", "2")
+                    ],
                 }
 
                 # Ajouter la colonne Value
@@ -566,10 +518,9 @@ def display_results(analyses, bankroll):
                     mp = probs_1x2.get(key, 0)
                     bo = analysis.odds.get(key, 0)
                     if bo > 0 and mp > 0:
-                        v = (bo * mp - 1) * 100
-                        values.append(f"{v:+.1f}%")
+                        values.append((bo * mp - 1) * 100)
                     else:
-                        values.append("—")
+                        values.append(None)
 
                 data["Value"] = values
 
@@ -635,20 +586,42 @@ def display_results(analyses, bankroll):
                     bo = float(analysis.odds.get(odds_key, 0) or 0)
                     if bo <= 1:
                         continue
-                    data["Résultat"].append(label)
-                    data["Modèle"].append(f"{mp*100:.1f}%")
-                    data["Betclic"].append(f"{1/bo*100:.1f}%")
-                    data["Cote"].append(f"{bo:.2f}")
+                    data["Marché"].append(label)
+                    data["Modèle"].append(mp * 100)
+                    data["Betclic"].append(100 / bo)
+                    data["Cote"].append(bo)
                     if mp > 0:
-                        v = (bo * mp - 1) * 100
-                        data["Value"].append(f"{v:+.1f}%")
+                        data["Value"].append((bo * mp - 1) * 100)
                     else:
-                        data["Value"].append("—")
+                        data["Value"].append(None)
+
+                df = pd.DataFrame(data)
+
+                def _value_color(v):
+                    if pd.isna(v):
+                        return ""
+                    if v > 0:
+                        return f"color: {COLOR_GREEN}; font-weight: 600"
+                    return f"color: {COLOR_RED}"
 
                 st.dataframe(
-                    pd.DataFrame(data),
-                    use_container_width=True,
-                    hide_index=True
+                    df.style.map(_value_color, subset=["Value"]),
+                    hide_index=True,
+                    width="stretch",
+                    height=min(38 + 35 * len(df), 460),
+                    column_config={
+                        "Marché": st.column_config.TextColumn(
+                            "Marché", width="medium"),
+                        "Modèle": st.column_config.ProgressColumn(
+                            "Prob. modèle", min_value=0, max_value=100,
+                            format="%.1f%%"),
+                        "Betclic": st.column_config.NumberColumn(
+                            "Prob. Betclic", format="%.1f%%"),
+                        "Cote": st.column_config.NumberColumn(
+                            "Cote", format="%.2f"),
+                        "Value": st.column_config.NumberColumn(
+                            "Value", format="%+.1f%%"),
+                    },
                 )
 
             with col2:
@@ -673,70 +646,83 @@ def display_results(analyses, bankroll):
                         r=model_vals + [model_vals[0]],
                         theta=categories + [categories[0]],
                         name='Modèle',
-                        line=dict(color='#00ff88', width=3),
+                        line=dict(color=COLOR_GREEN, width=3),
                         fill='toself',
-                        fillcolor='rgba(0, 255, 136, 0.1)'
+                        fillcolor='rgba(52, 211, 153, 0.15)'
                     ))
 
                     fig.add_trace(go.Scatterpolar(
                         r=betclic_vals + [betclic_vals[0]],
                         theta=categories + [categories[0]],
                         name='Betclic',
-                        line=dict(color='#ff4444', width=3),
+                        line=dict(color=COLOR_RED, width=3),
                         fill='toself',
-                        fillcolor='rgba(255, 68, 68, 0.1)'
+                        fillcolor='rgba(248, 113, 113, 0.15)'
                     ))
 
                     fig.update_layout(
                         polar=dict(
-                            radialaxis=dict(visible=True, range=[0, 70]),
+                            radialaxis=dict(
+                                visible=True, range=[0, 70],
+                                gridcolor='#334155',
+                            ),
+                            angularaxis=dict(gridcolor='#334155'),
                             bgcolor='rgba(0,0,0,0)'
                         ),
                         showlegend=True,
-                        height=300,
-                        margin=dict(l=40, r=40, t=20, b=40),
+                        legend=dict(orientation="h", y=-0.1),
+                        height=320,
+                        margin=dict(l=40, r=40, t=30, b=30),
                         paper_bgcolor='rgba(0,0,0,0)',
                         plot_bgcolor='rgba(0,0,0,0)',
-                        font=dict(color='white')
+                        font=dict(color='#F1F5F9', family='Inter')
                     )
 
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig)
 
             # Value bets
             if analysis.value_bets:
-                st.success(
-                    f"🎯 **{analysis.total_value_bets} VALUE BET(S) DÉTECTÉ(S)**"
+                st.markdown(
+                    f":material/target: **{analysis.total_value_bets} "
+                    f"value bet(s) détecté(s)**"
                 )
 
                 for vb in analysis.value_bets:
-                    st.markdown(f"""
-                    <div class="value-bet-card">
-                        <strong>{vb.market}</strong> → <strong>{vb.selection}</strong>
-                        @ <strong>{vb.bookmaker_odds:.2f}</strong><br>
-                        📈 Value : <strong>+{vb.value_percentage*100:.1f}%</strong> {vb.value_rating} |
-                        🎯 Confiance : {vb.confidence_score:.0f}/100 |
-                        💰 Mise : <strong>{vb.recommended_stake:,.0f} FCFA</strong>
-                        ({vb.kelly_stake:.1f}% bankroll)
-                    </div>
-                    """, unsafe_allow_html=True)
+                    with st.container(border=True):
+                        c_sel, c_conf, c_mise, c_pct = st.columns(
+                            [3, 1, 1.3, 1], vertical_alignment="center"
+                        )
+                        with c_sel:
+                            st.markdown(
+                                f"**{vb.market} → {vb.selection}** "
+                                f"@ **{vb.bookmaker_odds:.2f}**  \n"
+                                f":green-badge[:material/trending_up: "
+                                f"+{vb.value_percentage*100:.1f}%] "
+                                f"{vb.value_rating}"
+                            )
+                        c_conf.metric(
+                            "Confiance", f"{vb.confidence_score:.0f}/100")
+                        c_mise.metric(
+                            "Mise", f"{vb.recommended_stake:,.0f} FCFA")
+                        c_pct.metric(
+                            "Bankroll", f"{vb.kelly_stake:.1f}%")
             else:
-                st.markdown("""
-                <div class="no-value-card">
-                    ❌ Aucun value bet détecté — les cotes semblent correctement calibrées
-                </div>
-                """, unsafe_allow_html=True)
+                st.caption(
+                    ":material/do_not_disturb_on: Aucun value bet détecté — "
+                    "les cotes semblent correctement calibrées sur ce match."
+                )
 
             # Infos additionnelles
-            col_info1, col_info2 = st.columns(2)
-            with col_info1:
-                st.caption(f"🎯 Score prédit : **{analysis.predicted_score}**")
-                st.caption(f"📈 Résultat probable : **{analysis.most_likely_result}**")
-            with col_info2:
-                st.caption(f"📐 Marge Betclic : **{analysis.bookmaker_margin:.1f}%**")
-                st.caption(f"🔒 Confiance : **{analysis.analysis_confidence:.0f}/100**")
+            st.space("small")
+            st.markdown(
+                f":material/scoreboard: Score prédit : **{analysis.predicted_score}** · "
+                f":material/emoji_events: **{analysis.most_likely_result}** · "
+                f":material/percent: Marge Betclic : **{analysis.bookmaker_margin:.1f}%** · "
+                f":material/verified: Confiance : **{analysis.analysis_confidence:.0f}/100**"
+            )
 
             if analysis.data_warning:
-                st.warning(analysis.data_warning)
+                st.warning(analysis.data_warning, icon=":material/warning:")
 
     # ── Tableau récapitulatif final ──
     all_vbs = []
@@ -747,19 +733,35 @@ def display_results(analyses, bankroll):
                 "Marché": vb.market.split(" - ")[-1] if " - " in vb.market else vb.market,
                 "Sélection": vb.selection,
                 "Cote": vb.bookmaker_odds,
-                "Value": f"+{vb.value_percentage*100:.1f}%",
+                "Value": vb.value_percentage * 100,
                 "Rating": vb.value_rating,
-                "Confiance": f"{vb.confidence_score:.0f}",
-                "Mise (FCFA)": f"{vb.recommended_stake:,.0f}",
+                "Confiance": vb.confidence_score,
+                "Mise (FCFA)": vb.recommended_stake,
             })
 
     if all_vbs:
-        st.markdown("---")
-        st.subheader("🏆 Tous les Value Bets Recommandés")
+        st.space("medium")
+        st.subheader(":material/emoji_events: Tous les value bets recommandés")
+
+        df_vbs = pd.DataFrame(all_vbs).sort_values(
+            "Value", ascending=False
+        )
+
+        def _vb_color(v):
+            return f"color: {COLOR_GREEN}; font-weight: 600"
+
         st.dataframe(
-            pd.DataFrame(all_vbs),
-            use_container_width=True,
-            hide_index=True
+            df_vbs.style.map(_vb_color, subset=["Value"]),
+            hide_index=True,
+            width="stretch",
+            column_config={
+                "Cote": st.column_config.NumberColumn(format="%.2f"),
+                "Value": st.column_config.NumberColumn(format="%+.1f%%"),
+                "Confiance": st.column_config.ProgressColumn(
+                    "Confiance", min_value=0, max_value=100, format="%.0f"),
+                "Mise (FCFA)": st.column_config.NumberColumn(
+                    format="localized"),
+            },
         )
 
 
@@ -770,9 +772,9 @@ def display_results(analyses, bankroll):
 def page_dashboard():
     """Tableau de bord avec les statistiques globales."""
 
-    st.markdown(
-        '<div class="main-header">📊 Tableau de Bord</div>',
-        unsafe_allow_html=True
+    page_header(
+        "monitoring", "Tableau de bord",
+        "Suivi de tes performances réelles : paris, ROI et bankroll."
     )
 
     db = init_modules()["db"]
@@ -780,8 +782,9 @@ def page_dashboard():
 
     if not stats or stats.get("total_bets", 0) == 0:
         st.info(
-            "📌 Aucune donnée disponible. "
-            "Commencez par analyser des matchs et enregistrer les résultats."
+            "Aucune donnée pour l'instant : analyse des matchs, enregistre "
+            "tes paris, puis renseigne leurs résultats dans Backtesting.",
+            icon=":material/info:",
         )
         return
 
@@ -789,30 +792,26 @@ def page_dashboard():
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.metric(
-            "🎰 Total Paris",
-            stats.get("total_bets", 0)
-        )
+        st.metric("Total paris", stats.get("total_bets", 0), border=True)
 
     with col2:
         wr = stats.get("win_rate", 0)
-        st.metric(
-            "✅ Win Rate",
-            f"{wr:.1f}%"
-        )
+        st.metric("Taux de réussite", f"{wr:.1f}%", border=True)
 
     with col3:
         roi = stats.get("roi", 0)
         st.metric(
-            "📈 ROI",
+            "ROI",
             f"{roi:+.1f}%",
-            delta=f"{stats.get('total_profit', 0):+,.0f} FCFA"
+            delta=f"{stats.get('total_profit', 0):+,.0f} FCFA",
+            border=True,
         )
 
     with col4:
         st.metric(
-            "🎯 Value Moyenne",
-            f"{stats.get('avg_value', 0)*100:+.1f}%"
+            "Value moyenne",
+            f"{stats.get('avg_value', 0)*100:+.1f}%",
+            border=True,
         )
 
     # Graphique d'évolution du bankroll
@@ -820,27 +819,32 @@ def page_dashboard():
     result = backtester.run_backtest()
 
     if result.bankroll_history:
-        st.subheader("💰 Évolution du Bankroll")
+        st.space("small")
+        st.subheader(":material/finance_mode: Évolution du bankroll")
 
         fig = go.Figure()
         fig.add_trace(go.Scatter(
             y=result.bankroll_history,
             mode='lines',
             name='Bankroll',
-            line=dict(color='#00ff88', width=2),
-            fill='toself',
-            fillcolor='rgba(0, 255, 136, 0.05)'
+            line=dict(color=COLOR_GREEN, width=2),
+            fill='tozeroy',
+            fillcolor='rgba(52, 211, 153, 0.08)'
         ))
 
         fig.update_layout(
             height=400,
             xaxis_title="Nombre de paris",
             yaxis_title="Bankroll (FCFA)",
-            template="plotly_dark",
-            margin=dict(l=40, r=40, t=20, b=40)
+            margin=dict(l=40, r=40, t=20, b=40),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(color='#F1F5F9', family='Inter'),
+            xaxis=dict(gridcolor='#334155'),
+            yaxis=dict(gridcolor='#334155'),
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig)
 
 
 # ══════════════════════════════════════════════════════
@@ -850,9 +854,10 @@ def page_dashboard():
 def page_backtesting():
     """Page de backtesting et validation."""
 
-    st.markdown(
-        '<div class="main-header">📈 Backtesting & Validation</div>',
-        unsafe_allow_html=True
+    page_header(
+        "history", "Backtesting & validation",
+        "Renseigne les résultats de tes paris pour mesurer la vraie "
+        "performance du modèle."
     )
 
     backtester = init_modules()["backtester"]
@@ -862,7 +867,7 @@ def page_backtesting():
     pending = db.get_pending_bets()
 
     if pending:
-        st.subheader("⏳ Paris en attente de résultat")
+        st.subheader(":material/pending: Paris en attente de résultat")
 
         for bet in pending:
             col1, col2, col3 = st.columns([3, 1, 1])
@@ -874,33 +879,39 @@ def page_backtesting():
                 )
 
             with col2:
-                if st.button("✅ Gagné", key=f"win_{bet['id']}"):
+                if st.button("Gagné", key=f"win_{bet['id']}",
+                             icon=":material/check_circle:"):
                     profit = bet['recommended_stake'] * (bet['bookmaker_odds'] - 1)
                     db.update_bet_result(bet['id'], "win", profit)
                     st.rerun()
 
             with col3:
-                if st.button("❌ Perdu", key=f"loss_{bet['id']}"):
+                if st.button("Perdu", key=f"loss_{bet['id']}",
+                             icon=":material/cancel:"):
                     db.update_bet_result(bet['id'], "loss", -bet['recommended_stake'])
                     st.rerun()
 
     # Lancer le backtest
-    st.divider()
+    st.space("small")
 
-    if st.button("🔄 Recalculer le Backtest", type="primary"):
+    if st.button("Recalculer le backtest", type="primary",
+                 icon=":material/refresh:"):
         result = backtester.run_backtest()
 
         if result.total_bets > 0:
             col1, col2, col3 = st.columns(3)
-            col1.metric("📊 ROI", f"{result.roi:+.1f}%")
-            col2.metric("📉 Max Drawdown", f"{result.max_drawdown:.1f}%")
+            col1.metric("ROI", f"{result.roi:+.1f}%", border=True)
+            col2.metric("Max drawdown", f"{result.max_drawdown:.1f}%",
+                        border=True)
             col3.metric(
-                "📊 P-value",
+                "P-value",
                 f"{result.p_value:.4f}",
-                delta="Significatif" if result.is_significant else "Non significatif"
+                delta="Significatif" if result.is_significant else "Non significatif",
+                border=True,
             )
         else:
-            st.info("Aucun pari résolu disponible pour le backtest.")
+            st.info("Aucun pari résolu disponible pour le backtest.",
+                    icon=":material/info:")
 
 
 # ══════════════════════════════════════════════════════
@@ -910,16 +921,16 @@ def page_backtesting():
 def page_settings():
     """Page de configuration des paramètres."""
 
-    st.markdown(
-        '<div class="main-header">⚙️ Paramètres</div>',
-        unsafe_allow_html=True
+    page_header(
+        "settings", "Paramètres",
+        "Réglages des modèles et des clés API."
     )
 
     tab1, tab2, tab3, tab4 = st.tabs([
-        "🎲 Modèle Poisson",
-        "📊 Elo",
-        "🎯 Value Bet",
-        "🔑 APIs"
+        ":material/casino: Modèle Poisson",
+        ":material/leaderboard: Elo",
+        ":material/target: Value bet",
+        ":material/key: APIs"
     ])
 
     with tab1:
@@ -976,67 +987,99 @@ def page_settings():
             st.number_input("Cote maximum", value=ValueBetConfig.MAX_ODDS, step=0.5)
 
     with tab4:
-        st.subheader("🔑 Clés API")
+        st.subheader(":material/key: Clés API")
         st.text_input("OpenAI API Key", type="password", value="sk-...")
         st.text_input("RapidAPI Key", type="password", value="")
         st.text_input("The Odds API Key", type="password", value="")
 
-        if st.button("💾 Sauvegarder"):
-            st.success("✅ Paramètres sauvegardés !")
+        if st.button("Sauvegarder", icon=":material/save:"):
+            st.success("Paramètres sauvegardés !",
+                       icon=":material/check_circle:")
 
 
 # ══════════════════════════════════════════════════════
 #  POINT D'ENTRÉE PRINCIPAL
 # ══════════════════════════════════════════════════════
 
+def page_home():
+    """Page d'accueil."""
+
+    page_header(
+        "sports_soccer", "Value Bet Analyzer",
+        "Analyse les cotes de Betclic Côte d'Ivoire et détecte les value "
+        "bets — les paris où la probabilité réelle dépasse ce que suggère "
+        "la cote."
+    )
+
+    st.markdown(
+        ":green-badge[:material/check: 25 marchés analysés] "
+        ":blue-badge[:material/psychology: Poisson + Elo + stats réelles] "
+        ":violet-badge[:material/calculate: Mises Kelly]"
+    )
+
+    st.space("medium")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        with st.container(border=True):
+            st.markdown(":material/photo_camera: **Upload de captures**")
+            st.caption(
+                "Dépose tes captures Betclic : matchs, cotes et marchés "
+                "sont lus et fusionnés automatiquement."
+            )
+
+    with col2:
+        with st.container(border=True):
+            st.markdown(":material/edit_note: **Saisie manuelle**")
+            st.caption(
+                "Entre les cotes à la main, du 1X2 aux tirs cadrés, "
+                "quand tu n'as pas de capture sous la main."
+            )
+
+    with col3:
+        with st.container(border=True):
+            st.markdown(":material/monitoring: **Tableau de bord**")
+            st.caption(
+                "Suis ton ROI réel, ton bankroll et la performance du "
+                "modèle sur tes paris enregistrés."
+            )
+
+    st.space("medium")
+    st.caption(
+        ":material/health_and_safety: Les mises proposées sont volontairement "
+        "prudentes (quart de Kelly, plafond 5% du bankroll). Ne mise jamais "
+        "plus que ce que tu peux te permettre de perdre."
+    )
+
+
 def main():
     """Point d'entrée de l'application Streamlit."""
 
-    page, bankroll, min_value, min_confidence = render_sidebar()
+    bankroll, min_value, min_confidence = render_sidebar_settings()
 
-    if "Analyse" in page or "🏠" in page:
-        # Page d'accueil avec les deux options
-        st.markdown(
-            '<div class="main-header">🏠 Value Bet Analyzer — Betclic CI</div>',
-            unsafe_allow_html=True
-        )
-
-        st.markdown("""
-        ### 👋 Bienvenue dans le Value Bet Analyzer !
-
-        Ce logiciel analyse automatiquement les cotes de **Betclic Côte d'Ivoire**
-        pour identifier les **value bets** — des paris où la probabilité réelle
-        est supérieure à ce que suggèrent les cotes.
-
-        #### 🚀 Comment commencer ?
-
-        1. **📸 Upload** — Envoyez vos captures d'écran Betclic
-        2. **✍️ Saisie manuelle** — Entrez les matchs et cotes à la main
-        3. **📊 Tableau de bord** — Suivez vos performances
-        """)
-
-        col1, col2 = st.columns(2)
-
-        with col1:
-            st.info("📸 **Upload de captures d'écran**\n\nEnvoyez vos screenshots Betclic CI.")
-
-        with col2:
-            st.info("✍️ **Saisie manuelle**\n\nEntrez les matchs et cotes directement.")
-
-    elif "Upload" in page or "📸" in page:
+    def _upload():
         page_upload_screenshots(bankroll, min_value, min_confidence)
 
-    elif "Saisie" in page or "✍️" in page:
+    def _manual():
         page_manual_entry(bankroll, min_value, min_confidence)
 
-    elif "Tableau" in page or "📊" in page:
-        page_dashboard()
+    pg = st.navigation([
+        st.Page(page_home, title="Accueil",
+                icon=":material/home:", default=True),
+        st.Page(_upload, title="Upload captures",
+                icon=":material/photo_camera:", url_path="upload"),
+        st.Page(_manual, title="Saisie manuelle",
+                icon=":material/edit_note:", url_path="saisie"),
+        st.Page(page_dashboard, title="Tableau de bord",
+                icon=":material/monitoring:", url_path="dashboard"),
+        st.Page(page_backtesting, title="Backtesting",
+                icon=":material/history:", url_path="backtesting"),
+        st.Page(page_settings, title="Paramètres",
+                icon=":material/settings:", url_path="parametres"),
+    ])
 
-    elif "Backtesting" in page or "📈" in page:
-        page_backtesting()
-
-    elif "Paramètres" in page or "⚙️" in page:
-        page_settings()
+    pg.run()
 
 
 if __name__ == "__main__":
