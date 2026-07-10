@@ -66,6 +66,20 @@ class ReportGenerator:
         # Probabilités 1X2
         probs = analysis.model_probs.get("1X2", {})
 
+        # Marchés supplémentaires (Over/Under 2.5 et BTTS)
+        probs_ou = analysis.model_probs.get("OU25", {})
+        probs_btts = analysis.model_probs.get("BTTS", {})
+        extra_rows = (
+            ("Over 2.5", probs_ou.get("over", 0),
+             float(analysis.odds.get("over_2_5", 0) or 0)),
+            ("Under 2.5", probs_ou.get("under", 0),
+             float(analysis.odds.get("under_2_5", 0) or 0)),
+            ("BTTS Oui", probs_btts.get("yes", 0),
+             float(analysis.odds.get("btts_oui", 0) or 0)),
+            ("BTTS Non", probs_btts.get("no", 0),
+             float(analysis.odds.get("btts_non", 0) or 0)),
+        )
+
         if HAS_RICH:
             table = Table(box=box.SIMPLE, show_header=True)
             table.add_column("Sélection", style="cyan")
@@ -92,12 +106,33 @@ class ReportGenerator:
                     f"{bo:.2f}" if bo > 1 else "—", value_str
                 )
 
+            for label, mp, bo in extra_rows:
+                if bo <= 1:
+                    continue
+                implied = f"{100/bo:.1f}%"
+                if mp > 0:
+                    v = (bo * mp - 1) * 100
+                    v_style = "green" if v > 0 else "red"
+                    value_str = f"[{v_style}]{v:+.1f}%[/]"
+                else:
+                    value_str = "—"
+
+                table.add_row(
+                    label, f"{mp*100:.1f}%", implied,
+                    f"{bo:.2f}", value_str
+                )
+
             self.console.print(table)
         else:
             for key in ("1", "X", "2"):
                 mp = probs.get(key, 0)
                 bo = float(analysis.odds.get(key, 0) or 0)
                 print(f"    {key}: modèle {mp*100:.1f}% | cote {bo:.2f}")
+
+            for label, mp, bo in extra_rows:
+                if bo <= 1:
+                    continue
+                print(f"    {label}: modèle {mp*100:.1f}% | cote {bo:.2f}")
 
         self._print(
             f"  🎯 Score prédit : {analysis.predicted_score} | "

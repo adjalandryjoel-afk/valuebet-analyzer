@@ -18,6 +18,7 @@ from typing import Dict, Optional
 from dataclasses import dataclass, field
 
 from config import Paths, PoissonConfig, SUPPORTED_LEAGUES
+from modules.api_football import ApiFootballCollector
 
 
 # ══════════════════════════════════════════════════════
@@ -85,12 +86,14 @@ class DataCollector:
     Construit le MatchContext d'un match.
 
     Sources par ordre de priorité :
-    1. data/historical_data.json (stats sauvegardées)
-    2. Estimation depuis les cotes (toujours disponible)
+    1. API-Football (stats réelles, indépendantes des cotes)
+    2. data/historical_data.json (stats sauvegardées)
+    3. Estimation depuis les cotes (toujours disponible)
     """
 
     def __init__(self):
         self.historical = self._load_historical()
+        self.api_collector = ApiFootballCollector()
 
     def _load_historical(self) -> Dict:
         """Charge les stats historiques sauvegardées si présentes."""
@@ -128,14 +131,17 @@ class DataCollector:
             league_avg_goals=league_avg,
         )
 
-        # Stats des équipes : historique > estimation par les cotes
+        # Stats des équipes :
+        # API-Football > historique > estimation par les cotes
         context.home_stats = (
-            self._stats_from_historical(home_name)
+            self._stats_from_api(home_name)
+            or self._stats_from_historical(home_name)
             or self._estimate_stats_from_odds(home_name, odds, league_avg,
                                               is_home=True)
         )
         context.away_stats = (
-            self._stats_from_historical(away_name)
+            self._stats_from_api(away_name)
+            or self._stats_from_historical(away_name)
             or self._estimate_stats_from_odds(away_name, odds, league_avg,
                                               is_home=False)
         )
@@ -146,9 +152,13 @@ class DataCollector:
             completeness += 15
         if odds.get("btts_oui") and odds.get("btts_non"):
             completeness += 10
-        if context.home_stats.data_source == "historical":
+        if context.home_stats.data_source == "api":
+            completeness += 20
+        elif context.home_stats.data_source == "historical":
             completeness += 15
-        if context.away_stats.data_source == "historical":
+        if context.away_stats.data_source == "api":
+            completeness += 20
+        elif context.away_stats.data_source == "historical":
             completeness += 15
         if match_info.get("both_matched"):
             completeness += 10
@@ -156,6 +166,37 @@ class DataCollector:
         context.data_completeness = min(completeness, 100.0)
 
         return context
+
+    # ─── STATS DEPUIS API-FOOTBALL ──────────────────
+
+    def _stats_from_api(self, team_name: str) -> Optional[TeamStats]:
+        """
+        Récupère les stats réelles d'une équipe via API-Football.
+
+        Ce sont les seules stats totalement indépendantes des cotes :
+        indispensables pour détecter de la value sur Over/Under et BTTS.
+        """
+
+        api_stats = self.api_collector.get_team_stats(team_name)
+        if not api_stats:
+            return None
+
+        stats = TeamStats(team_name=team_name, data_source="api")
+
+        for attr in (
+            "avg_goals_scored", "avg_goals_conceded",
+            "avg_goals_scored_home", "avg_goals_conceded_home",
+            "avg_goals_scored_away", "avg_goals_conceded_away",
+            "recent_form_score", "matches_played",
+        ):
+            if attr in api_stats:
+                setattr(stats, attr, api_stats[attr])
+
+        # Non fournis par l'API : points_per_game approximé depuis
+        # la forme récente, league_position garde son défaut
+        stats.points_per_game = stats.recent_form_score
+
+        return stats
 
     # ─── STATS DEPUIS L'HISTORIQUE ──────────────────
 

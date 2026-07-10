@@ -524,6 +524,31 @@ def display_results(analyses, bankroll):
 
                 data["Value"] = values
 
+                # Marchés supplémentaires (Over/Under 2.5 et BTTS)
+                probs_ou = analysis.model_probs.get("OU25", {})
+                probs_btts = analysis.model_probs.get("BTTS", {})
+
+                extra_rows = [
+                    ("Over 2.5", probs_ou.get("over", 0), "over_2_5"),
+                    ("Under 2.5", probs_ou.get("under", 0), "under_2_5"),
+                    ("BTTS Oui", probs_btts.get("yes", 0), "btts_oui"),
+                    ("BTTS Non", probs_btts.get("no", 0), "btts_non"),
+                ]
+
+                for label, mp, odds_key in extra_rows:
+                    bo = float(analysis.odds.get(odds_key, 0) or 0)
+                    if bo <= 1:
+                        continue
+                    data["Résultat"].append(label)
+                    data["Modèle"].append(f"{mp*100:.1f}%")
+                    data["Betclic"].append(f"{1/bo*100:.1f}%")
+                    data["Cote"].append(f"{bo:.2f}")
+                    if mp > 0:
+                        v = (bo * mp - 1) * 100
+                        data["Value"].append(f"{v:+.1f}%")
+                    else:
+                        data["Value"].append("—")
+
                 st.dataframe(
                     pd.DataFrame(data),
                     use_container_width=True,

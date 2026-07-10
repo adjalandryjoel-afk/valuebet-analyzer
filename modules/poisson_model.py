@@ -116,54 +116,62 @@ class PoissonPredictor:
         return lam_home, lam_away
 
     def _lambdas_from_stats(self, context: MatchContext) -> Tuple[float, float]:
-        """λ depuis les stats des équipes (xG en priorité)."""
+        """
+        λ depuis les stats des équipes (xG en priorité).
+
+        Trois natures de stats, combinées côté par côté :
+        - "réelles" (API, historique, xG) : moyennes vs adversaires
+          moyens → formule multiplicative attaque × défense / moyenne
+        - "estimées" (dérivées des cotes) : déjà spécifiques à CE
+          matchup → les multiplier compterait l'écart de niveau deux
+          fois, on moyenne les deux estimations de la même quantité
+        L'avantage domicile n'est réappliqué que sur les stats sans
+        déclinaison domicile/extérieur (xG), jamais sur les splits
+        domicile/extérieur qui l'incluent déjà.
+        """
 
         home = context.home_stats
         away = context.away_stats
         league_avg = context.league_avg_goals / 2  # buts moyens par équipe
 
-        # Cas particulier : stats estimées depuis les cotes.
-        # Elles sont déjà spécifiques au matchup (attaque de l'un =
-        # faiblesse de l'autre) → les multiplier reviendrait à compter
-        # l'écart de niveau deux fois. On moyenne les deux estimations
-        # de la même quantité, sans réappliquer l'avantage domicile
-        # (déjà inclus dans les déclinaisons domicile/extérieur).
-        if (home and away
-                and home.data_source == "estimated"
-                and away.data_source == "estimated"
-                and not home.xg_available and not away.xg_available):
-            lam_home = (home.avg_goals_scored_home
-                        + away.avg_goals_conceded_away) / 2
-            lam_away = (away.avg_goals_scored_away
-                        + home.avg_goals_conceded_home) / 2
-            return lam_home, lam_away
+        def side_profile(stats, is_home):
+            """(attaque, défense, estimé?, avantage domicile déjà inclus?)"""
+            if stats and stats.xg_available:
+                # xG moyens toutes venues → avantage domicile à appliquer
+                return stats.xg_scored, stats.xg_conceded, \
+                    stats.data_source == "estimated", False
+            if stats:
+                if is_home:
+                    return stats.avg_goals_scored_home, \
+                        stats.avg_goals_conceded_home, \
+                        stats.data_source == "estimated", True
+                return stats.avg_goals_scored_away, \
+                    stats.avg_goals_conceded_away, \
+                    stats.data_source == "estimated", True
+            # Aucune donnée : profil moyen de la ligue
+            if is_home:
+                return league_avg * 1.1, league_avg * 0.95, True, True
+            return league_avg * 0.9, league_avg * 1.05, True, True
 
-        if home and home.xg_available:
-            home_attack = home.xg_scored
-            home_defense = home.xg_conceded
-        elif home:
-            home_attack = home.avg_goals_scored_home
-            home_defense = home.avg_goals_conceded_home
-        else:
-            home_attack, home_defense = league_avg * 1.1, league_avg * 0.95
+        h_att, h_def, h_est, h_ha = side_profile(home, is_home=True)
+        a_att, a_def, a_est, a_ha = side_profile(away, is_home=False)
 
-        if away and away.xg_available:
-            away_attack = away.xg_scored
-            away_defense = away.xg_conceded
-        elif away:
-            away_attack = away.avg_goals_scored_away
-            away_defense = away.avg_goals_conceded_away
-        else:
-            away_attack, away_defense = league_avg * 0.9, league_avg * 1.05
+        def combine(attack, opp_defense, att_est, def_est):
+            """Deux estimations de la même quantité (buts de ce côté)."""
+            if att_est or def_est:
+                # Au moins une est déjà spécifique au matchup → moyenne
+                return (attack + opp_defense) / 2
+            # Deux moyennes vs adversaires moyens → multiplicative
+            return attack * opp_defense / max(league_avg, 0.5)
 
-        # Attaque de l'un × faiblesse défensive de l'autre,
-        # normalisé par la moyenne de la ligue
-        lam_home = (home_attack * away_defense / max(league_avg, 0.5))
-        lam_away = (away_attack * home_defense / max(league_avg, 0.5))
+        lam_home = combine(h_att, a_def, h_est, a_est)
+        lam_away = combine(a_att, h_def, a_est, h_est)
 
-        # Avantage domicile
-        lam_home *= PoissonConfig.HOME_ADVANTAGE
-        lam_away *= (2 - PoissonConfig.HOME_ADVANTAGE)  # symétrique
+        # Avantage domicile : uniquement si pas déjà dans les splits
+        if not h_ha:
+            lam_home *= PoissonConfig.HOME_ADVANTAGE
+        if not a_ha:
+            lam_away *= (2 - PoissonConfig.HOME_ADVANTAGE)
 
         return lam_home, lam_away
 
