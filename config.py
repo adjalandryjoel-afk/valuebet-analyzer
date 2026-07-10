@@ -90,6 +90,14 @@ class PoissonConfig:
     MIN_LAMBDA = 0.30
     MAX_LAMBDA = 4.00
 
+    # Part des buts marqués en 1ère mi-temps (observé : ~45%,
+    # le rythme augmente en 2ème période)
+    FIRST_HALF_SHARE = 0.45
+
+    # Tirs cadrés attendus par but attendu (approximation :
+    # ~30% des tirs cadrés finissent au fond)
+    SOT_PER_GOAL = 3.3
+
 
 # ══════════════════════════════════════════════════════
 #  SYSTÈME ELO

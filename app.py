@@ -535,6 +535,53 @@ def display_results(analyses, bankroll):
                     ("BTTS Non", probs_btts.get("no", 0), "btts_non"),
                 ]
 
+                # Totaux par équipe (home/away over/under 0.5, 1.5, 2.5)
+                for side, team, group in (
+                    ("home", analysis.home_team, "HOME_TOTALS"),
+                    ("away", analysis.away_team, "AWAY_TOTALS"),
+                ):
+                    probs_tot = analysis.model_probs.get(group, {})
+                    for line in ("0_5", "1_5", "2_5"):
+                        for ou in ("over", "under"):
+                            extra_rows.append((
+                                f"{team} {ou.capitalize()} {line.replace('_', '.')}",
+                                probs_tot.get(f"{ou}_{line}", 0),
+                                f"{side}_{ou}_{line}",
+                            ))
+
+                # Buts par mi-temps (1MT / 2MT over/under 0.5, 1.5)
+                for half, half_label in (("h1", "1MT"), ("h2", "2MT")):
+                    probs_half = analysis.model_probs.get(half.upper(), {})
+                    for line in ("0_5", "1_5"):
+                        for ou in ("over", "under"):
+                            extra_rows.append((
+                                f"{half_label} {ou.capitalize()} {line.replace('_', '.')}",
+                                probs_half.get(f"{ou}_{line}", 0),
+                                f"{half}_{ou}_{line}",
+                            ))
+
+                # Tirs cadrés par équipe (lignes variables, déduites des cotes)
+                for side, team in (("home", analysis.home_team),
+                                   ("away", analysis.away_team)):
+                    probs_sot = analysis.model_probs.get(f"SOT_{side.upper()}", {})
+                    prefix = f"sot_{side}_"
+                    sot_lines = []
+                    for odds_key in analysis.odds:
+                        if not odds_key.startswith(prefix):
+                            continue
+                        parts = odds_key[len(prefix):].split("_", 1)
+                        if (len(parts) == 2 and parts[0] in ("over", "under")
+                                and parts[1].replace("_", "", 1).isdigit()):
+                            sot_lines.append((parts[0], parts[1], odds_key))
+                    sot_lines.sort(key=lambda s: (float(s[1].replace("_", ".")),
+                                                  s[0] != "over"))
+                    for ou, line, odds_key in sot_lines:
+                        extra_rows.append((
+                            f"Tirs cadrés {team} {ou.capitalize()} {line.replace('_', '.')}",
+                            probs_sot.get(f"{ou}_{line}", 0),
+                            odds_key,
+                        ))
+
                 for label, mp, odds_key in extra_rows:
                     bo = float(analysis.odds.get(odds_key, 0) or 0)
                     if bo <= 1:

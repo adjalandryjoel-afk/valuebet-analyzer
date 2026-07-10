@@ -50,6 +50,18 @@ class PoissonPrediction:
     prob_btts_yes: float = 0.0
     prob_btts_no: float = 0.0
 
+    # Totaux par équipe — {"0_5": P(over), "1_5": ..., "2_5": ...}
+    team_totals_home: Dict[str, float] = field(default_factory=dict)
+    team_totals_away: Dict[str, float] = field(default_factory=dict)
+
+    # Buts par mi-temps (match entier) — {"0_5": P(over), "1_5": ...}
+    h1_totals: Dict[str, float] = field(default_factory=dict)
+    h2_totals: Dict[str, float] = field(default_factory=dict)
+
+    # Tirs cadrés attendus par équipe (λ, approximation depuis les buts)
+    sot_lambda_home: float = 0.0
+    sot_lambda_away: float = 0.0
+
     # Double chance
     prob_1x: float = 0.0
     prob_x2: float = 0.0
@@ -321,6 +333,46 @@ class PoissonPredictor:
         scores.sort(key=lambda s: s[1], reverse=True)
         pred.top_scores = [(s, round(p, 4)) for s, p in scores[:5]]
         pred.most_likely_score = scores[0][0] if scores else "1-1"
+
+        # ── Totaux par équipe (loi de Poisson exacte sur chaque λ) ──
+        pred.team_totals_home = self._over_probs(lam_h, ("0_5", "1_5", "2_5"))
+        pred.team_totals_away = self._over_probs(lam_a, ("0_5", "1_5", "2_5"))
+
+        # ── Buts par mi-temps (part 1MT ≈ 45% du total attendu) ──
+        lam_total = lam_h + lam_a
+        lam_h1 = lam_total * PoissonConfig.FIRST_HALF_SHARE
+        lam_h2 = lam_total * (1 - PoissonConfig.FIRST_HALF_SHARE)
+        pred.h1_totals = self._over_probs(lam_h1, ("0_5", "1_5"))
+        pred.h2_totals = self._over_probs(lam_h2, ("0_5", "1_5"))
+
+        # ── Tirs cadrés attendus (approximation depuis les buts) ──
+        pred.sot_lambda_home = round(lam_h * PoissonConfig.SOT_PER_GOAL, 2)
+        pred.sot_lambda_away = round(lam_a * PoissonConfig.SOT_PER_GOAL, 2)
+
+    @classmethod
+    def _over_probs(cls, lam: float, lines: tuple) -> Dict[str, float]:
+        """P(N > ligne) pour N ~ Poisson(λ), lignes au format "1_5"."""
+
+        return {
+            line: round(cls.poisson_over(lam, line), 4)
+            for line in lines
+        }
+
+    @staticmethod
+    def poisson_over(lam: float, line: str) -> float:
+        """
+        P(N ≥ k) pour N ~ Poisson(λ), où k = ligne arrondie au-dessus
+        (ligne "2_5" → P(N ≥ 3)).
+        """
+
+        threshold = int(float(line.replace("_", "."))) + 1
+        cumulative = 0.0
+        term = math.exp(-lam)
+        for k in range(threshold):
+            if k > 0:
+                term *= lam / k
+            cumulative += term
+        return 1 - cumulative
 
     @staticmethod
     def _invert_over25(p_over: float) -> float:

@@ -12,6 +12,7 @@ marché, et on ne retient que les écarts au-dessus des seuils
 de config (value minimum, confiance minimum, cotes jouables).
 """
 
+import re
 from typing import Dict, List, Optional
 from dataclasses import dataclass, field
 
@@ -165,23 +166,86 @@ class ValueBetDetector:
         ) / 2
 
         # ── Scanner chaque marché ──
+        # (marché, sélection, cote, prob modèle, pénalité de confiance)
         candidates = [
-            ("1X2", "1", o1, p1),
-            ("1X2", "X", ox, px),
-            ("1X2", "2", o2, p2),
+            ("1X2", "1", o1, p1, 0),
+            ("1X2", "X", ox, px, 0),
+            ("1X2", "2", o2, p2, 0),
             ("Over/Under 2.5", "Over 2.5",
-             float(odds.get("over_2_5", 0) or 0), poisson_pred.prob_over25),
+             float(odds.get("over_2_5", 0) or 0), poisson_pred.prob_over25, 0),
             ("Over/Under 2.5", "Under 2.5",
-             float(odds.get("under_2_5", 0) or 0), poisson_pred.prob_under25),
+             float(odds.get("under_2_5", 0) or 0), poisson_pred.prob_under25, 0),
             ("BTTS", "Oui",
-             float(odds.get("btts_oui", 0) or 0), poisson_pred.prob_btts_yes),
+             float(odds.get("btts_oui", 0) or 0), poisson_pred.prob_btts_yes, 0),
             ("BTTS", "Non",
-             float(odds.get("btts_non", 0) or 0), poisson_pred.prob_btts_no),
+             float(odds.get("btts_non", 0) or 0), poisson_pred.prob_btts_no, 0),
         ]
+
+        # ── Totaux de buts par équipe ──
+        team_sides = (
+            ("home", home_team, poisson_pred.team_totals_home, "HOME_TOTALS"),
+            ("away", away_team, poisson_pred.team_totals_away, "AWAY_TOTALS"),
+        )
+        for side, team, totals, probs_key in team_sides:
+            analysis.model_probs[probs_key] = {}
+            for line, p_over in totals.items():
+                line_txt = line.replace("_", ".")
+                analysis.model_probs[probs_key][f"over_{line}"] = round(p_over, 4)
+                analysis.model_probs[probs_key][f"under_{line}"] = round(1 - p_over, 4)
+                candidates.append((
+                    f"Buts {team}", f"Over {line_txt}",
+                    float(odds.get(f"{side}_over_{line}", 0) or 0), p_over, 0))
+                candidates.append((
+                    f"Buts {team}", f"Under {line_txt}",
+                    float(odds.get(f"{side}_under_{line}", 0) or 0), 1 - p_over, 0))
+
+        # ── Buts par mi-temps (répartition 45/55 → légère pénalité) ──
+        halves = (
+            ("h1", "1ère mi-temps", poisson_pred.h1_totals, "H1"),
+            ("h2", "2ème mi-temps", poisson_pred.h2_totals, "H2"),
+        )
+        for prefix, label, totals, probs_key in halves:
+            analysis.model_probs[probs_key] = {}
+            for line, p_over in totals.items():
+                line_txt = line.replace("_", ".")
+                analysis.model_probs[probs_key][f"over_{line}"] = round(p_over, 4)
+                analysis.model_probs[probs_key][f"under_{line}"] = round(1 - p_over, 4)
+                candidates.append((
+                    f"Buts {label}", f"Over {line_txt}",
+                    float(odds.get(f"{prefix}_over_{line}", 0) or 0), p_over, 5))
+                candidates.append((
+                    f"Buts {label}", f"Under {line_txt}",
+                    float(odds.get(f"{prefix}_under_{line}", 0) or 0), 1 - p_over, 5))
+
+        # ── Tirs cadrés par équipe (approximation depuis les buts
+        #    attendus → forte pénalité de confiance) ──
+        from modules.poisson_model import PoissonPredictor
+        analysis.model_probs["SOT_HOME"] = {}
+        analysis.model_probs["SOT_AWAY"] = {}
+        sot_pattern = re.compile(r"^sot_(home|away)_(over|under)_(\d+_5)$")
+        for key, value in odds.items():
+            m = sot_pattern.match(str(key))
+            if not m:
+                continue
+            side, direction, line = m.groups()
+            lam_sot = (poisson_pred.sot_lambda_home if side == "home"
+                       else poisson_pred.sot_lambda_away)
+            if lam_sot <= 0:
+                continue
+            p_over = PoissonPredictor.poisson_over(lam_sot, line)
+            p = p_over if direction == "over" else 1 - p_over
+            team = home_team if side == "home" else away_team
+            line_txt = line.replace("_", ".")
+            analysis.model_probs[f"SOT_{side.upper()}"][
+                f"{direction}_{line}"] = round(p, 4)
+            candidates.append((
+                f"Tirs cadrés {team}",
+                f"{'Over' if direction == 'over' else 'Under'} {line_txt}",
+                float(value or 0), p, 15))
 
         implausible_count = 0
 
-        for market, selection, book_odds, model_prob in candidates:
+        for market, selection, book_odds, model_prob, penalty in candidates:
             # Cotes 1X2 incohérentes → ne pas parier dessus
             if market == "1X2" and odds_1x2_suspect:
                 continue
@@ -197,6 +261,7 @@ class ValueBetDetector:
                 match_label, market, selection,
                 book_odds, model_prob, model_agreement,
                 analysis.bookmaker_margin,
+                confidence_penalty=penalty,
             )
             if vb:
                 analysis.value_bets.append(vb)
@@ -248,8 +313,16 @@ class ValueBetDetector:
     def _evaluate_selection(self, match_label: str, market: str,
                              selection: str, book_odds: float,
                              model_prob: float, model_agreement: float,
-                             margin: float) -> Optional[ValueBet]:
-        """Évalue une sélection et retourne un ValueBet si les seuils passent."""
+                             margin: float,
+                             confidence_penalty: float = 0.0
+                             ) -> Optional[ValueBet]:
+        """
+        Évalue une sélection et retourne un ValueBet si les seuils passent.
+
+        confidence_penalty : points de confiance retirés pour les
+        marchés modélisés par approximation (mi-temps : 5,
+        tirs cadrés : 15).
+        """
 
         if book_odds <= 1 or model_prob <= 0:
             return None
@@ -276,6 +349,9 @@ class ValueBetDetector:
         # Pénalité si marge élevée (cotes molles, moins fiables)
         if margin > 8:
             confidence -= 8
+
+        # Pénalité des marchés modélisés par approximation
+        confidence -= confidence_penalty
 
         confidence = max(0, min(100, confidence))
 

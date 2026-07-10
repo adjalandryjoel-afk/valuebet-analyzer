@@ -50,7 +50,13 @@ avec un JSON valide, sans texte autour, au format :
         "over_2_5": 1.72,
         "under_2_5": 2.10,
         "btts_oui": 1.85,
-        "btts_non": 1.95
+        "btts_non": 1.95,
+        "home_over_1_5": 1.60,
+        "away_under_0_5": 3.25,
+        "h1_over_0_5": 1.28,
+        "h2_under_1_5": 1.55,
+        "sot_home_over_3_5": 1.80,
+        "sot_away_under_4_5": 1.90
       }
     }
   ]
@@ -63,12 +69,28 @@ Règles STRICTES :
 Ne JAMAIS y mettre les cotes d'un autre marché (double chance, \
 handicap, mi-temps, buteur...). Si ce marché n'est pas visible, \
 mets {"1": 0, "X": 0, "2": 0}
-- "over_2_5"/"under_2_5" = UNIQUEMENT la ligne exactement 2,5 buts. \
-Ignore les lignes 0,5 / 1,5 / 3,5 / 4,5 etc.
+- "over_2_5"/"under_2_5" = UNIQUEMENT la ligne exactement 2,5 buts \
+du marché "Nombre de buts" du MATCH ENTIER. Ignore les lignes 0,5 / \
+1,5 / 3,5 / 4,5 etc.
 - "btts_oui"/"btts_non" = uniquement le marché "Les deux équipes \
 marquent"
+- Totaux par équipe (marché "Nombre de buts de [équipe]" ou "Total \
+de buts équipe") : clés home_over_0_5, home_under_0_5, home_over_1_5, \
+home_under_1_5, home_over_2_5, home_under_2_5 (idem away_). home_ = \
+la 1ère équipe affichée (domicile), away_ = la 2ème (extérieur). \
+Lignes 0,5 / 1,5 / 2,5 uniquement. Ne JAMAIS confondre le total \
+d'une équipe avec le total du match
+- Buts par mi-temps du match ENTIER (marché "Nombre de buts 1ère \
+mi-temps" / "2ème mi-temps", PAS par équipe) : clés h1_over_0_5, \
+h1_under_0_5, h1_over_1_5, h1_under_1_5 (idem h2_). Lignes 0,5 / \
+1,5 uniquement
+- Tirs cadrés par équipe (marché "Tirs cadrés de [équipe]") : clés \
+sot_home_over_N_5 / sot_home_under_N_5 (idem sot_away_) avec N,5 = \
+la ligne réellement affichée (ex. plus de 3,5 tirs cadrés domicile \
+→ sot_home_over_3_5). Ne JAMAIS confondre tirs cadrés et buts
 - N'inclus dans marches_supplementaires que les marchés réellement \
-visibles et identifiés avec certitude — en cas de doute, omets
+visibles et identifiés avec certitude — en cas de doute sur le \
+marché ou la ligne, omets la clé
 - Une capture peut montrer plusieurs écrans de marchés du MÊME match : \
 c'est un seul match, pas plusieurs
 - Si l'image n'est pas une capture de bookmaker (appli de stats, \

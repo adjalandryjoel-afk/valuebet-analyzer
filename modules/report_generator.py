@@ -69,7 +69,7 @@ class ReportGenerator:
         # Marchés supplémentaires (Over/Under 2.5 et BTTS)
         probs_ou = analysis.model_probs.get("OU25", {})
         probs_btts = analysis.model_probs.get("BTTS", {})
-        extra_rows = (
+        extra_rows = [
             ("Over 2.5", probs_ou.get("over", 0),
              float(analysis.odds.get("over_2_5", 0) or 0)),
             ("Under 2.5", probs_ou.get("under", 0),
@@ -78,7 +78,54 @@ class ReportGenerator:
              float(analysis.odds.get("btts_oui", 0) or 0)),
             ("BTTS Non", probs_btts.get("no", 0),
              float(analysis.odds.get("btts_non", 0) or 0)),
-        )
+        ]
+
+        # Totaux par équipe (home/away over/under 0.5, 1.5, 2.5)
+        for side, team, group in (
+            ("home", analysis.home_team, "HOME_TOTALS"),
+            ("away", analysis.away_team, "AWAY_TOTALS"),
+        ):
+            probs_tot = analysis.model_probs.get(group, {})
+            for line in ("0_5", "1_5", "2_5"):
+                for ou in ("over", "under"):
+                    extra_rows.append((
+                        f"{team} {ou.capitalize()} {line.replace('_', '.')}",
+                        probs_tot.get(f"{ou}_{line}", 0),
+                        float(analysis.odds.get(f"{side}_{ou}_{line}", 0) or 0),
+                    ))
+
+        # Buts par mi-temps (1MT / 2MT over/under 0.5, 1.5)
+        for half, half_label in (("h1", "1MT"), ("h2", "2MT")):
+            probs_half = analysis.model_probs.get(half.upper(), {})
+            for line in ("0_5", "1_5"):
+                for ou in ("over", "under"):
+                    extra_rows.append((
+                        f"{half_label} {ou.capitalize()} {line.replace('_', '.')}",
+                        probs_half.get(f"{ou}_{line}", 0),
+                        float(analysis.odds.get(f"{half}_{ou}_{line}", 0) or 0),
+                    ))
+
+        # Tirs cadrés par équipe (lignes variables, déduites des cotes)
+        for side, team in (("home", analysis.home_team),
+                           ("away", analysis.away_team)):
+            probs_sot = analysis.model_probs.get(f"SOT_{side.upper()}", {})
+            prefix = f"sot_{side}_"
+            sot_lines = []
+            for odds_key in analysis.odds:
+                if not odds_key.startswith(prefix):
+                    continue
+                parts = odds_key[len(prefix):].split("_", 1)
+                if (len(parts) == 2 and parts[0] in ("over", "under")
+                        and parts[1].replace("_", "", 1).isdigit()):
+                    sot_lines.append((parts[0], parts[1], odds_key))
+            sot_lines.sort(key=lambda s: (float(s[1].replace("_", ".")),
+                                          s[0] != "over"))
+            for ou, line, odds_key in sot_lines:
+                extra_rows.append((
+                    f"Tirs cadrés {team} {ou.capitalize()} {line.replace('_', '.')}",
+                    probs_sot.get(f"{ou}_{line}", 0),
+                    float(analysis.odds.get(odds_key, 0) or 0),
+                ))
 
         if HAS_RICH:
             table = Table(box=box.SIMPLE, show_header=True)
