@@ -123,7 +123,7 @@ def render_sidebar():
     with st.sidebar:
         st.image("https://img.icons8.com/color/96/football2--v1.png", width=80)
         st.title("⚽ Value Bet Analyzer")
-        st.caption("Betclic Côte d'Ivoire")
+        st.caption("Betclic Côte d'Ivoire — v2.2 · 25 marchés")
 
         st.divider()
 
@@ -322,18 +322,74 @@ def page_manual_entry(bankroll, min_value, min_confidence):
                                       value=4.20, step=0.05, key=f"o2_{i}")
 
         # Marchés supplémentaires (expansible)
+        extras_input = {}
+
         with st.expander("📈 Marchés supplémentaires (optionnel)"):
             col_d, col_e = st.columns(2)
             with col_d:
-                over25 = st.number_input("Over 2.5", min_value=0.0,
-                                          value=0.0, step=0.05, key=f"ov_{i}")
-                btts_y = st.number_input("BTTS Oui", min_value=0.0,
-                                          value=0.0, step=0.05, key=f"by_{i}")
+                extras_input["over_2_5"] = st.number_input(
+                    "Over 2.5", min_value=0.0,
+                    value=0.0, step=0.05, key=f"ov_{i}")
+                extras_input["btts_oui"] = st.number_input(
+                    "BTTS Oui", min_value=0.0,
+                    value=0.0, step=0.05, key=f"by_{i}")
             with col_e:
-                under25 = st.number_input("Under 2.5", min_value=0.0,
-                                           value=0.0, step=0.05, key=f"un_{i}")
-                btts_n = st.number_input("BTTS Non", min_value=0.0,
-                                          value=0.0, step=0.05, key=f"bn_{i}")
+                extras_input["under_2_5"] = st.number_input(
+                    "Under 2.5", min_value=0.0,
+                    value=0.0, step=0.05, key=f"un_{i}")
+                extras_input["btts_non"] = st.number_input(
+                    "BTTS Non", min_value=0.0,
+                    value=0.0, step=0.05, key=f"bn_{i}")
+
+        with st.expander("🆕 Buts par équipe (optionnel)"):
+            st.caption("Marché Betclic « Nombre de buts de l'équipe »")
+            col_h, col_a2 = st.columns(2)
+            for side, label, col in (("home", "Domicile", col_h),
+                                     ("away", "Extérieur", col_a2)):
+                with col:
+                    st.markdown(f"**{label}**")
+                    for line in ("0_5", "1_5", "2_5"):
+                        line_txt = line.replace("_", ".")
+                        extras_input[f"{side}_over_{line}"] = st.number_input(
+                            f"+ de {line_txt}", min_value=0.0, value=0.0,
+                            step=0.05, key=f"{side}o{line}_{i}")
+                        extras_input[f"{side}_under_{line}"] = st.number_input(
+                            f"- de {line_txt}", min_value=0.0, value=0.0,
+                            step=0.05, key=f"{side}u{line}_{i}")
+
+        with st.expander("🆕 Buts par mi-temps (optionnel)"):
+            st.caption("Nombre de buts du match en 1ère / 2ème mi-temps")
+            col_h1, col_h2 = st.columns(2)
+            for half, label, col in (("h1", "1ère mi-temps", col_h1),
+                                     ("h2", "2ème mi-temps", col_h2)):
+                with col:
+                    st.markdown(f"**{label}**")
+                    for line in ("0_5", "1_5"):
+                        line_txt = line.replace("_", ".")
+                        extras_input[f"{half}_over_{line}"] = st.number_input(
+                            f"+ de {line_txt}", min_value=0.0, value=0.0,
+                            step=0.05, key=f"{half}o{line}_{i}")
+                        extras_input[f"{half}_under_{line}"] = st.number_input(
+                            f"- de {line_txt}", min_value=0.0, value=0.0,
+                            step=0.05, key=f"{half}u{line}_{i}")
+
+        with st.expander("🆕 Tirs cadrés par équipe (optionnel)"):
+            st.caption("Choisis la ligne affichée par Betclic (ex. 3.5)")
+            col_sh, col_sa = st.columns(2)
+            for side, label, col in (("home", "Domicile", col_sh),
+                                     ("away", "Extérieur", col_sa)):
+                with col:
+                    st.markdown(f"**{label}**")
+                    sot_line = st.selectbox(
+                        "Ligne", ["2.5", "3.5", "4.5", "5.5", "6.5"],
+                        index=1, key=f"sotl{side}_{i}")
+                    line_key = sot_line.replace(".", "_")
+                    extras_input[f"sot_{side}_over_{line_key}"] = st.number_input(
+                        f"+ de {sot_line} tirs cadrés", min_value=0.0,
+                        value=0.0, step=0.05, key=f"soto{side}_{i}")
+                    extras_input[f"sot_{side}_under_{line_key}"] = st.number_input(
+                        f"- de {sot_line} tirs cadrés", min_value=0.0,
+                        value=0.0, step=0.05, key=f"sotu{side}_{i}")
 
         if home and away:
             match_data = {
@@ -341,17 +397,10 @@ def page_manual_entry(bankroll, min_value, min_confidence):
                 "equipe_exterieur": away,
                 "competition": competition,
                 "cotes": {"1": odds_1, "X": odds_x, "2": odds_2},
-                "marches_supplementaires": {}
+                "marches_supplementaires": {
+                    k: v for k, v in extras_input.items() if v > 0
+                }
             }
-
-            if over25 > 0:
-                match_data["marches_supplementaires"]["over_2_5"] = over25
-            if under25 > 0:
-                match_data["marches_supplementaires"]["under_2_5"] = under25
-            if btts_y > 0:
-                match_data["marches_supplementaires"]["btts_oui"] = btts_y
-            if btts_n > 0:
-                match_data["marches_supplementaires"]["btts_non"] = btts_n
 
             all_matches.append(match_data)
 
