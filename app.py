@@ -33,6 +33,7 @@ from modules.value_detector import ValueBetDetector, MatchAnalysis
 from modules.kelly_criterion import KellyStakeCalculator
 from modules.database_manager import DatabaseManager
 from modules.backtester import Backtester
+from modules.match_intel import get_match_intelligence
 
 
 # ══════════════════════════════════════════════════════
@@ -75,6 +76,7 @@ def init_modules():
         "value_detector": ValueBetDetector(),
         "db": DatabaseManager(),
         "backtester": Backtester(),
+        "intel": get_match_intelligence(),
     }
 
 
@@ -115,6 +117,14 @@ def render_sidebar_settings():
             value=int(ValueBetConfig.MIN_CONFIDENCE_SCORE)
         )
 
+        st.subheader(":material/groups: Agents d'analyse")
+        deep_analysis = st.toggle(
+            "Analyse approfondie",
+            value=True,
+            help="H2H, forme détaillée, contexte et verdict du chef "
+                 "analyste. Ajoute quelques secondes par match."
+        )
+
         # Performance globale
         db = init_modules()["db"]
         stats = db.get_performance_stats()
@@ -131,14 +141,15 @@ def render_sidebar_settings():
                 border=True,
             )
 
-        return bankroll, min_value / 100, min_confidence
+        return bankroll, min_value / 100, min_confidence, deep_analysis
 
 
 # ══════════════════════════════════════════════════════
 #  PAGE : UPLOAD DE CAPTURES D'ÉCRAN
 # ══════════════════════════════════════════════════════
 
-def page_upload_screenshots(bankroll, min_value, min_confidence):
+def page_upload_screenshots(bankroll, min_value, min_confidence,
+                            deep_analysis=True):
     """Page d'upload et d'analyse des captures d'écran."""
 
     page_header(
@@ -167,6 +178,16 @@ def page_upload_screenshots(bankroll, min_value, min_confidence):
 
         if len(uploaded_files) > 5:
             st.caption(f"... et {len(uploaded_files) - 5} autre(s)")
+
+        user_notes = st.text_area(
+            "Actus des matchs (optionnel)",
+            placeholder="Blessés, suspensions, enjeu, turnover... "
+                        "Ex : « PSG sans Mbappé (blessé). Finale de coupe "
+                        "pour Marseille. »",
+            help="L'agent contexte structure ces informations et ajuste "
+                 "le modèle en conséquence. Il n'utilise QUE ce que tu "
+                 "écris ici — rien n'est inventé."
+        )
 
         # Bouton d'analyse
         if st.button("Lancer l'analyse", type="primary",
@@ -204,7 +225,9 @@ def page_upload_screenshots(bankroll, min_value, min_confidence):
                            icon=":material/check_circle:")
 
                 # Analyser les matchs
-                analyze_matches_ui(all_matches, bankroll, min_value, min_confidence)
+                analyze_matches_ui(all_matches, bankroll, min_value,
+                                   min_confidence, user_notes=user_notes,
+                                   deep=deep_analysis)
             else:
                 st.error("Aucun match détecté dans les captures.",
                          icon=":material/error:")
@@ -214,7 +237,8 @@ def page_upload_screenshots(bankroll, min_value, min_confidence):
 #  PAGE : SAISIE MANUELLE
 # ══════════════════════════════════════════════════════
 
-def page_manual_entry(bankroll, min_value, min_confidence):
+def page_manual_entry(bankroll, min_value, min_confidence,
+                      deep_analysis=True):
     """Page de saisie manuelle des matchs et cotes."""
 
     page_header(
@@ -361,20 +385,31 @@ def page_manual_entry(bankroll, min_value, min_confidence):
 
     # Bouton d'analyse
     if all_matches:
+        user_notes = st.text_area(
+            "Actus des matchs (optionnel)",
+            placeholder="Blessés, suspensions, enjeu, turnover...",
+            help="L'agent contexte structure ces informations et ajuste "
+                 "le modèle. Il n'utilise QUE ce que tu écris ici."
+        )
+
         if st.button("Analyser tous les matchs", type="primary",
                      icon=":material/rocket_launch:", width="stretch"):
-            analyze_matches_ui(all_matches, bankroll, min_value, min_confidence)
+            analyze_matches_ui(all_matches, bankroll, min_value,
+                               min_confidence, user_notes=user_notes,
+                               deep=deep_analysis)
 
 
 # ══════════════════════════════════════════════════════
 #  ANALYSE DES MATCHS (LOGIQUE COMMUNE)
 # ══════════════════════════════════════════════════════
 
-def analyze_matches_ui(matches, bankroll, min_value, min_confidence):
+def analyze_matches_ui(matches, bankroll, min_value, min_confidence,
+                       user_notes="", deep=True):
     """Analyse les matchs et affiche les résultats dans l'interface."""
 
     modules = init_modules()
     kelly = get_kelly_calculator(bankroll)
+    intel = modules["intel"]
 
     all_analyses = []
     all_value_bets = []
@@ -414,8 +449,25 @@ def analyze_matches_ui(matches, bankroll, min_value, min_confidence):
 
         elo_pred = modules["elo"].predict(home_name, away_name)
 
-        # 4. Prédiction Poisson
-        poisson_pred = modules["poisson"].predict(context)
+        # 4. Conseil d'agents pré-match (H2H, forme, contexte)
+        intel_report = None
+        if deep:
+            try:
+                intel_report = intel.analyze(
+                    home_name, away_name, context, user_notes=user_notes
+                )
+            except Exception:
+                intel_report = None
+
+        multipliers = (
+            (intel_report.lambda_mult_home, intel_report.lambda_mult_away)
+            if intel_report else (1.0, 1.0)
+        )
+
+        # 5. Prédiction Poisson (ajustée par les agents)
+        poisson_pred = modules["poisson"].predict(
+            context, lambda_multipliers=multipliers
+        )
 
         # 5. Détecter les value bets
         analysis = modules["value_detector"].analyze_match(
@@ -426,10 +478,22 @@ def analyze_matches_ui(matches, bankroll, min_value, min_confidence):
         # 6. Calculer les mises
         stakes = kelly.calculate_all_stakes(analysis)
 
+        # 7. Verdict du chef analyste
+        verdict = ""
+        if deep and intel_report is not None:
+            try:
+                verdict = intel.synthesize(
+                    analysis, intel_report, bankroll=bankroll
+                )
+            except Exception:
+                verdict = ""
+
         # Stocker
         analysis._poisson = poisson_pred
         analysis._elo = elo_pred
         analysis._stakes = stakes
+        analysis._intel = intel_report
+        analysis._verdict = verdict
         all_analyses.append(analysis)
         all_value_bets.extend(analysis.value_bets)
 
@@ -442,6 +506,83 @@ def analyze_matches_ui(matches, bankroll, min_value, min_confidence):
 # ══════════════════════════════════════════════════════
 #  AFFICHAGE DES RÉSULTATS
 # ══════════════════════════════════════════════════════
+
+def _form_badges(sequence):
+    """Convertit "VNDVV" en badges colorés markdown."""
+
+    colors = {"V": "green", "N": "gray", "D": "red"}
+    return " ".join(
+        f":{colors.get(c, 'gray')}-badge[{c}]" for c in sequence
+    )
+
+
+def _render_intel_section(analysis):
+    """Affiche le rapport du conseil d'agents d'un match."""
+
+    report = getattr(analysis, "_intel", None)
+    verdict = getattr(analysis, "_verdict", "")
+
+    if report is None and not verdict:
+        return
+
+    st.space("small")
+    st.markdown(":material/groups: **Conseil des agents**")
+
+    if report is not None:
+        col_h2h, col_form = st.columns(2)
+
+        with col_h2h:
+            with st.container(border=True):
+                st.markdown(":material/swords: **Face-à-face**")
+                h2h = report.h2h
+                if h2h and h2h.get("sample", 0) >= 2:
+                    st.markdown(
+                        f"**{h2h['team1_wins']}V - {h2h['draws']}N - "
+                        f"{h2h['team2_wins']}D** "
+                        f"({analysis.home_team} d'abord, "
+                        f"{h2h['sample']} confrontations)"
+                    )
+                    st.caption(
+                        f"{h2h['avg_goals']:.2f} buts/match · "
+                        f"BTTS {h2h['btts_rate']*100:.0f}%"
+                    )
+                    for m in h2h.get("matches", [])[:5]:
+                        st.caption(
+                            f"{m['date']} — {m['home']} {m['score']} "
+                            f"{m['away']}"
+                        )
+                else:
+                    st.caption(
+                        "Pas de confrontations directes disponibles."
+                    )
+
+        with col_form:
+            with st.container(border=True):
+                st.markdown(":material/timeline: **Forme récente**")
+                shown = False
+                for label, form in (
+                    (analysis.home_team, report.form_home),
+                    (analysis.away_team, report.form_away),
+                ):
+                    if form and form.get("sequence"):
+                        st.markdown(
+                            f"{label} : {_form_badges(form['sequence'][:8])}"
+                        )
+                        shown = True
+                if not shown:
+                    st.caption("Forme détaillée indisponible.")
+
+        if report.adjust_reasons:
+            st.caption(
+                ":material/tune: Ajustements du modèle : "
+                + " · ".join(report.adjust_reasons)
+            )
+
+    if verdict:
+        with st.container(border=True):
+            st.markdown(":material/psychology: **Verdict du chef analyste**")
+            st.markdown(verdict)
+
 
 def display_results(analyses, bankroll):
     """Affiche tous les résultats de l'analyse."""
@@ -723,6 +864,8 @@ def display_results(analyses, bankroll):
 
             if analysis.data_warning:
                 st.warning(analysis.data_warning, icon=":material/warning:")
+
+            _render_intel_section(analysis)
 
     # ── Tableau récapitulatif final ──
     all_vbs = []
@@ -1056,13 +1199,17 @@ def page_home():
 def main():
     """Point d'entrée de l'application Streamlit."""
 
-    bankroll, min_value, min_confidence = render_sidebar_settings()
+    bankroll, min_value, min_confidence, deep_analysis = (
+        render_sidebar_settings()
+    )
 
     def _upload():
-        page_upload_screenshots(bankroll, min_value, min_confidence)
+        page_upload_screenshots(bankroll, min_value, min_confidence,
+                                deep_analysis)
 
     def _manual():
-        page_manual_entry(bankroll, min_value, min_confidence)
+        page_manual_entry(bankroll, min_value, min_confidence,
+                          deep_analysis)
 
     pg = st.navigation([
         st.Page(page_home, title="Accueil",

@@ -83,10 +83,25 @@ class PoissonPrediction:
 class PoissonPredictor:
     """Modèle de Poisson calibré marché + stats."""
 
-    def predict(self, context: MatchContext) -> PoissonPrediction:
-        """Prédit toutes les probabilités d'un match."""
+    def predict(self, context: MatchContext,
+                lambda_multipliers: Tuple[float, float] = (1.0, 1.0)
+                ) -> PoissonPrediction:
+        """
+        Prédit toutes les probabilités d'un match.
+
+        lambda_multipliers : ajustements (domicile, extérieur) issus de
+        l'analyse pré-match (H2H, forme, contexte) — bornés par sécurité.
+        """
 
         lam_home, lam_away = self._estimate_lambdas(context)
+
+        # Ajustements du conseil d'agents (bornés une seconde fois)
+        mult_h = max(0.85, min(1.15, lambda_multipliers[0]))
+        mult_a = max(0.85, min(1.15, lambda_multipliers[1]))
+        lam_home = max(PoissonConfig.MIN_LAMBDA,
+                       min(PoissonConfig.MAX_LAMBDA, lam_home * mult_h))
+        lam_away = max(PoissonConfig.MIN_LAMBDA,
+                       min(PoissonConfig.MAX_LAMBDA, lam_away * mult_a))
 
         pred = PoissonPrediction(
             lambda_home=round(lam_home, 3),

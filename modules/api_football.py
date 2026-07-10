@@ -5,13 +5,15 @@
 ═══════════════════════════════════════════════════════
 
 Fournit au modèle des statistiques INDÉPENDANTES des cotes :
-buts marqués/encaissés (globaux et domicile/extérieur) et
-forme récente, calculés sur les 15 derniers matchs terminés.
+buts marqués/encaissés (globaux et domicile/extérieur), forme
+récente et 10 derniers résultats, calculés sur les 15 derniers
+matchs terminés — plus le bilan des confrontations directes
+(head-to-head) entre deux équipes.
 
 Économie de requêtes (plan gratuit : 100 requêtes/jour) :
   • cache disque data/api_cache.json
   • team_id conservé indéfiniment (1 seule recherche/équipe)
-  • stats conservées 24h (TTL)
+  • stats conservées 24h (TTL), H2H conservés 7 jours
   • saison accessible mémorisée (le plan gratuit n'accepte ni
     le paramètre `last` ni les saisons trop récentes)
 
@@ -57,8 +59,14 @@ class ApiFootballCollector:
     # Durée de vie des stats en cache (secondes)
     CACHE_TTL = 24 * 3600
 
+    # Durée de vie d'un bilan H2H en cache (secondes)
+    H2H_CACHE_TTL = 7 * 24 * 3600
+
     # Nombre de derniers matchs terminés utilisés
     LAST_FIXTURES = 15
+
+    # Nombre de confrontations directes conservées
+    H2H_LAST_MATCHES = 10
 
     # Statuts de matchs considérés comme terminés
     FINISHED_STATUSES = ("FT", "AET", "PEN")
@@ -326,20 +334,21 @@ class ApiFootballCollector:
             goals = fx.get("goals") or {}
             teams = fx.get("teams") or {}
             gh, ga = goals.get("home"), goals.get("away")
-            home_id = (teams.get("home") or {}).get("id")
-            away_id = (teams.get("away") or {}).get("id")
+            home = teams.get("home") or {}
+            away = teams.get("away") or {}
 
             if gh is None or ga is None:
                 continue
-            if team_id not in (home_id, away_id):
+            if team_id not in (home.get("id"), away.get("id")):
                 continue
 
-            is_home = (home_id == team_id)
+            is_home = (home.get("id") == team_id)
             usable.append({
                 "date": (fx.get("fixture") or {}).get("date") or "",
                 "is_home": is_home,
                 "scored": gh if is_home else ga,
                 "conceded": ga if is_home else gh,
+                "opponent": (away if is_home else home).get("name") or "",
             })
 
         if len(usable) < 5:
@@ -369,6 +378,20 @@ class ApiFootballCollector:
             elif m["scored"] == m["conceded"]:
                 points += 1
 
+        # 10 derniers résultats détaillés, du plus récent au plus ancien
+        recent_results = [
+            {
+                "date": (m["date"] or "")[:10],
+                "venue": "dom" if m["is_home"] else "ext",
+                "adversaire": m["opponent"],
+                "score": f"{m['scored']}-{m['conceded']}",
+                "resultat": ("V" if m["scored"] > m["conceded"]
+                             else "N" if m["scored"] == m["conceded"]
+                             else "D"),
+            }
+            for m in usable[:10]
+        ]
+
         return {
             "avg_goals_scored": round(avg_scored, 2),
             "avg_goals_conceded": round(avg_conceded, 2),
@@ -381,6 +404,7 @@ class ApiFootballCollector:
             "avg_goals_conceded_away": round(
                 _avg(away, "conceded", avg_conceded), 2),
             "recent_form_score": round(points / 5, 2),
+            "recent_results": recent_results,
             "matches_played": n,
             "last_match_date": (usable[0]["date"] or "")[:10],
         }
@@ -416,7 +440,32 @@ class ApiFootballCollector:
 
         return stats
 
-    # ─── POINT D'ENTRÉE ─────────────────────────────
+    # ─── RÉSOLUTION D'UN TEAM ID (avec cache) ───────
+
+    def _resolve_team_id(self, team_name: str) -> Optional[int]:
+        """
+        Retourne le team_id d'une équipe : cache disque (conservé à
+        vie) en priorité, sinon recherche API mémorisée aussitôt.
+        """
+
+        key = self._normalize(team_name)
+        entry = self.cache.get(key)
+        entry = entry if isinstance(entry, dict) else {}
+
+        team_id = entry.get("team_id")
+        if team_id:
+            return team_id
+
+        team_id = self._search_team_id(team_name)
+        if not team_id:
+            return None
+
+        entry["team_id"] = team_id
+        self.cache[key] = entry
+        self._save_cache()  # le team_id est acquis, ne pas le reperdre
+        return team_id
+
+    # ─── POINT D'ENTRÉE : STATS D'ÉQUIPE ────────────
 
     def get_team_stats(self, team_name: str) -> Optional[Dict]:
         """
@@ -427,7 +476,15 @@ class ApiFootballCollector:
           avg_goals_scored_home, avg_goals_conceded_home,
           avg_goals_scored_away, avg_goals_conceded_away,
           recent_form_score (points/match, 5 derniers),
+          recent_results (10 derniers matchs, du plus récent au plus
+            ancien : {date "YYYY-MM-DD", venue "dom"|"ext",
+            adversaire, score "2-1" — buts de l'équipe d'abord,
+            resultat "V"|"N"|"D"}),
           matches_played
+
+        NB : une entrée mise en cache par une version antérieure peut
+        ne pas contenir "recent_results" ; elle est retournée telle
+        quelle (les consommateurs utilisent .get()).
         """
 
         if not team_name or not team_name.strip():
@@ -442,14 +499,11 @@ class ApiFootballCollector:
             return entry["stats"]
 
         # 2. team_id : cache (conservé à vie) ou recherche API
-        team_id = entry.get("team_id")
+        team_id = self._resolve_team_id(team_name)
         if not team_id:
-            team_id = self._search_team_id(team_name)
-            if not team_id:
-                return None
-            entry["team_id"] = team_id
-            self.cache[key] = entry
-            self._save_cache()  # le team_id est acquis, ne pas le reperdre
+            return None
+        entry = self.cache.get(key)
+        entry = entry if isinstance(entry, dict) else {}
 
         # 3. Derniers matchs terminés → stats (avec contrôle de fraîcheur)
         fixtures = self._fetch_last_fixtures(team_id)
@@ -472,3 +526,201 @@ class ApiFootballCollector:
               f"({stats['matches_played']} matchs{note})")
 
         return stats
+
+    # ─── CONFRONTATIONS DIRECTES (H2H) ──────────────
+
+    def _fetch_h2h_fixtures(self, id1: int, id2: int) -> Optional[List[Dict]]:
+        """
+        Récupère les confrontations directes terminées entre deux
+        équipes (max 10, plus récentes d'abord).
+
+        Le plan gratuit peut refuser la requête sans saison : on
+        retente alors sur la saison max autorisée extraite du message
+        d'erreur (même logique que _fetch_last_fixtures).
+
+        Retourne None si aucune requête n'a abouti (clé absente,
+        réseau, HTTP != 200) — à ne pas mettre en cache — et une
+        liste (éventuellement vide) si l'API a répondu.
+        """
+
+        params = {"h2h": f"{id1}-{id2}"}
+        data = self._request("/fixtures/headtohead", params)
+        if data is None:
+            return None
+
+        errors = data.get("errors")
+        if errors:
+            # Saison/plan refusé → retenter sur la saison max autorisée
+            allowed = self._max_allowed_season(errors)
+            if not allowed:
+                print(f"      ⚠️ API-Football indisponible : "
+                      f"{self._errors_text(errors)}")
+                return []
+            data = self._request("/fixtures/headtohead",
+                                 {**params, "season": allowed})
+            if data is None:
+                return None
+            errors = data.get("errors")
+            if errors:
+                print(f"      ⚠️ API-Football indisponible : "
+                      f"{self._errors_text(errors)}")
+                return []
+            self._remember_season(allowed)
+
+        fixtures = [
+            fx for fx in (data.get("response") or [])
+            if ((fx.get("fixture") or {}).get("status") or {})
+            .get("short") in self.FINISHED_STATUSES
+        ]
+        # Les plus récentes d'abord, limitées à 10
+        fixtures.sort(
+            key=lambda fx: (fx.get("fixture") or {}).get("date") or "",
+            reverse=True,
+        )
+        return fixtures[:self.H2H_LAST_MATCHES]
+
+    def _compute_h2h(self, team1_id: int, team2_id: int,
+                     fixtures: List[Dict]) -> Optional[Dict]:
+        """
+        Transforme les confrontations brutes en bilan H2H relatif à
+        team1. Retourne None si moins de 2 matchs exploitables.
+        """
+
+        matches = []
+        team1_wins = draws = team2_wins = 0
+        team1_goals = team2_goals = btts = 0
+
+        for fx in fixtures:
+            goals = fx.get("goals") or {}
+            teams = fx.get("teams") or {}
+            gh, ga = goals.get("home"), goals.get("away")
+            home = teams.get("home") or {}
+            away = teams.get("away") or {}
+
+            if gh is None or ga is None:
+                continue
+            if {home.get("id"), away.get("id")} != {team1_id, team2_id}:
+                continue
+
+            team1_home = (home.get("id") == team1_id)
+            scored1 = gh if team1_home else ga
+            scored2 = ga if team1_home else gh
+
+            matches.append({
+                "date": (((fx.get("fixture") or {}).get("date")) or "")[:10],
+                "home": home.get("name") or "",
+                "away": away.get("name") or "",
+                "score": f"{gh}-{ga}",
+            })
+
+            if scored1 > scored2:
+                team1_wins += 1
+            elif scored1 == scored2:
+                draws += 1
+            else:
+                team2_wins += 1
+
+            team1_goals += scored1
+            team2_goals += scored2
+            if scored1 > 0 and scored2 > 0:
+                btts += 1
+
+        n = len(matches)
+        if n < 2:
+            return None
+
+        return {
+            "matches": matches,
+            "team1_wins": team1_wins,
+            "draws": draws,
+            "team2_wins": team2_wins,
+            "avg_goals": round((team1_goals + team2_goals) / n, 2),
+            "btts_rate": round(btts / n, 2),
+            "team1_avg_scored": round(team1_goals / n, 2),
+            "team2_avg_scored": round(team2_goals / n, 2),
+            "sample": n,
+        }
+
+    @staticmethod
+    def _orient_h2h(stats: Optional[Dict], flip: bool) -> Optional[Dict]:
+        """
+        Le bilan est mis en cache relatif à l'équipe au plus petit id
+        (clé de cache triée) : si l'appelant a passé les équipes dans
+        l'autre ordre, échanger les clés team1_*/team2_*.
+        """
+
+        if not stats or not flip:
+            return stats
+
+        oriented = dict(stats)
+        oriented["team1_wins"] = stats["team2_wins"]
+        oriented["team2_wins"] = stats["team1_wins"]
+        oriented["team1_avg_scored"] = stats["team2_avg_scored"]
+        oriented["team2_avg_scored"] = stats["team1_avg_scored"]
+        return oriented
+
+    # ─── POINT D'ENTRÉE : H2H ───────────────────────
+
+    def get_h2h(self, team1_name: str, team2_name: str) -> Optional[Dict]:
+        """
+        Retourne le bilan des confrontations directes (10 dernières,
+        matchs terminés uniquement), ou None si moins de 2
+        confrontations trouvées ou en cas d'erreur. Ne lève jamais
+        d'exception.
+
+        Clés du dict retourné (team1 = premier argument) :
+          matches (du plus récent au plus ancien :
+            {date "YYYY-MM-DD", home, away, score "2-1" — buts de
+            l'équipe à domicile d'abord}),
+          team1_wins, draws, team2_wins,
+          avg_goals (buts totaux/match), btts_rate (part des matchs
+          où les deux marquent), team1_avg_scored, team2_avg_scored,
+          sample (nb de matchs)
+
+        Cache disque 7 jours sous "h2h::{id_min}-{id_max}", échecs
+        compris (stats: None) pour ne pas re-brûler du quota.
+        """
+
+        if not team1_name or not team1_name.strip():
+            return None
+        if not team2_name or not team2_name.strip():
+            return None
+
+        # 1. Résolution des deux team_id (cache à vie ou recherche)
+        id1 = self._resolve_team_id(team1_name)
+        id2 = self._resolve_team_id(team2_name)
+        if not id1 or not id2 or id1 == id2:
+            return None
+
+        low, high = sorted((id1, id2))
+        flip = (id1 != low)  # bilan stocké relatif au plus petit id
+        cache_key = f"h2h::{low}-{high}"
+
+        # 2. Bilan frais en cache (y compris un échec) → zéro requête
+        entry = self.cache.get(cache_key)
+        entry = entry if isinstance(entry, dict) else {}
+        if "stats" in entry and \
+                (time.time() - entry.get("ts", 0)) < self.H2H_CACHE_TTL:
+            return self._orient_h2h(entry["stats"], flip)
+
+        # 3. Confrontations terminées → bilan
+        fixtures = self._fetch_h2h_fixtures(low, high)
+        if fixtures is None:
+            return None  # requête impossible : ne pas figer 7 jours
+
+        stats = self._compute_h2h(low, high, fixtures)
+
+        # Mémoriser même les échecs (stats=None) pour ne pas
+        # re-brûler du quota à chaque analyse pendant 7 jours
+        entry["ts"] = time.time()
+        entry["stats"] = stats
+        self.cache[cache_key] = entry
+        self._save_cache()
+
+        if not stats:
+            return None
+
+        print(f"      📡 API-Football : H2H {team1_name} / {team2_name} "
+              f"({stats['sample']} confrontations)")
+
+        return self._orient_h2h(stats, flip)
