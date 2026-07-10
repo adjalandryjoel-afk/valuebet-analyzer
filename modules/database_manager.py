@@ -393,6 +393,59 @@ class DatabaseManager:
 
             return {}
 
+    def get_analysis_history(self, limit: int = 200,
+                             search: str = "") -> List[Dict]:
+        """
+        Historique des analyses, les plus récentes d'abord, avec le
+        nombre de value bets et la meilleure value de chaque match.
+        """
+
+        with self._get_connection() as conn:
+            query = """
+                SELECT
+                    m.id, m.home_team, m.away_team, m.competition,
+                    m.analysis_date, m.predicted_score, m.predicted_result,
+                    m.confidence, m.bookmaker_margin,
+                    m.odds_1, m.odds_x, m.odds_2,
+                    COUNT(vb.id) AS n_value_bets,
+                    MAX(vb.value_percentage) AS best_value,
+                    SUM(CASE WHEN vb.result IS NOT NULL
+                        THEN 1 ELSE 0 END) AS n_resolved
+                FROM matches m
+                LEFT JOIN value_bets vb ON vb.match_id = m.id
+            """
+            params: list = []
+
+            if search:
+                query += """
+                    WHERE m.home_team LIKE ? OR m.away_team LIKE ?
+                       OR m.competition LIKE ?
+                """
+                needle = f"%{search}%"
+                params = [needle, needle, needle]
+
+            query += """
+                GROUP BY m.id
+                ORDER BY m.analysis_date DESC, m.id DESC
+                LIMIT ?
+            """
+            params.append(limit)
+
+            rows = conn.execute(query, params).fetchall()
+            return [dict(row) for row in rows]
+
+    def get_value_bets_for_match(self, match_id: int) -> List[Dict]:
+        """Value bets enregistrés pour une analyse donnée."""
+
+        with self._get_connection() as conn:
+            rows = conn.execute("""
+                SELECT * FROM value_bets
+                WHERE match_id = ?
+                ORDER BY value_percentage DESC
+            """, (match_id,)).fetchall()
+
+            return [dict(row) for row in rows]
+
     def get_team_history(self, team_name: str, limit: int = 20) -> List[Dict]:
         """Récupère l'historique des analyses d'une équipe."""
 

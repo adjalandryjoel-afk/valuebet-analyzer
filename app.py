@@ -494,6 +494,59 @@ def analyze_matches_ui(matches, bankroll, min_value, min_confidence,
         analysis._stakes = stakes
         analysis._intel = intel_report
         analysis._verdict = verdict
+
+        # 8. Persister dans l'historique (base SQLite)
+        try:
+            match_id = modules["db"].save_match_analysis({
+                "home_team": home_name,
+                "away_team": away_name,
+                "competition": competition,
+                "match_date": None,
+                "odds_1": cotes.get("1"),
+                "odds_x": cotes.get("X"),
+                "odds_2": cotes.get("2"),
+                "odds_over25": extras.get("over_2_5"),
+                "odds_under25": extras.get("under_2_5"),
+                "odds_btts_yes": extras.get("btts_oui"),
+                "odds_btts_no": extras.get("btts_non"),
+                "model_prob_1": analysis.model_probs.get("1X2", {}).get("1"),
+                "model_prob_x": analysis.model_probs.get("1X2", {}).get("X"),
+                "model_prob_2": analysis.model_probs.get("1X2", {}).get("2"),
+                "model_prob_over25": analysis.model_probs.get(
+                    "OU25", {}).get("over"),
+                "model_prob_under25": analysis.model_probs.get(
+                    "OU25", {}).get("under"),
+                "model_prob_btts_yes": analysis.model_probs.get(
+                    "BTTS", {}).get("yes"),
+                "model_prob_btts_no": analysis.model_probs.get(
+                    "BTTS", {}).get("no"),
+                "lambda_home": poisson_pred.lambda_home,
+                "lambda_away": poisson_pred.lambda_away,
+                "elo_home": elo_pred.home_rating,
+                "elo_away": elo_pred.away_rating,
+                "predicted_score": analysis.predicted_score,
+                "predicted_result": analysis.most_likely_result,
+                "confidence": analysis.analysis_confidence,
+                "bookmaker_margin": analysis.bookmaker_margin,
+            })
+
+            for vb in analysis.value_bets:
+                modules["db"].save_value_bet(match_id, {
+                    "market": vb.market,
+                    "selection": vb.selection,
+                    "bookmaker_odds": vb.bookmaker_odds,
+                    "fair_odds": vb.fair_odds,
+                    "model_probability": vb.model_probability,
+                    "implied_probability": vb.implied_probability,
+                    "value_percentage": vb.value_percentage,
+                    "edge": vb.edge,
+                    "confidence_score": vb.confidence_score,
+                    "value_rating": vb.value_rating,
+                    "kelly_stake": vb.kelly_stake,
+                    "recommended_stake": vb.recommended_stake,
+                })
+        except Exception:
+            pass  # l'historique ne doit jamais bloquer une analyse
         all_analyses.append(analysis)
         all_value_bets.extend(analysis.value_bets)
 
@@ -909,6 +962,139 @@ def display_results(analyses, bankroll):
 
 
 # ══════════════════════════════════════════════════════
+#  PAGE : HISTORIQUE DES ANALYSES
+# ══════════════════════════════════════════════════════
+
+def page_history():
+    """Historique de toutes les analyses effectuées."""
+
+    page_header(
+        "receipt_long", "Historique des analyses",
+        "Chaque analyse (captures ou saisie manuelle) est archivée ici "
+        "avec sa prédiction et ses value bets."
+    )
+
+    db = init_modules()["db"]
+
+    search = st.text_input(
+        "Rechercher",
+        placeholder="Filtrer par équipe ou compétition...",
+        label_visibility="collapsed",
+        icon=":material/search:",
+    )
+
+    history = db.get_analysis_history(search=search.strip())
+
+    if not history:
+        st.info(
+            "Aucune analyse archivée pour l'instant — lance ta première "
+            "analyse depuis Upload captures ou Saisie manuelle.",
+            icon=":material/info:",
+        )
+        return
+
+    # Métriques de synthèse
+    n_total = len(history)
+    n_with_value = sum(1 for h in history if (h["n_value_bets"] or 0) > 0)
+    n_vbs = sum(h["n_value_bets"] or 0 for h in history)
+
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Analyses", n_total, border=True)
+    c2.metric("Matchs avec value", n_with_value, border=True)
+    c3.metric("Value bets détectés", n_vbs, border=True)
+
+    st.space("small")
+    st.caption(
+        ":material/touch_app: Clique sur une ligne pour voir le détail. "
+        "Sur l'app en ligne, l'historique repart de zéro à chaque "
+        "redémarrage du serveur — l'historique complet vit sur ton PC."
+    )
+
+    df_hist = pd.DataFrame([{
+        "id": h["id"],
+        "Date": (h["analysis_date"] or "")[:16],
+        "Match": f"{h['home_team']} vs {h['away_team']}",
+        "Compétition": h["competition"] or "—",
+        "Prédiction": (f"{h['predicted_score'] or '—'} · "
+                       f"{h['predicted_result'] or '—'}"),
+        "Confiance": h["confidence"] or 0,
+        "Value bets": h["n_value_bets"] or 0,
+        "Meilleure value": ((h["best_value"] or 0) * 100
+                            if h["best_value"] else None),
+    } for h in history])
+
+    event = st.dataframe(
+        df_hist,
+        hide_index=True,
+        width="stretch",
+        height=min(38 + 35 * len(df_hist), 420),
+        on_select="rerun",
+        selection_mode="single-row",
+        column_config={
+            "id": None,
+            "Confiance": st.column_config.ProgressColumn(
+                "Confiance", min_value=0, max_value=100, format="%.0f"),
+            "Meilleure value": st.column_config.NumberColumn(
+                "Meilleure value", format="%+.1f%%"),
+        },
+    )
+
+    # Détail de l'analyse sélectionnée
+    rows = event.selection.rows if event and event.selection else []
+    if not rows:
+        return
+
+    selected = history[rows[0]]
+    st.space("small")
+
+    with st.container(border=True):
+        st.markdown(
+            f":material/sports_soccer: **{selected['home_team']} vs "
+            f"{selected['away_team']}**"
+            + (f" — {selected['competition']}"
+               if selected['competition'] else "")
+        )
+        st.caption(
+            f"Analysé le {(selected['analysis_date'] or '')[:16]} · "
+            f"Cotes 1X2 : {selected['odds_1'] or '—'} / "
+            f"{selected['odds_x'] or '—'} / {selected['odds_2'] or '—'} · "
+            f"Marge : {selected['bookmaker_margin'] or 0:.1f}%"
+        )
+
+        vbs = db.get_value_bets_for_match(selected["id"])
+
+        if vbs:
+            statut = {None: "⏳ En attente", "win": "✅ Gagné",
+                      "loss": "❌ Perdu", "void": "➖ Non joué"}
+            df_vbs = pd.DataFrame([{
+                "Marché": vb["market"],
+                "Sélection": vb["selection"],
+                "Cote": vb["bookmaker_odds"],
+                "Value": (vb["value_percentage"] or 0) * 100,
+                "Mise (FCFA)": vb["recommended_stake"] or 0,
+                "Statut": statut.get(vb["result"], vb["result"]),
+            } for vb in vbs])
+
+            st.dataframe(
+                df_vbs,
+                hide_index=True,
+                width="stretch",
+                column_config={
+                    "Cote": st.column_config.NumberColumn(format="%.2f"),
+                    "Value": st.column_config.NumberColumn(
+                        format="%+.1f%%"),
+                    "Mise (FCFA)": st.column_config.NumberColumn(
+                        format="localized"),
+                },
+            )
+        else:
+            st.caption(
+                ":material/do_not_disturb_on: Aucun value bet détecté "
+                "sur cette analyse."
+            )
+
+
+# ══════════════════════════════════════════════════════
 #  PAGE : TABLEAU DE BORD
 # ══════════════════════════════════════════════════════
 
@@ -1013,7 +1199,7 @@ def page_backtesting():
         st.subheader(":material/pending: Paris en attente de résultat")
 
         for bet in pending:
-            col1, col2, col3 = st.columns([3, 1, 1])
+            col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
 
             with col1:
                 st.write(
@@ -1032,6 +1218,12 @@ def page_backtesting():
                 if st.button("Perdu", key=f"loss_{bet['id']}",
                              icon=":material/cancel:"):
                     db.update_bet_result(bet['id'], "loss", -bet['recommended_stake'])
+                    st.rerun()
+
+            with col4:
+                if st.button("Non joué", key=f"void_{bet['id']}",
+                             icon=":material/remove_circle_outline:"):
+                    db.update_bet_result(bet['id'], "void", 0.0)
                     st.rerun()
 
     # Lancer le backtest
@@ -1220,6 +1412,8 @@ def main():
                 icon=":material/edit_note:", url_path="saisie"),
         st.Page(page_dashboard, title="Tableau de bord",
                 icon=":material/monitoring:", url_path="dashboard"),
+        st.Page(page_history, title="Historique",
+                icon=":material/receipt_long:", url_path="historique"),
         st.Page(page_backtesting, title="Backtesting",
                 icon=":material/history:", url_path="backtesting"),
         st.Page(page_settings, title="Paramètres",
