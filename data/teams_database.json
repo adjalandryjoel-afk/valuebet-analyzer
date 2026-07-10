@@ -1,0 +1,277 @@
+{
+  "Paris Saint-Germain": {
+    "aliases": ["PSG", "Paris SG", "Paris"],
+    "league": "ligue1_fr",
+    "country": "France",
+    "city": "Paris"
+  },
+  "Olympique de Marseille": {
+    "aliases": ["Marseille", "OM"],
+    "league": "ligue1_fr",
+    "country": "France",
+    "city": "Marseille"
+  },
+  "Olympique Lyonnais": {
+    "aliases": ["Lyon", "OL"],
+    "league": "ligue1_fr",
+    "country": "France",
+    "city": "Lyon"
+  },
+  "AS Monaco": {
+    "aliases": ["Monaco", "ASM"],
+    "league": "ligue1_fr",
+    "country": "France",
+    "city": "Monaco"
+  },
+  "LOSC Lille": {
+    "aliases": ["Lille", "LOSC"],
+    "league": "ligue1_fr",
+    "country": "France",
+    "city": "Lille"
+  },
+  "OGC Nice": {
+    "aliases": ["Nice"],
+    "league": "ligue1_fr",
+    "country": "France",
+    "city": "Nice"
+  },
+  "RC Lens": {
+    "aliases": ["Lens"],
+    "league": "ligue1_fr",
+    "country": "France",
+    "city": "Lens"
+  },
+  "Stade Rennais": {
+    "aliases": ["Rennes"],
+    "league": "ligue1_fr",
+    "country": "France",
+    "city": "Rennes"
+  },
+
+  "Manchester City": {
+    "aliases": ["Man City", "City", "MCFC"],
+    "league": "premier_league",
+    "country": "Angleterre",
+    "city": "Manchester"
+  },
+  "Manchester United": {
+    "aliases": ["Man United", "Man Utd", "MUFC"],
+    "league": "premier_league",
+    "country": "Angleterre",
+    "city": "Manchester"
+  },
+  "Liverpool FC": {
+    "aliases": ["Liverpool", "LFC"],
+    "league": "premier_league",
+    "country": "Angleterre",
+    "city": "Liverpool"
+  },
+  "Arsenal FC": {
+    "aliases": ["Arsenal", "Gunners"],
+    "league": "premier_league",
+    "country": "Angleterre",
+    "city": "London"
+  },
+  "Chelsea FC": {
+    "aliases": ["Chelsea", "CFC"],
+    "league": "premier_league",
+    "country": "Angleterre",
+    "city": "London"
+  },
+  "Tottenham Hotspur": {
+    "aliases": ["Tottenham", "Spurs"],
+    "league": "premier_league",
+    "country": "Angleterre",
+    "city": "London"
+  },
+  "Newcastle United": {
+    "aliases": ["Newcastle"],
+    "league": "premier_league",
+    "country": "Angleterre",
+    "city": "Newcastle"
+  },
+  "Aston Villa": {
+    "aliases": ["Villa"],
+    "league": "premier_league",
+    "country": "Angleterre",
+    "city": "Birmingham"
+  },
+  "West Ham United": {
+    "aliases": ["West Ham"],
+    "league": "premier_league",
+    "country": "Angleterre",
+    "city": "London"
+  },
+
+  "Real Madrid": {
+    "aliases": ["Real", "Madrid"],
+    "league": "la_liga",
+    "country": "Espagne",
+    "city": "Madrid"
+  },
+  "FC Barcelona": {
+    "aliases": ["Barcelona", "Barça", "Barca", "Barcelone"],
+    "league": "la_liga",
+    "country": "Espagne",
+    "city": "Barcelona"
+  },
+  "Atlético Madrid": {
+    "aliases": ["Atletico", "Atlético", "Atletico Madrid"],
+    "league": "la_liga",
+    "country": "Espagne",
+    "city": "Madrid"
+  },
+  "Sevilla FC": {
+    "aliases": ["Sevilla", "Séville"],
+    "league": "la_liga",
+    "country": "Espagne",
+    "city": "Sevilla"
+  },
+  "Real Sociedad": {
+    "aliases": ["Sociedad"],
+    "league": "la_liga",
+    "country": "Espagne",
+    "city": "San Sebastián"
+  },
+  "Athletic Bilbao": {
+    "aliases": ["Athletic", "Bilbao"],
+    "league": "la_liga",
+    "country": "Espagne",
+    "city": "Bilbao"
+  },
+  "Villarreal CF": {
+    "aliases": ["Villarreal"],
+    "league": "la_liga",
+    "country": "Espagne",
+    "city": "Villarreal"
+  },
+
+  "Juventus": {
+    "aliases": ["Juve", "Juventus Turin"],
+    "league": "serie_a",
+    "country": "Italie",
+    "city": "Torino"
+  },
+  "Inter Milan": {
+    "aliases": ["Inter", "Internazionale"],
+    "league": "serie_a",
+    "country": "Italie",
+    "city": "Milan"
+  },
+  "AC Milan": {
+    "aliases": ["Milan", "Milan AC"],
+    "league": "serie_a",
+    "country": "Italie",
+    "city": "Milan"
+  },
+  "SSC Napoli": {
+    "aliases": ["Napoli", "Naples"],
+    "league": "serie_a",
+    "country": "Italie",
+    "city": "Napoli"
+  },
+  "AS Roma": {
+    "aliases": ["Roma", "Rome"],
+    "league": "serie_a",
+    "country": "Italie",
+    "city": "Rome"
+  },
+  "SS Lazio": {
+    "aliases": ["Lazio"],
+    "league": "serie_a",
+    "country": "Italie",
+    "city": "Rome"
+  },
+  "Atalanta BC": {
+    "aliases": ["Atalanta"],
+    "league": "serie_a",
+    "country": "Italie",
+    "city": "Bergamo"
+  },
+
+  "Bayern Munich": {
+    "aliases": ["Bayern", "FC Bayern", "Bayern München"],
+    "league": "bundesliga",
+    "country": "Allemagne",
+    "city": "Munich"
+  },
+  "Borussia Dortmund": {
+    "aliases": ["Dortmund", "BVB"],
+    "league": "bundesliga",
+    "country": "Allemagne",
+    "city": "Dortmund"
+  },
+  "RB Leipzig": {
+    "aliases": ["Leipzig"],
+    "league": "bundesliga",
+    "country": "Allemagne",
+    "city": "Leipzig"
+  },
+  "Bayer Leverkusen": {
+    "aliases": ["Leverkusen"],
+    "league": "bundesliga",
+    "country": "Allemagne",
+    "city": "Leverkusen"
+  },
+  "Eintracht Frankfurt": {
+    "aliases": ["Frankfurt", "Francfort"],
+    "league": "bundesliga",
+    "country": "Allemagne",
+    "city": "Frankfurt"
+  },
+  "VfB Stuttgart": {
+    "aliases": ["Stuttgart"],
+    "league": "bundesliga",
+    "country": "Allemagne",
+    "city": "Stuttgart"
+  },
+
+  "ASEC Mimosas": {
+    "aliases": ["ASEC", "Asec Abidjan", "ASEC Abidjan"],
+    "league": "ligue1_ci",
+    "country": "Côte d'Ivoire",
+    "city": "Abidjan"
+  },
+  "Africa Sports": {
+    "aliases": ["Africa", "Africa Sports d'Abidjan"],
+    "league": "ligue1_ci",
+    "country": "Côte d'Ivoire",
+    "city": "Abidjan"
+  },
+  "Stade d'Abidjan": {
+    "aliases": ["Stade Abidjan"],
+    "league": "ligue1_ci",
+    "country": "Côte d'Ivoire",
+    "city": "Abidjan"
+  },
+  "Racing Club Abidjan": {
+    "aliases": ["RC Abidjan", "Racing Abidjan"],
+    "league": "ligue1_ci",
+    "country": "Côte d'Ivoire",
+    "city": "Abidjan"
+  },
+  "SC Gagnoa": {
+    "aliases": ["Gagnoa", "Sporting Gagnoa"],
+    "league": "ligue1_ci",
+    "country": "Côte d'Ivoire",
+    "city": "Gagnoa"
+  },
+  "FC San-Pédro": {
+    "aliases": ["San Pedro", "San-Pédro", "San Pédro"],
+    "league": "ligue1_ci",
+    "country": "Côte d'Ivoire",
+    "city": "San-Pédro"
+  },
+  "SOA": {
+    "aliases": ["Société Omnisports de l'Armée", "SO Armée"],
+    "league": "ligue1_ci",
+    "country": "Côte d'Ivoire",
+    "city": "Yamoussoukro"
+  },
+  "AS Tanda": {
+    "aliases": ["Tanda"],
+    "league": "ligue1_ci",
+    "country": "Côte d'Ivoire",
+    "city": "Tanda"
+  }
+}

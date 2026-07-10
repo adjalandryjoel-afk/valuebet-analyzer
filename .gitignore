@@ -1,0 +1,16 @@
+# Secrets — ne JAMAIS pousser les clés API
+.env
+secrets_streamlit.toml
+
+# Python
+__pycache__/
+*.pyc
+
+# Données générées localement
+data/valuebet.db*
+data/elo_ratings.json
+data/results_log.json
+data/historical_data.json
+reports/
+screenshots/
+models/
