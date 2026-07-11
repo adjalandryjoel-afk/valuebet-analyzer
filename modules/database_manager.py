@@ -205,6 +205,18 @@ class DatabaseManager:
                 )
             """)
 
+            # ── Migrations idempotentes (CLV tracking) ──
+            # Ajoute les colonnes de clôture aux bases existantes ;
+            # sqlite3.OperationalError "duplicate column" = déjà migré.
+            for ddl in (
+                "ALTER TABLE value_bets ADD COLUMN closing_odds REAL",
+                "ALTER TABLE value_bets ADD COLUMN clv_pct REAL",
+            ):
+                try:
+                    conn.execute(ddl)
+                except sqlite3.OperationalError:
+                    pass
+
             # ── Index pour la performance ──
             conn.execute("""
                 CREATE INDEX IF NOT EXISTS idx_matches_date
@@ -335,6 +347,25 @@ class DatabaseManager:
                 WHERE id = ?
             """, (result, profit, bet_id))
 
+    def update_bet_closing(self, bet_id: int, closing_odds: float,
+                           clv_pct: float):
+        """
+        Enregistre la cote de clôture et le CLV d'un value bet.
+
+        Args:
+            bet_id: ID du value bet
+            closing_odds: cote de clôture de la sélection
+            clv_pct: Closing Line Value en % (cote prise vs cote
+                     juste de clôture sans marge)
+        """
+
+        with self._get_connection() as conn:
+            conn.execute("""
+                UPDATE value_bets
+                SET closing_odds = ?, clv_pct = ?
+                WHERE id = ?
+            """, (closing_odds, clv_pct, bet_id))
+
     def update_match_result(self, match_id: int, actual_score: str,
                             actual_result: str):
         """Met à jour le résultat réel d'un match."""
@@ -393,6 +424,34 @@ class DatabaseManager:
 
             return {}
 
+    def get_clv_stats(self) -> Dict:
+        """
+        Statistiques de Closing Line Value sur les paris dont la
+        cote de clôture a été capturée (clv_pct non NULL).
+
+        Returns:
+            {"n_avec_clv": int, "clv_moyen_pct": float,
+             "clv_positif_pct": float (% de paris à CLV > 0)}
+        """
+
+        with self._get_connection() as conn:
+            row = conn.execute("""
+                SELECT
+                    COUNT(*) AS n_avec_clv,
+                    AVG(clv_pct) AS clv_moyen_pct,
+                    AVG(CASE WHEN clv_pct > 0 THEN 100.0 ELSE 0.0 END)
+                        AS clv_positif_pct
+                FROM value_bets
+                WHERE clv_pct IS NOT NULL
+            """).fetchone()
+
+            n = row["n_avec_clv"] if row else 0
+            return {
+                "n_avec_clv": n or 0,
+                "clv_moyen_pct": (row["clv_moyen_pct"] or 0.0) if n else 0.0,
+                "clv_positif_pct": (row["clv_positif_pct"] or 0.0) if n else 0.0,
+            }
+
     def get_analysis_history(self, limit: int = 200,
                              search: str = "") -> List[Dict]:
         """
@@ -432,6 +491,24 @@ class DatabaseManager:
             params.append(limit)
 
             rows = conn.execute(query, params).fetchall()
+            return [dict(row) for row in rows]
+
+    def get_bets_for_simulation(self) -> List[Dict]:
+        """
+        Tous les paris enregistrés avec une mise (résolus ou non) —
+        matière première du simulateur Monte Carlo.
+        """
+
+        with self._get_connection() as conn:
+            rows = conn.execute("""
+                SELECT bookmaker_odds, recommended_stake, model_probability
+                FROM value_bets
+                WHERE recommended_stake > 0
+                  AND model_probability > 0
+                  AND (result IS NULL OR result != 'void')
+                ORDER BY created_at ASC, id ASC
+            """).fetchall()
+
             return [dict(row) for row in rows]
 
     def get_resolved_bets(self) -> List[Dict]:

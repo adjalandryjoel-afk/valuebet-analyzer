@@ -1,0 +1,257 @@
+{
+  "genere_le": "2026-07-11T09:09:31+00:00",
+  "source": "football-data.co.uk (B365 ouverture, Pinnacle clôture)",
+  "saisons_train": [
+    "2122",
+    "2223",
+    "2324"
+  ],
+  "saisons_test": [
+    "2425",
+    "2526"
+  ],
+  "ligues": [
+    "premier_league",
+    "la_liga",
+    "serie_a",
+    "bundesliga",
+    "ligue1_fr"
+  ],
+  "n_matchs_train": 5052,
+  "n_matchs_test": 3449,
+  "poids_marche": {
+    "courbe_logloss_train": {
+      "0.5": 0.99406,
+      "0.6": 0.98681,
+      "0.7": 0.98117,
+      "0.8": 0.97704,
+      "0.9": 0.97438
+    },
+    "meilleur": 0.9,
+    "valeur_app": 0.6
+  },
+  "brier": {
+    "modele": 0.57411,
+    "marche_b365": 0.57228,
+    "marche_cloture": 0.57099
+  },
+  "logloss": {
+    "modele": 0.96559,
+    "marche_b365": 0.96288,
+    "marche_cloture": 0.96078
+  },
+  "n_matchs_compares": 2595,
+  "calibration": {
+    "home_win": [
+      {
+        "decile": "0.0-0.1",
+        "n": 38,
+        "p_pred_moyenne": 0.0926,
+        "freq_observee": 0.0
+      },
+      {
+        "decile": "0.1-0.2",
+        "n": 309,
+        "p_pred_moyenne": 0.1563,
+        "freq_observee": 0.1262
+      },
+      {
+        "decile": "0.2-0.3",
+        "n": 460,
+        "p_pred_moyenne": 0.2518,
+        "freq_observee": 0.2239
+      },
+      {
+        "decile": "0.3-0.4",
+        "n": 661,
+        "p_pred_moyenne": 0.353,
+        "freq_observee": 0.3298
+      },
+      {
+        "decile": "0.4-0.5",
+        "n": 680,
+        "p_pred_moyenne": 0.4479,
+        "freq_observee": 0.45
+      },
+      {
+        "decile": "0.5-0.6",
+        "n": 555,
+        "p_pred_moyenne": 0.5499,
+        "freq_observee": 0.5099
+      },
+      {
+        "decile": "0.6-0.7",
+        "n": 404,
+        "p_pred_moyenne": 0.6507,
+        "freq_observee": 0.6436
+      },
+      {
+        "decile": "0.7-0.8",
+        "n": 342,
+        "p_pred_moyenne": 0.7289,
+        "freq_observee": 0.8041
+      },
+      {
+        "decile": "0.8-0.9",
+        "n": 0,
+        "p_pred_moyenne": null,
+        "freq_observee": null
+      },
+      {
+        "decile": "0.9-1.0",
+        "n": 0,
+        "p_pred_moyenne": null,
+        "freq_observee": null
+      }
+    ],
+    "over25": [
+      {
+        "decile": "0.0-0.1",
+        "n": 0,
+        "p_pred_moyenne": null,
+        "freq_observee": null
+      },
+      {
+        "decile": "0.1-0.2",
+        "n": 0,
+        "p_pred_moyenne": null,
+        "freq_observee": null
+      },
+      {
+        "decile": "0.2-0.3",
+        "n": 0,
+        "p_pred_moyenne": null,
+        "freq_observee": null
+      },
+      {
+        "decile": "0.3-0.4",
+        "n": 253,
+        "p_pred_moyenne": 0.3723,
+        "freq_observee": 0.415
+      },
+      {
+        "decile": "0.4-0.5",
+        "n": 772,
+        "p_pred_moyenne": 0.4573,
+        "freq_observee": 0.4417
+      },
+      {
+        "decile": "0.5-0.6",
+        "n": 1504,
+        "p_pred_moyenne": 0.5539,
+        "freq_observee": 0.5339
+      },
+      {
+        "decile": "0.6-0.7",
+        "n": 821,
+        "p_pred_moyenne": 0.6415,
+        "freq_observee": 0.6322
+      },
+      {
+        "decile": "0.7-0.8",
+        "n": 99,
+        "p_pred_moyenne": 0.7118,
+        "freq_observee": 0.7273
+      },
+      {
+        "decile": "0.8-0.9",
+        "n": 0,
+        "p_pred_moyenne": null,
+        "freq_observee": null
+      },
+      {
+        "decile": "0.9-1.0",
+        "n": 0,
+        "p_pred_moyenne": null,
+        "freq_observee": null
+      }
+    ]
+  },
+  "strategie": {
+    "n_paris": 37,
+    "mise_totale": 40730.0,
+    "roi_pct": -16.68,
+    "profit": -6793.0,
+    "win_rate": 0.2703,
+    "cote_moyenne": 4.3,
+    "value_moyenne_pct": 12.27,
+    "clv_moyen_pct": -6.98,
+    "clv_positif_pct": 27.6,
+    "n_paris_avec_clv": 29,
+    "par_seuil": {
+      "cotes_1.30-2.50_seuil_5pct": {
+        "n_paris": 13,
+        "roi_pct": -7.18,
+        "profit": -1385.0,
+        "win_rate": 0.4615
+      },
+      "cotes_2.50-4.00_seuil_8pct": {
+        "n_paris": 2,
+        "roi_pct": 32.67,
+        "profit": 859.0,
+        "win_rate": 0.5
+      },
+      "cotes_4.00-6.00_seuil_12pct": {
+        "n_paris": 22,
+        "roi_pct": -33.3,
+        "profit": -6267.0,
+        "win_rate": 0.1364
+      }
+    }
+  },
+  "mi_temps_par_ligue": {
+    "premier_league": {
+      "part_1ere_mt": 0.4447,
+      "config_app": 0.47,
+      "n_matchs": 1900
+    },
+    "la_liga": {
+      "part_1ere_mt": 0.4402,
+      "config_app": 0.44,
+      "n_matchs": 1900
+    },
+    "serie_a": {
+      "part_1ere_mt": 0.4406,
+      "config_app": 0.45,
+      "n_matchs": 1900
+    },
+    "bundesliga": {
+      "part_1ere_mt": 0.4628,
+      "config_app": 0.49,
+      "n_matchs": 1529
+    },
+    "ligue1_fr": {
+      "part_1ere_mt": 0.4489,
+      "config_app": 0.45,
+      "n_matchs": 1678
+    }
+  },
+  "sot_par_but_par_ligue": {
+    "premier_league": {
+      "sot_par_but": 3.073,
+      "config_app": 3.1,
+      "n_matchs": 1900
+    },
+    "la_liga": {
+      "sot_par_but": 3.22,
+      "config_app": 3.1,
+      "n_matchs": 1900
+    },
+    "serie_a": {
+      "sot_par_but": 3.186,
+      "config_app": 3.1,
+      "n_matchs": 1900
+    },
+    "bundesliga": {
+      "sot_par_but": 3.007,
+      "config_app": 3.1,
+      "n_matchs": 1529
+    },
+    "ligue1_fr": {
+      "sot_par_but": 3.155,
+      "config_app": 3.1,
+      "n_matchs": 1678
+    }
+  },
+  "duree_backtest_s": 128.9
+}

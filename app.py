@@ -34,6 +34,8 @@ from modules.kelly_criterion import KellyStakeCalculator
 from modules.database_manager import DatabaseManager
 from modules.backtester import Backtester
 from modules.match_intel import get_match_intelligence
+from modules.clv_tracker import ClvTracker
+from modules.monte_carlo import simulate_bets
 
 
 # ══════════════════════════════════════════════════════
@@ -93,7 +95,7 @@ def render_sidebar_settings():
     """Réglages dans la barre latérale (sous la navigation)."""
 
     with st.sidebar:
-        st.caption("Betclic Côte d'Ivoire · v3.2 · 25 marchés")
+        st.caption("Betclic Côte d'Ivoire · v3.3 · 25 marchés")
 
         st.subheader(":material/account_balance_wallet: Bankroll")
         bankroll = st.number_input(
@@ -1120,6 +1122,183 @@ def page_history():
 
 
 # ══════════════════════════════════════════════════════
+#  PAGE : VALIDATION DU MODÈLE (backtest historique)
+# ══════════════════════════════════════════════════════
+
+def page_validation():
+    """Résultats du backtest sur données historiques réelles."""
+
+    page_header(
+        "science", "Validation du modèle",
+        "Le modèle testé sur des milliers de matchs réels "
+        "(football-data.co.uk, cotes Bet365 et Pinnacle clôture)."
+    )
+
+    bt_path = os.path.join(Paths.DATA_DIR, "backtest_results.json")
+    if not os.path.exists(bt_path):
+        st.info(
+            "Aucun backtest disponible. Lance en local : "
+            "`python scripts/backtest_football_data.py`",
+            icon=":material/info:",
+        )
+        return
+
+    with open(bt_path, encoding="utf-8") as f:
+        bt = json.load(f)
+
+    st.caption(
+        f"Backtest du {bt.get('genere_le', '')[:10]} — "
+        f"{bt.get('n_matchs_train', 0):,} matchs d'entraînement, "
+        f"{bt.get('n_matchs_test', 0):,} matchs de test "
+        f"({', '.join(bt.get('ligues', []))})."
+    )
+
+    # ── Verdict honnête ──
+    brier = bt.get("brier", {})
+    st.warning(
+        "**Verdict du backtest : sur les 5 grands championnats, le "
+        "modèle statistique ne bat pas le marché** (Brier modèle "
+        f"{brier.get('modele', 0):.4f} vs marché {brier.get('marche_b365', 0):.4f}). "
+        "C'est le résultat attendu par la recherche : ces marchés sont "
+        "très efficients. Conséquence intégrée : le modèle s'ancre "
+        "désormais à 90% sur le marché, et l'edge réel de l'app vient "
+        "d'ailleurs — tes infos de contexte (blessés, enjeu), les "
+        "lignes lentes de Betclic et les marchés secondaires.",
+        icon=":material/psychology:",
+    )
+
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Brier modèle", f"{brier.get('modele', 0):.4f}", border=True,
+              help="Plus bas = mieux calibré")
+    c2.metric("Brier marché (B365)", f"{brier.get('marche_b365', 0):.4f}",
+              border=True)
+    c3.metric("Brier clôture (Pinnacle)",
+              f"{brier.get('marche_cloture', 0):.4f}", border=True)
+    c4.metric("Matchs comparés", f"{bt.get('n_matchs_compares', 0):,}",
+              border=True)
+
+    st.space("small")
+
+    col_g, col_d = st.columns(2)
+
+    # ── Courbe du poids marché ──
+    with col_g:
+        with st.container(border=True):
+            st.markdown(":material/tune: **Poids du marché optimal**")
+            courbe = bt.get("poids_marche", {}).get("courbe_logloss_train", {})
+            if courbe:
+                xs = [float(k) for k in courbe.keys()]
+                ys = list(courbe.values())
+                fig_w = go.Figure(go.Scatter(
+                    x=xs, y=ys, mode="lines+markers",
+                    line=dict(color=COLOR_ACCENT, width=2),
+                ))
+                best = bt.get("poids_marche", {}).get("meilleur")
+                fig_w.update_layout(
+                    height=260,
+                    xaxis_title="Poids du marché",
+                    yaxis_title="Log-loss (plus bas = mieux)",
+                    margin=dict(l=40, r=20, t=10, b=40),
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    plot_bgcolor="rgba(0,0,0,0)",
+                    font=dict(color="#F1F5F9", family="Inter"),
+                    xaxis=dict(gridcolor="#334155"),
+                    yaxis=dict(gridcolor="#334155"),
+                )
+                st.plotly_chart(fig_w)
+                st.caption(
+                    f"Meilleur poids : **{best}** (l'app utilisait 0.60, "
+                    "recalibrée à 0.90)."
+                )
+
+    # ── Calibration ──
+    with col_d:
+        with st.container(border=True):
+            st.markdown(":material/verified: **Calibration (victoire domicile)**")
+            cal = [c for c in bt.get("calibration", {}).get("home_win", [])
+                   if c.get("p_pred_moyenne") is not None and c.get("n", 0) > 0]
+            if cal:
+                fig_c = go.Figure()
+                fig_c.add_trace(go.Scatter(
+                    x=[0, 1], y=[0, 1], mode="lines", name="Parfait",
+                    line=dict(color="#64748B", dash="dash"),
+                ))
+                fig_c.add_trace(go.Scatter(
+                    x=[c["p_pred_moyenne"] for c in cal],
+                    y=[c["freq_observee"] for c in cal],
+                    mode="lines+markers", name="Modèle",
+                    line=dict(color=COLOR_GREEN, width=2),
+                    text=[f"n={c['n']}" for c in cal],
+                ))
+                fig_c.update_layout(
+                    height=260,
+                    xaxis_title="Probabilité prédite",
+                    yaxis_title="Fréquence observée",
+                    margin=dict(l=40, r=20, t=10, b=40),
+                    showlegend=False,
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    plot_bgcolor="rgba(0,0,0,0)",
+                    font=dict(color="#F1F5F9", family="Inter"),
+                    xaxis=dict(gridcolor="#334155", range=[0, 1]),
+                    yaxis=dict(gridcolor="#334155", range=[0, 1]),
+                )
+                st.plotly_chart(fig_c)
+                st.caption(
+                    "Courbe proche de la diagonale = probabilités honnêtes."
+                )
+
+    # ── Stratégie simulée ──
+    strat = bt.get("strategie", {})
+    if strat:
+        st.space("small")
+        st.subheader(":material/casino: Stratégie value simulée (2024-2026)")
+        s1, s2, s3, s4 = st.columns(4)
+        s1.metric("Paris déclenchés", strat.get("n_paris", 0), border=True)
+        s2.metric("ROI simulé", f"{strat.get('roi_pct', 0):+.1f}%",
+                  border=True)
+        s3.metric("CLV moyen", f"{strat.get('clv_moyen_pct', 0):+.1f}%",
+                  border=True,
+                  help="Battre la cote de clôture = signe d'edge réel")
+        s4.metric("Paris battant la clôture",
+                  f"{strat.get('clv_positif_pct', 0):.0f}%", border=True)
+        st.caption(
+            ":material/warning: Sur les grands championnats, les « values » "
+            "purement statistiques sont du bruit (CLV négatif). C'est la "
+            "preuve mesurée qu'il faut des informations que le marché n'a "
+            "pas encore — c'est le rôle de tes notes de contexte."
+        )
+
+    # ── Paramètres empiriques ──
+    st.space("small")
+    with st.expander("Paramètres mesurés vs configuration",
+                     icon=":material/straighten:"):
+        mt = bt.get("mi_temps_par_ligue", {})
+        sot = bt.get("sot_par_but_par_ligue", {})
+        rows = []
+        for ligue in mt:
+            rows.append({
+                "Ligue": ligue,
+                "Buts 1MT (réel)": mt[ligue]["part_1ere_mt"],
+                "Tirs cadrés/but (réel)": sot.get(ligue, {}).get("sot_par_but"),
+                "Matchs": mt[ligue]["n_matchs"],
+            })
+        if rows:
+            st.dataframe(
+                pd.DataFrame(rows), hide_index=True, width="stretch",
+                column_config={
+                    "Buts 1MT (réel)": st.column_config.NumberColumn(
+                        format="%.3f"),
+                    "Tirs cadrés/but (réel)": st.column_config.NumberColumn(
+                        format="%.2f"),
+                },
+            )
+            st.caption(
+                "Ces mesures ont recalibré l'app : répartition mi-temps "
+                "par ligue et ratio tirs cadrés (3.1)."
+            )
+
+
+# ══════════════════════════════════════════════════════
 #  PAGE : TABLEAU DE BORD
 # ══════════════════════════════════════════════════════
 
@@ -1247,6 +1426,83 @@ def page_dashboard():
         )
         st.plotly_chart(fig_mk)
 
+    # ── Closing Line Value ──
+    clv = db.get_clv_stats()
+    if clv.get("n_avec_clv", 0) > 0:
+        st.space("small")
+        st.subheader(":material/schedule: Closing Line Value")
+        st.caption(
+            "Battre la cote de clôture est le meilleur indicateur d'edge "
+            "réel — bien avant que le ROI soit significatif."
+        )
+        k1, k2, k3 = st.columns(3)
+        k1.metric("Paris avec CLV", clv["n_avec_clv"], border=True)
+        k2.metric("CLV moyen", f"{clv['clv_moyen_pct']:+.2f}%", border=True)
+        k3.metric("Paris battant la clôture",
+                  f"{clv['clv_positif_pct']:.0f}%", border=True)
+
+    # ── Réalité statistique (Monte Carlo) ──
+    sim_bets = db.get_bets_for_simulation()
+    if len(sim_bets) >= 5:
+        st.space("small")
+        st.subheader(":material/casino: Réalité statistique")
+        st.caption(
+            "10 000 rejouages simulés de tes paris : à quoi t'attendre "
+            "selon que le modèle a raison... ou pas."
+        )
+
+        sim = simulate_bets(sim_bets)
+        if sim:
+            mc, mk_ = sim["modele_correct"], sim["marche_correct"]
+
+            r1, r2, r3, r4 = st.columns(4)
+            r1.metric(
+                "Profit médian (si modèle correct)",
+                f"{mc['percentiles']['p50']:+,.0f} FCFA", border=True,
+            )
+            r2.metric(
+                "P(être perdant) — modèle correct",
+                f"{mc['prob_perte']:.0%}", border=True,
+                help="Même avec un vrai edge, la variance peut te mettre "
+                     "dans le rouge sur cette séquence.",
+            )
+            r3.metric(
+                "P(être perdant) — aucun edge",
+                f"{mk_['prob_perte']:.0%}", border=True,
+            )
+            r4.metric(
+                "Drawdown attendu (médian)",
+                f"{mc['drawdown_median']:,.0f} FCFA", border=True,
+            )
+
+            # Distributions superposées
+            fig_sim = go.Figure()
+            for res, name, color in (
+                (mc, "Modèle correct", COLOR_GREEN),
+                (mk_, "Aucun edge (marge payée)", COLOR_RED),
+            ):
+                counts, edges = res["distribution"]
+                centers = [(edges[i] + edges[i + 1]) / 2
+                           for i in range(len(counts))]
+                fig_sim.add_trace(go.Bar(
+                    x=centers, y=list(counts), name=name,
+                    marker_color=color, opacity=0.55,
+                ))
+            fig_sim.update_layout(
+                barmode="overlay",
+                height=320,
+                xaxis_title="Profit final (FCFA)",
+                yaxis_title="Nombre de simulations",
+                legend=dict(orientation="h", y=1.1),
+                margin=dict(l=40, r=40, t=10, b=40),
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                font=dict(color='#F1F5F9', family='Inter'),
+                xaxis=dict(gridcolor='#334155'),
+                yaxis=dict(gridcolor='#334155'),
+            )
+            st.plotly_chart(fig_sim)
+
 
 # ══════════════════════════════════════════════════════
 #  PAGE : BACKTESTING
@@ -1269,6 +1525,26 @@ def page_backtesting():
 
     if pending:
         st.subheader(":material/pending: Paris en attente de résultat")
+
+        col_clv, col_info = st.columns([1.4, 2], vertical_alignment="center")
+        with col_clv:
+            if st.button("Capturer les cotes de clôture (CLV)",
+                         icon=":material/schedule:"):
+                with st.spinner("Interrogation de The Odds API..."):
+                    tracker = ClvTracker(db=db)
+                    res = tracker.capture_closing_odds(pending)
+                st.success(
+                    f"{res['captures']} CLV capturé(s), "
+                    f"{res['ignores']} ignoré(s), "
+                    f"quota API restant : {res.get('quota_restant', '?')}",
+                    icon=":material/check_circle:",
+                )
+        with col_info:
+            st.caption(
+                ":material/info: À lancer **15-30 min avant le coup "
+                "d'envoi** des matchs pariés — c'est la comparaison à la "
+                "cote de clôture qui mesure ton edge réel."
+            )
 
         for bet in pending:
             with st.container(border=True):
@@ -1531,6 +1807,9 @@ def main():
         "historique": st.Page(page_history, title="Historique",
                               icon=":material/receipt_long:",
                               url_path="historique"),
+        "validation": st.Page(page_validation, title="Validation",
+                              icon=":material/science:",
+                              url_path="validation"),
         "backtesting": st.Page(page_backtesting, title="Backtesting",
                                icon=":material/history:",
                                url_path="backtesting"),
