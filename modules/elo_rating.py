@@ -18,6 +18,7 @@ from typing import Dict, Optional
 from dataclasses import dataclass
 
 from config import Paths, EloConfig
+from modules.odds_utils import novig_probs
 
 
 @dataclass
@@ -90,8 +91,9 @@ class EloRatingSystem:
         if odds_for <= 1 or odds_against <= 1:
             return self.get_rating(team)
 
-        # Probabilité de victoire relative (sans le nul)
-        p = (1 / odds_for) / (1 / odds_for + 1 / odds_against)
+        # Probabilité de victoire relative sans le nul (Shin :
+        # corrige le biais favori-outsider)
+        p = novig_probs([odds_for, odds_against])[0]
         p = max(0.03, min(0.97, p))
 
         # Différence Elo implicite : p = 1 / (1 + 10^(-diff/400))

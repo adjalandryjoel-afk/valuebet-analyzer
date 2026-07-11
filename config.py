@@ -90,13 +90,23 @@ class PoissonConfig:
     MIN_LAMBDA = 0.30
     MAX_LAMBDA = 4.00
 
-    # Part des buts marqués en 1ère mi-temps (observé : ~45%,
-    # le rythme augmente en 2ème période)
+    # Part des buts marqués en 1ère mi-temps (défaut si la ligue
+    # n'a pas sa propre valeur dans SUPPORTED_LEAGUES)
     FIRST_HALF_SHARE = 0.45
 
-    # Tirs cadrés attendus par but attendu (approximation :
-    # ~30% des tirs cadrés finissent au fond)
-    SOT_PER_GOAL = 3.3
+    # Tirs cadrés attendus par but attendu (littérature : ~30-32%
+    # des tirs cadrés finissent au fond → ratio central 3.1)
+    SOT_PER_GOAL = 3.1
+
+    # Correction Dixon-Coles (1997) : dépendance des scores faibles.
+    # rho négatif => gonfle 0-0 et 1-1, dégonfle 1-0 et 0-1.
+    # Valeur typique estimée sur les grands championnats : -0.05 à -0.15.
+    DIXON_COLES_RHO = -0.10
+
+    # Décote temporelle des matchs passés (Dixon-Coles time decay) :
+    # poids = exp(-XI_PER_DAY × ancienneté_en_jours). 0.002/j ≈
+    # demi-vie de ~1 an — les vieilles saisons pèsent peu.
+    TIME_DECAY_XI = 0.002
 
 
 # ══════════════════════════════════════════════════════
@@ -134,9 +144,19 @@ class ValueBetConfig:
     # Score de confiance minimum (0-100)
     MIN_CONFIDENCE_SCORE = 55
 
-    # Fourchette de cotes jouables
+    # Fourchette de cotes jouables (au-delà de 6, le biais
+    # favori-outsider rend les cotes structurellement surévaluées)
     MIN_ODDS = 1.30
-    MAX_ODDS = 7.00
+    MAX_ODDS = 6.00
+
+    # Seuil de value progressif selon la cote (biais favori-outsider) :
+    # multiplicateur appliqué au seuil de base MIN_VALUE_THRESHOLD.
+    # (cote_max_exclusive, multiplicateur)
+    VALUE_THRESHOLD_MULTIPLIERS = [
+        (2.50, 1.0),   # 5% de base sous 2.50
+        (4.00, 1.6),   # ~8% entre 2.50 et 4.00
+        (99.0, 2.4),   # ~12% au-delà de 4.00
+    ]
 
     # Probabilité modèle minimum (éviter les paris trop improbables)
     MIN_MODEL_PROBABILITY = 0.15
@@ -177,8 +197,10 @@ class KellyConfig:
     # Fraction de Kelly appliquée (0.25 = quart de Kelly, prudent)
     KELLY_FRACTION = 0.25
 
-    # Mise maximum par pari (% du bankroll)
-    MAX_STAKE_PERCENTAGE = 5.0
+    # Mise maximum par pari (% du bankroll) — abaissé à 2% tant que
+    # le CLV/ROI n'est pas prouvé positif sur 100+ paris (recherche :
+    # les drawdowns du quart de Kelly à 5% sont trop violents)
+    MAX_STAKE_PERCENTAGE = 2.0
 
     # Mise minimum en FCFA (en dessous, on ne joue pas)
     MIN_STAKE_AMOUNT = 500
@@ -220,47 +242,55 @@ SUPPORTED_LEAGUES = {
         "country": "Angleterre",
         "avg_goals": 2.85,
         "home_win_rate": 0.44,
+        "first_half_share": 0.47,
     },
     "la_liga": {
         "name": "La Liga",
         "country": "Espagne",
         "avg_goals": 2.55,
         "home_win_rate": 0.46,
+        "first_half_share": 0.44,
     },
     "serie_a": {
         "name": "Serie A",
         "country": "Italie",
         "avg_goals": 2.65,
         "home_win_rate": 0.42,
+        "first_half_share": 0.45,
     },
     "bundesliga": {
         "name": "Bundesliga",
         "country": "Allemagne",
         "avg_goals": 3.10,
         "home_win_rate": 0.44,
+        "first_half_share": 0.49,
     },
     "ligue1_fr": {
         "name": "Ligue 1",
         "country": "France",
         "avg_goals": 2.60,
         "home_win_rate": 0.45,
+        "first_half_share": 0.45,
     },
     "ligue1_ci": {
         "name": "Ligue 1 Côte d'Ivoire",
         "country": "Côte d'Ivoire",
         "avg_goals": 2.20,
         "home_win_rate": 0.48,
+        "first_half_share": 0.45,
     },
     "champions_league": {
         "name": "Champions League",
         "country": "Europe",
         "avg_goals": 2.90,
         "home_win_rate": 0.45,
+        "first_half_share": 0.46,
     },
     "europa_league": {
         "name": "Europa League",
         "country": "Europe",
         "avg_goals": 2.80,
         "home_win_rate": 0.44,
+        "first_half_share": 0.46,
     },
 }

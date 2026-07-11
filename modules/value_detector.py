@@ -89,7 +89,9 @@ class ValueBetDetector:
 
     def analyze_match(self, home_team: str, away_team: str,
                       odds: Dict, poisson_pred, elo_pred,
-                      competition: str = "") -> MatchAnalysis:
+                      competition: str = "",
+                      min_value: float = None,
+                      min_confidence: float = None) -> MatchAnalysis:
         """
         Analyse tous les marchés d'un match.
 
@@ -98,7 +100,14 @@ class ValueBetDetector:
                   "under_2_5", "btts_oui", "btts_non"}
             poisson_pred: PoissonPrediction
             elo_pred: EloPrediction
+            min_value / min_confidence : seuils de l'interface
+                (défaut : valeurs de config)
         """
+
+        self._min_value = (min_value if min_value is not None
+                           else ValueBetConfig.MIN_VALUE_THRESHOLD)
+        self._min_confidence = (min_confidence if min_confidence is not None
+                                else ValueBetConfig.MIN_CONFIDENCE_SCORE)
 
         analysis = MatchAnalysis(
             home_team=home_team,
@@ -332,7 +341,18 @@ class ValueBetDetector:
         edge = model_prob - implied_prob
 
         # ── Filtres ──
-        if value < ValueBetConfig.MIN_VALUE_THRESHOLD:
+        # Seuil progressif selon la cote (biais favori-outsider :
+        # les grosses cotes exigent plus de value pour être crédibles)
+        base_threshold = getattr(
+            self, "_min_value", ValueBetConfig.MIN_VALUE_THRESHOLD
+        )
+        multiplier = ValueBetConfig.VALUE_THRESHOLD_MULTIPLIERS[-1][1]
+        for odds_cap, mult in ValueBetConfig.VALUE_THRESHOLD_MULTIPLIERS:
+            if book_odds < odds_cap:
+                multiplier = mult
+                break
+
+        if value < base_threshold * multiplier:
             return None
         if not (ValueBetConfig.MIN_ODDS <= book_odds <= ValueBetConfig.MAX_ODDS):
             return None
@@ -355,7 +375,8 @@ class ValueBetDetector:
 
         confidence = max(0, min(100, confidence))
 
-        if confidence < ValueBetConfig.MIN_CONFIDENCE_SCORE:
+        if confidence < getattr(self, "_min_confidence",
+                                ValueBetConfig.MIN_CONFIDENCE_SCORE):
             return None
 
         # ── Rating étoiles ──

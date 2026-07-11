@@ -473,7 +473,8 @@ def analyze_matches_ui(matches, bankroll, min_value, min_confidence,
         # 5. Détecter les value bets
         analysis = modules["value_detector"].analyze_match(
             home_name, away_name, all_odds,
-            poisson_pred, elo_pred, competition
+            poisson_pred, elo_pred, competition,
+            min_value=min_value, min_confidence=min_confidence,
         )
 
         # 6. Calculer les mises

@@ -20,6 +20,7 @@ from dataclasses import dataclass, field
 
 from config import PoissonConfig
 from modules.data_collector import MatchContext
+from modules.odds_utils import novig_probs
 
 
 # ══════════════════════════════════════════════════════
@@ -108,7 +109,10 @@ class PoissonPredictor:
             lambda_away=round(lam_away, 3),
         )
 
-        self._fill_probabilities(pred)
+        self._fill_probabilities(
+            pred,
+            first_half_share=getattr(context, "first_half_share", None),
+        )
 
         # Confiance selon la qualité des données
         pred.confidence = min(40 + context.data_completeness * 0.5, 90)
@@ -219,15 +223,16 @@ class PoissonPredictor:
         if o1 <= 1 or ox <= 1 or o2 <= 1:
             return None
 
-        inv = [1 / o1, 1 / ox, 1 / o2]
-        total = sum(inv)
-        target_1, target_x, target_2 = (v / total for v in inv)
+        probs = novig_probs([o1, ox, o2])
+        if not probs:
+            return None
+        target_1, target_x, target_2 = probs
 
         # Total de buts cible
         o_over = float(odds.get("over_2_5", 0) or 0)
         o_under = float(odds.get("under_2_5", 0) or 0)
         if o_over > 1 and o_under > 1:
-            p_over = (1 / o_over) / (1 / o_over + 1 / o_under)
+            p_over = novig_probs([o_over, o_under])[0]
             total_candidates = [self._invert_over25(p_over)]
         else:
             # balayer plusieurs totaux autour de la moyenne de la ligue
@@ -260,18 +265,51 @@ class PoissonPredictor:
     def _poisson_pmf(k: int, lam: float) -> float:
         return math.exp(-lam) * lam ** k / math.factorial(k)
 
-    def _quick_1x2(self, lam_home: float,
-                   lam_away: float) -> Tuple[float, float, float]:
-        """1X2 rapide depuis deux lambdas (matrice réduite)."""
+    @classmethod
+    def _score_matrix(cls, lam_home: float,
+                      lam_away: float) -> List[List[float]]:
+        """
+        Matrice des probabilités de score avec correction Dixon-Coles.
+
+        Le Poisson indépendant sous-estime les 0-0 et 1-1 et surestime
+        les 1-0/0-1. Dixon & Coles (1997) corrigent les 4 cases basses
+        par un facteur tau (rho négatif => 0-0 et 1-1 gonflés) :
+          tau(0,0) = 1 − λμρ    tau(0,1) = 1 + λρ
+          tau(1,0) = 1 + μρ     tau(1,1) = 1 − ρ
+        La matrice est ensuite renormalisée.
+        """
 
         max_g = PoissonConfig.MAX_GOALS
-        ph = [self._poisson_pmf(i, lam_home) for i in range(max_g + 1)]
-        pa = [self._poisson_pmf(j, lam_away) for j in range(max_g + 1)]
+        rho = PoissonConfig.DIXON_COLES_RHO
+
+        ph = [cls._poisson_pmf(i, lam_home) for i in range(max_g + 1)]
+        pa = [cls._poisson_pmf(j, lam_away) for j in range(max_g + 1)]
+
+        matrix = [[ph[i] * pa[j] for j in range(max_g + 1)]
+                  for i in range(max_g + 1)]
+
+        matrix[0][0] *= max(0.0, 1 - lam_home * lam_away * rho)
+        matrix[0][1] *= max(0.0, 1 + lam_home * rho)
+        matrix[1][0] *= max(0.0, 1 + lam_away * rho)
+        matrix[1][1] *= max(0.0, 1 - rho)
+
+        total = sum(sum(row) for row in matrix)
+        if total > 0:
+            matrix = [[p / total for p in row] for row in matrix]
+
+        return matrix
+
+    def _quick_1x2(self, lam_home: float,
+                   lam_away: float) -> Tuple[float, float, float]:
+        """1X2 rapide depuis deux lambdas (matrice Dixon-Coles)."""
+
+        matrix = self._score_matrix(lam_home, lam_away)
+        max_g = PoissonConfig.MAX_GOALS
 
         p1 = px = p2 = 0.0
         for i in range(max_g + 1):
             for j in range(max_g + 1):
-                p = ph[i] * pa[j]
+                p = matrix[i][j]
                 if i > j:
                     p1 += p
                 elif i == j:
@@ -281,17 +319,14 @@ class PoissonPredictor:
 
         return p1, px, p2
 
-    def _fill_probabilities(self, pred: PoissonPrediction):
+    def _fill_probabilities(self, pred: PoissonPrediction,
+                            first_half_share: float = None):
         """Remplit toutes les probabilités depuis la matrice des scores."""
 
         max_g = PoissonConfig.MAX_GOALS
         lam_h, lam_a = pred.lambda_home, pred.lambda_away
 
-        ph = [self._poisson_pmf(i, lam_h) for i in range(max_g + 1)]
-        pa = [self._poisson_pmf(j, lam_a) for j in range(max_g + 1)]
-
-        matrix = [[ph[i] * pa[j] for j in range(max_g + 1)]
-                  for i in range(max_g + 1)]
+        matrix = self._score_matrix(lam_h, lam_a)
         pred.score_matrix = matrix
 
         p1 = px = p2 = 0.0
@@ -322,7 +357,7 @@ class PoissonPredictor:
                 if i >= 1 and j >= 1:
                     btts += p
 
-        # Normaliser (la matrice tronquée ne somme pas exactement à 1)
+        # La matrice Dixon-Coles est déjà normalisée
         norm = p1 + px + p2
         if norm > 0:
             p1, px, p2 = p1 / norm, px / norm, p2 / norm
@@ -353,10 +388,11 @@ class PoissonPredictor:
         pred.team_totals_home = self._over_probs(lam_h, ("0_5", "1_5", "2_5"))
         pred.team_totals_away = self._over_probs(lam_a, ("0_5", "1_5", "2_5"))
 
-        # ── Buts par mi-temps (part 1MT ≈ 45% du total attendu) ──
+        # ── Buts par mi-temps (part 1MT propre à la ligue) ──
+        share = first_half_share or PoissonConfig.FIRST_HALF_SHARE
         lam_total = lam_h + lam_a
-        lam_h1 = lam_total * PoissonConfig.FIRST_HALF_SHARE
-        lam_h2 = lam_total * (1 - PoissonConfig.FIRST_HALF_SHARE)
+        lam_h1 = lam_total * share
+        lam_h2 = lam_total * (1 - share)
         pred.h1_totals = self._over_probs(lam_h1, ("0_5", "1_5"))
         pred.h2_totals = self._over_probs(lam_h2, ("0_5", "1_5"))
 

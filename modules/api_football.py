@@ -25,13 +25,14 @@ bascule alors sur ses sources de repli.
 import os
 import re
 import json
+import math
 import time
 import unicodedata
 import requests
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from config import APIKeys, Paths
+from config import APIKeys, Paths, PoissonConfig
 
 
 # ══════════════════════════════════════════════════════
@@ -357,18 +358,39 @@ class ApiFootballCollector:
         # Les plus récents en premier (pour la forme)
         usable.sort(key=lambda m: m["date"], reverse=True)
 
+        # Décote temporelle (Dixon-Coles time decay) : un match
+        # d'il y a un an pèse ~2x moins qu'un match récent — crucial
+        # avec le plan gratuit qui ne sert que des saisons passées.
+        now = datetime.now()
+        for m in usable:
+            try:
+                age = (now - datetime.fromisoformat(m["date"][:10])).days
+            except (ValueError, TypeError):
+                age = 365
+            m["w"] = math.exp(-PoissonConfig.TIME_DECAY_XI * max(age, 0))
+
+        # Poids total trop faible = données trop périmées pour signifier
+        if sum(m["w"] for m in usable) < 2.5:
+            return None
+
         n = len(usable)
-        avg_scored = sum(m["scored"] for m in usable) / n
-        avg_conceded = sum(m["conceded"] for m in usable) / n
+
+        def _wavg(matches: list, key: str, fallback: float = None) -> float:
+            """Moyenne pondérée par la fraîcheur des matchs."""
+            total_w = sum(m["w"] for m in matches)
+            if not matches or total_w <= 0:
+                return fallback if fallback is not None else 0.0
+            return sum(m[key] * m["w"] for m in matches) / total_w
+
+        avg_scored = _wavg(usable, "scored")
+        avg_conceded = _wavg(usable, "conceded")
 
         home = [m for m in usable if m["is_home"]]
         away = [m for m in usable if not m["is_home"]]
 
         def _avg(matches: list, key: str, fallback: float) -> float:
-            """Moyenne d'un champ, repli sur la moyenne globale si vide."""
-            if not matches:
-                return fallback
-            return sum(m[key] for m in matches) / len(matches)
+            """Moyenne pondérée d'un champ, repli si vide."""
+            return _wavg(matches, key, fallback)
 
         # Forme récente : points/match sur les 5 plus récents
         points = 0

@@ -41,6 +41,7 @@ jinja2>=3.1.0
 # === UTILITAIRES ===
 python-dotenv>=1.0.0
 rapidfuzz>=3.2.0
+shin>=0.2.0
 tenacity>=8.2.0
 schedule>=1.2.0
 pytz>=2023.3

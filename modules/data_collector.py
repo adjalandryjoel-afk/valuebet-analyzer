@@ -19,6 +19,7 @@ from dataclasses import dataclass, field
 
 from config import Paths, PoissonConfig, SUPPORTED_LEAGUES
 from modules.api_football import ApiFootballCollector
+from modules.odds_utils import novig_probs
 
 
 # ══════════════════════════════════════════════════════
@@ -72,6 +73,9 @@ class MatchContext:
 
     # Moyenne de buts de la ligue
     league_avg_goals: float = PoissonConfig.DEFAULT_LEAGUE_AVG_GOALS
+
+    # Part des buts en 1ère mi-temps (propre à la ligue)
+    first_half_share: float = PoissonConfig.FIRST_HALF_SHARE
 
     # Qualité des données disponibles (0-100)
     data_completeness: float = 0.0
@@ -129,6 +133,9 @@ class DataCollector:
             league=league,
             odds=dict(odds or {}),
             league_avg_goals=league_avg,
+            first_half_share=league_info.get(
+                "first_half_share", PoissonConfig.FIRST_HALF_SHARE
+            ),
         )
 
         # Stats des équipes :
@@ -244,17 +251,21 @@ class DataCollector:
         if o1 <= 1 or o2 <= 1:
             return stats  # pas de cotes exploitables → défauts
 
-        # Probabilités no-vig
-        inv = [1 / o1, (1 / ox) if ox > 1 else 0.25, 1 / o2]
-        total = sum(inv)
-        p_home, p_draw, p_away = (v / total for v in inv)
+        # Probabilités no-vig (méthode de Shin : corrige le biais
+        # favori-outsider de la normalisation proportionnelle)
+        if ox > 1:
+            p_home, p_draw, p_away = novig_probs([o1, ox, o2])
+        else:
+            p_home, p_away = novig_probs([o1, o2])
+            p_home, p_away = p_home * 0.75, p_away * 0.75
+            p_draw = 0.25
 
         # Total de buts attendu : depuis over/under 2.5 si dispo
         total_goals = league_avg
         o_over = float(odds.get("over_2_5", 0) or 0)
         o_under = float(odds.get("under_2_5", 0) or 0)
         if o_over > 1 and o_under > 1:
-            p_over = (1 / o_over) / (1 / o_over + 1 / o_under)
+            p_over = novig_probs([o_over, o_under])[0]
             total_goals = self._total_goals_from_over25(p_over)
 
         # Répartition du total selon la force relative
