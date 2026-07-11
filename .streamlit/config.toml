@@ -1,13 +1,13 @@
-# ═══ Thème Value Bet Analyzer — sombre, financier, accent émeraude ═══
+# ═══ Thème Value Bet Analyzer — sombre, financier, accent bleu ciel ═══
 
 [theme]
 base = "dark"
-primaryColor = "#34D399"             # Vert émeraude — la couleur de la value
+primaryColor = "#38BDF8"             # Bleu ciel — couleur signature de l'app
 backgroundColor = "#0F172A"          # Ardoise profonde
 secondaryBackgroundColor = "#1E293B" # Ardoise plus claire (widgets, cartes)
 codeBackgroundColor = "#1E293B"
 textColor = "#F1F5F9"
-linkColor = "#60A5FA"
+linkColor = "#38BDF8"
 borderColor = "#334155"
 codeTextColor = "#CBD5E1"
 showWidgetBorder = true
@@ -37,12 +37,12 @@ grayColor = "#94A3B8"
 
 # Palette des graphiques
 chartCategoricalColors = [
-    "#34D399",
+    "#38BDF8",
     "#F87171",
     "#60A5FA",
     "#FBBF24",
     "#A78BFA",
-    "#38BDF8",
+    "#34D399",
     "#94A3B8",
     "#FB923C",
 ]
@@ -70,4 +70,4 @@ secondaryBackgroundColor = "#1E293B"
 codeBackgroundColor = "#1E293B"
 textColor = "#F1F5F9"
 borderColor = "#334155"
-primaryColor = "#34D399"
+primaryColor = "#38BDF8"

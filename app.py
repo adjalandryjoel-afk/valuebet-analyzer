@@ -48,8 +48,9 @@ st.set_page_config(
 )
 
 # Couleurs du thème (alignées sur .streamlit/config.toml)
-COLOR_GREEN = "#34D399"
-COLOR_RED = "#F87171"
+COLOR_ACCENT = "#38BDF8"   # bleu ciel — signature de l'app
+COLOR_GREEN = "#34D399"    # gains / value positive
+COLOR_RED = "#F87171"      # pertes / value négative
 
 
 def page_header(icon: str, title: str, caption: str = ""):
@@ -92,7 +93,7 @@ def render_sidebar_settings():
     """Réglages dans la barre latérale (sous la navigation)."""
 
     with st.sidebar:
-        st.caption("Betclic Côte d'Ivoire · v3.1 · 25 marchés")
+        st.caption("Betclic Côte d'Ivoire · v3.2 · 25 marchés")
 
         st.subheader(":material/account_balance_wallet: Bankroll")
         bankroll = st.number_input(
