@@ -92,7 +92,7 @@ def render_sidebar_settings():
     """Réglages dans la barre latérale (sous la navigation)."""
 
     with st.sidebar:
-        st.caption("Betclic Côte d'Ivoire · v3.0 · 25 marchés")
+        st.caption("Betclic Côte d'Ivoire · v3.1 · 25 marchés")
 
         st.subheader(":material/account_balance_wallet: Bankroll")
         bankroll = st.number_input(
@@ -576,10 +576,11 @@ def _render_intel_section(analysis):
     verdict = getattr(analysis, "_verdict", "")
 
     if report is None and not verdict:
+        st.caption(
+            ":material/info: Analyse approfondie désactivée ou "
+            "indisponible pour ce match."
+        )
         return
-
-    st.space("small")
-    st.markdown(":material/groups: **Conseil des agents**")
 
     if report is not None:
         col_h2h, col_form = st.columns(2)
@@ -681,244 +682,254 @@ def display_results(analyses, bankroll):
             icon=exp_icon,
         ):
 
-            # Probabilités 1X2
-            col1, col2 = st.columns([3, 2])
+            tab_markets, tab_vb, tab_agents = st.tabs([
+                ":material/table_chart: Marchés",
+                f":material/target: Value bets "
+                f"({analysis.total_value_bets})",
+                ":material/groups: Agents & verdict",
+            ])
 
-            with col1:
-                st.caption("Probabilités modèle vs Betclic")
+            with tab_markets:
+                # Probabilités 1X2
+                col1, col2 = st.columns([3, 2])
 
-                probs_1x2 = analysis.model_probs.get("1X2", {})
+                with col1:
+                    st.caption("Probabilités modèle vs Betclic")
 
-                # Colonnes numériques → barres de progression et
-                # mise en forme via column_config
-                data = {
-                    "Marché": ["1 (Domicile)", "X (Nul)", "2 (Extérieur)"],
-                    "Modèle": [probs_1x2.get(k, 0) * 100
-                               for k in ("1", "X", "2")],
-                    "Betclic": [
-                        (100 / analysis.odds[k])
-                        if analysis.odds.get(k, 0) > 0 else None
-                        for k in ("1", "X", "2")
-                    ],
-                    "Cote": [
-                        analysis.odds.get(k, 0) or None
-                        for k in ("1", "X", "2")
-                    ],
-                }
+                    probs_1x2 = analysis.model_probs.get("1X2", {})
 
-                # Ajouter la colonne Value
-                values = []
-                for key in ["1", "X", "2"]:
-                    mp = probs_1x2.get(key, 0)
-                    bo = analysis.odds.get(key, 0)
-                    if bo > 0 and mp > 0:
-                        values.append((bo * mp - 1) * 100)
-                    else:
-                        values.append(None)
+                    # Colonnes numériques → barres de progression et
+                    # mise en forme via column_config
+                    data = {
+                        "Marché": ["1 (Domicile)", "X (Nul)", "2 (Extérieur)"],
+                        "Modèle": [probs_1x2.get(k, 0) * 100
+                                   for k in ("1", "X", "2")],
+                        "Betclic": [
+                            (100 / analysis.odds[k])
+                            if analysis.odds.get(k, 0) > 0 else None
+                            for k in ("1", "X", "2")
+                        ],
+                        "Cote": [
+                            analysis.odds.get(k, 0) or None
+                            for k in ("1", "X", "2")
+                        ],
+                    }
 
-                data["Value"] = values
+                    # Ajouter la colonne Value
+                    values = []
+                    for key in ["1", "X", "2"]:
+                        mp = probs_1x2.get(key, 0)
+                        bo = analysis.odds.get(key, 0)
+                        if bo > 0 and mp > 0:
+                            values.append((bo * mp - 1) * 100)
+                        else:
+                            values.append(None)
 
-                # Marchés supplémentaires (Over/Under 2.5 et BTTS)
-                probs_ou = analysis.model_probs.get("OU25", {})
-                probs_btts = analysis.model_probs.get("BTTS", {})
+                    data["Value"] = values
 
-                extra_rows = [
-                    ("Over 2.5", probs_ou.get("over", 0), "over_2_5"),
-                    ("Under 2.5", probs_ou.get("under", 0), "under_2_5"),
-                    ("BTTS Oui", probs_btts.get("yes", 0), "btts_oui"),
-                    ("BTTS Non", probs_btts.get("no", 0), "btts_non"),
-                ]
+                    # Marchés supplémentaires (Over/Under 2.5 et BTTS)
+                    probs_ou = analysis.model_probs.get("OU25", {})
+                    probs_btts = analysis.model_probs.get("BTTS", {})
 
-                # Totaux par équipe (home/away over/under 0.5, 1.5, 2.5)
-                for side, team, group in (
-                    ("home", analysis.home_team, "HOME_TOTALS"),
-                    ("away", analysis.away_team, "AWAY_TOTALS"),
-                ):
-                    probs_tot = analysis.model_probs.get(group, {})
-                    for line in ("0_5", "1_5", "2_5"):
-                        for ou in ("over", "under"):
-                            extra_rows.append((
-                                f"{team} {ou.capitalize()} {line.replace('_', '.')}",
-                                probs_tot.get(f"{ou}_{line}", 0),
-                                f"{side}_{ou}_{line}",
-                            ))
-
-                # Buts par mi-temps (1MT / 2MT over/under 0.5, 1.5)
-                for half, half_label in (("h1", "1MT"), ("h2", "2MT")):
-                    probs_half = analysis.model_probs.get(half.upper(), {})
-                    for line in ("0_5", "1_5"):
-                        for ou in ("over", "under"):
-                            extra_rows.append((
-                                f"{half_label} {ou.capitalize()} {line.replace('_', '.')}",
-                                probs_half.get(f"{ou}_{line}", 0),
-                                f"{half}_{ou}_{line}",
-                            ))
-
-                # Tirs cadrés par équipe (lignes variables, déduites des cotes)
-                for side, team in (("home", analysis.home_team),
-                                   ("away", analysis.away_team)):
-                    probs_sot = analysis.model_probs.get(f"SOT_{side.upper()}", {})
-                    prefix = f"sot_{side}_"
-                    sot_lines = []
-                    for odds_key in analysis.odds:
-                        if not odds_key.startswith(prefix):
-                            continue
-                        parts = odds_key[len(prefix):].split("_", 1)
-                        if (len(parts) == 2 and parts[0] in ("over", "under")
-                                and parts[1].replace("_", "", 1).isdigit()):
-                            sot_lines.append((parts[0], parts[1], odds_key))
-                    sot_lines.sort(key=lambda s: (float(s[1].replace("_", ".")),
-                                                  s[0] != "over"))
-                    for ou, line, odds_key in sot_lines:
-                        extra_rows.append((
-                            f"Tirs cadrés {team} {ou.capitalize()} {line.replace('_', '.')}",
-                            probs_sot.get(f"{ou}_{line}", 0),
-                            odds_key,
-                        ))
-
-                for label, mp, odds_key in extra_rows:
-                    bo = float(analysis.odds.get(odds_key, 0) or 0)
-                    if bo <= 1:
-                        continue
-                    data["Marché"].append(label)
-                    data["Modèle"].append(mp * 100)
-                    data["Betclic"].append(100 / bo)
-                    data["Cote"].append(bo)
-                    if mp > 0:
-                        data["Value"].append((bo * mp - 1) * 100)
-                    else:
-                        data["Value"].append(None)
-
-                df = pd.DataFrame(data)
-
-                def _value_color(v):
-                    if pd.isna(v):
-                        return ""
-                    if v > 0:
-                        return f"color: {COLOR_GREEN}; font-weight: 600"
-                    return f"color: {COLOR_RED}"
-
-                st.dataframe(
-                    df.style.map(_value_color, subset=["Value"]),
-                    hide_index=True,
-                    width="stretch",
-                    height=min(38 + 35 * len(df), 460),
-                    column_config={
-                        "Marché": st.column_config.TextColumn(
-                            "Marché", width="medium"),
-                        "Modèle": st.column_config.ProgressColumn(
-                            "Prob. modèle", min_value=0, max_value=100,
-                            format="%.1f%%"),
-                        "Betclic": st.column_config.NumberColumn(
-                            "Prob. Betclic", format="%.1f%%"),
-                        "Cote": st.column_config.NumberColumn(
-                            "Cote", format="%.2f"),
-                        "Value": st.column_config.NumberColumn(
-                            "Value", format="%+.1f%%"),
-                    },
-                )
-
-            with col2:
-                # Graphique radar
-                probs = probs_1x2
-                if probs:
-                    fig = go.Figure()
-
-                    categories = ['Domicile', 'Nul', 'Extérieur']
-                    model_vals = [
-                        probs.get('1', 0)*100,
-                        probs.get('X', 0)*100,
-                        probs.get('2', 0)*100,
+                    extra_rows = [
+                        ("Over 2.5", probs_ou.get("over", 0), "over_2_5"),
+                        ("Under 2.5", probs_ou.get("under", 0), "under_2_5"),
+                        ("BTTS Oui", probs_btts.get("yes", 0), "btts_oui"),
+                        ("BTTS Non", probs_btts.get("no", 0), "btts_non"),
                     ]
 
-                    betclic_vals = []
-                    for key in ['1', 'X', '2']:
-                        o = analysis.odds.get(key, 0)
-                        betclic_vals.append(100/o if o > 0 else 0)
+                    # Totaux par équipe (home/away over/under 0.5, 1.5, 2.5)
+                    for side, team, group in (
+                        ("home", analysis.home_team, "HOME_TOTALS"),
+                        ("away", analysis.away_team, "AWAY_TOTALS"),
+                    ):
+                        probs_tot = analysis.model_probs.get(group, {})
+                        for line in ("0_5", "1_5", "2_5"):
+                            for ou in ("over", "under"):
+                                extra_rows.append((
+                                    f"{team} {ou.capitalize()} {line.replace('_', '.')}",
+                                    probs_tot.get(f"{ou}_{line}", 0),
+                                    f"{side}_{ou}_{line}",
+                                ))
 
-                    fig.add_trace(go.Scatterpolar(
-                        r=model_vals + [model_vals[0]],
-                        theta=categories + [categories[0]],
-                        name='Modèle',
-                        line=dict(color=COLOR_GREEN, width=3),
-                        fill='toself',
-                        fillcolor='rgba(52, 211, 153, 0.15)'
-                    ))
+                    # Buts par mi-temps (1MT / 2MT over/under 0.5, 1.5)
+                    for half, half_label in (("h1", "1MT"), ("h2", "2MT")):
+                        probs_half = analysis.model_probs.get(half.upper(), {})
+                        for line in ("0_5", "1_5"):
+                            for ou in ("over", "under"):
+                                extra_rows.append((
+                                    f"{half_label} {ou.capitalize()} {line.replace('_', '.')}",
+                                    probs_half.get(f"{ou}_{line}", 0),
+                                    f"{half}_{ou}_{line}",
+                                ))
 
-                    fig.add_trace(go.Scatterpolar(
-                        r=betclic_vals + [betclic_vals[0]],
-                        theta=categories + [categories[0]],
-                        name='Betclic',
-                        line=dict(color=COLOR_RED, width=3),
-                        fill='toself',
-                        fillcolor='rgba(248, 113, 113, 0.15)'
-                    ))
+                    # Tirs cadrés par équipe (lignes variables, déduites des cotes)
+                    for side, team in (("home", analysis.home_team),
+                                       ("away", analysis.away_team)):
+                        probs_sot = analysis.model_probs.get(f"SOT_{side.upper()}", {})
+                        prefix = f"sot_{side}_"
+                        sot_lines = []
+                        for odds_key in analysis.odds:
+                            if not odds_key.startswith(prefix):
+                                continue
+                            parts = odds_key[len(prefix):].split("_", 1)
+                            if (len(parts) == 2 and parts[0] in ("over", "under")
+                                    and parts[1].replace("_", "", 1).isdigit()):
+                                sot_lines.append((parts[0], parts[1], odds_key))
+                        sot_lines.sort(key=lambda s: (float(s[1].replace("_", ".")),
+                                                      s[0] != "over"))
+                        for ou, line, odds_key in sot_lines:
+                            extra_rows.append((
+                                f"Tirs cadrés {team} {ou.capitalize()} {line.replace('_', '.')}",
+                                probs_sot.get(f"{ou}_{line}", 0),
+                                odds_key,
+                            ))
 
-                    fig.update_layout(
-                        polar=dict(
-                            radialaxis=dict(
-                                visible=True, range=[0, 70],
-                                gridcolor='#334155',
-                            ),
-                            angularaxis=dict(gridcolor='#334155'),
-                            bgcolor='rgba(0,0,0,0)'
-                        ),
-                        showlegend=True,
-                        legend=dict(orientation="h", y=-0.1),
-                        height=320,
-                        margin=dict(l=40, r=40, t=30, b=30),
-                        paper_bgcolor='rgba(0,0,0,0)',
-                        plot_bgcolor='rgba(0,0,0,0)',
-                        font=dict(color='#F1F5F9', family='Inter')
+                    for label, mp, odds_key in extra_rows:
+                        bo = float(analysis.odds.get(odds_key, 0) or 0)
+                        if bo <= 1:
+                            continue
+                        data["Marché"].append(label)
+                        data["Modèle"].append(mp * 100)
+                        data["Betclic"].append(100 / bo)
+                        data["Cote"].append(bo)
+                        if mp > 0:
+                            data["Value"].append((bo * mp - 1) * 100)
+                        else:
+                            data["Value"].append(None)
+
+                    df = pd.DataFrame(data)
+
+                    def _value_color(v):
+                        if pd.isna(v):
+                            return ""
+                        if v > 0:
+                            return f"color: {COLOR_GREEN}; font-weight: 600"
+                        return f"color: {COLOR_RED}"
+
+                    st.dataframe(
+                        df.style.map(_value_color, subset=["Value"]),
+                        hide_index=True,
+                        width="stretch",
+                        height=min(38 + 35 * len(df), 460),
+                        column_config={
+                            "Marché": st.column_config.TextColumn(
+                                "Marché", width="medium"),
+                            "Modèle": st.column_config.ProgressColumn(
+                                "Prob. modèle", min_value=0, max_value=100,
+                                format="%.1f%%"),
+                            "Betclic": st.column_config.NumberColumn(
+                                "Prob. Betclic", format="%.1f%%"),
+                            "Cote": st.column_config.NumberColumn(
+                                "Cote", format="%.2f"),
+                            "Value": st.column_config.NumberColumn(
+                                "Value", format="%+.1f%%"),
+                        },
                     )
 
-                    st.plotly_chart(fig)
+                with col2:
+                    # Graphique radar
+                    probs = probs_1x2
+                    if probs:
+                        fig = go.Figure()
 
-            # Value bets
-            if analysis.value_bets:
-                st.markdown(
-                    f":material/target: **{analysis.total_value_bets} "
-                    f"value bet(s) détecté(s)**"
-                )
+                        categories = ['Domicile', 'Nul', 'Extérieur']
+                        model_vals = [
+                            probs.get('1', 0)*100,
+                            probs.get('X', 0)*100,
+                            probs.get('2', 0)*100,
+                        ]
 
-                for vb in analysis.value_bets:
-                    with st.container(border=True):
-                        c_sel, c_conf, c_mise, c_pct = st.columns(
-                            [3, 1, 1.3, 1], vertical_alignment="center"
+                        betclic_vals = []
+                        for key in ['1', 'X', '2']:
+                            o = analysis.odds.get(key, 0)
+                            betclic_vals.append(100/o if o > 0 else 0)
+
+                        fig.add_trace(go.Scatterpolar(
+                            r=model_vals + [model_vals[0]],
+                            theta=categories + [categories[0]],
+                            name='Modèle',
+                            line=dict(color=COLOR_GREEN, width=3),
+                            fill='toself',
+                            fillcolor='rgba(52, 211, 153, 0.15)'
+                        ))
+
+                        fig.add_trace(go.Scatterpolar(
+                            r=betclic_vals + [betclic_vals[0]],
+                            theta=categories + [categories[0]],
+                            name='Betclic',
+                            line=dict(color=COLOR_RED, width=3),
+                            fill='toself',
+                            fillcolor='rgba(248, 113, 113, 0.15)'
+                        ))
+
+                        fig.update_layout(
+                            polar=dict(
+                                radialaxis=dict(
+                                    visible=True, range=[0, 70],
+                                    gridcolor='#334155',
+                                ),
+                                angularaxis=dict(gridcolor='#334155'),
+                                bgcolor='rgba(0,0,0,0)'
+                            ),
+                            showlegend=True,
+                            legend=dict(orientation="h", y=-0.1),
+                            height=320,
+                            margin=dict(l=40, r=40, t=30, b=30),
+                            paper_bgcolor='rgba(0,0,0,0)',
+                            plot_bgcolor='rgba(0,0,0,0)',
+                            font=dict(color='#F1F5F9', family='Inter')
                         )
-                        with c_sel:
-                            st.markdown(
-                                f"**{vb.market} → {vb.selection}** "
-                                f"@ **{vb.bookmaker_odds:.2f}**  \n"
-                                f":green-badge[:material/trending_up: "
-                                f"+{vb.value_percentage*100:.1f}%] "
-                                f"{vb.value_rating}"
+
+                        st.plotly_chart(fig)
+
+            with tab_vb:
+                # Value bets
+                if analysis.value_bets:
+                    st.markdown(
+                        f":material/target: **{analysis.total_value_bets} "
+                        f"value bet(s) détecté(s)**"
+                    )
+
+                    for vb in analysis.value_bets:
+                        with st.container(border=True):
+                            c_sel, c_conf, c_mise, c_pct = st.columns(
+                                [3, 1, 1.3, 1], vertical_alignment="center"
                             )
-                        c_conf.metric(
-                            "Confiance", f"{vb.confidence_score:.0f}/100")
-                        c_mise.metric(
-                            "Mise", f"{vb.recommended_stake:,.0f} FCFA")
-                        c_pct.metric(
-                            "Bankroll", f"{vb.kelly_stake:.1f}%")
-            else:
-                st.caption(
-                    ":material/do_not_disturb_on: Aucun value bet détecté — "
-                    "les cotes semblent correctement calibrées sur ce match."
+                            with c_sel:
+                                st.markdown(
+                                    f"**{vb.market} → {vb.selection}** "
+                                    f"@ **{vb.bookmaker_odds:.2f}**  \n"
+                                    f":green-badge[:material/trending_up: "
+                                    f"+{vb.value_percentage*100:.1f}%] "
+                                    f"{vb.value_rating}"
+                                )
+                            c_conf.metric(
+                                "Confiance", f"{vb.confidence_score:.0f}/100")
+                            c_mise.metric(
+                                "Mise", f"{vb.recommended_stake:,.0f} FCFA")
+                            c_pct.metric(
+                                "Bankroll", f"{vb.kelly_stake:.1f}%")
+                else:
+                    st.caption(
+                        ":material/do_not_disturb_on: Aucun value bet détecté — "
+                        "les cotes semblent correctement calibrées sur ce match."
+                    )
+
+                # Infos additionnelles
+                st.space("small")
+                st.markdown(
+                    f":material/scoreboard: Score prédit : **{analysis.predicted_score}** · "
+                    f":material/emoji_events: **{analysis.most_likely_result}** · "
+                    f":material/percent: Marge Betclic : **{analysis.bookmaker_margin:.1f}%** · "
+                    f":material/verified: Confiance : **{analysis.analysis_confidence:.0f}/100**"
                 )
 
-            # Infos additionnelles
-            st.space("small")
-            st.markdown(
-                f":material/scoreboard: Score prédit : **{analysis.predicted_score}** · "
-                f":material/emoji_events: **{analysis.most_likely_result}** · "
-                f":material/percent: Marge Betclic : **{analysis.bookmaker_margin:.1f}%** · "
-                f":material/verified: Confiance : **{analysis.analysis_confidence:.0f}/100**"
-            )
+                if analysis.data_warning:
+                    st.warning(analysis.data_warning, icon=":material/warning:")
 
-            if analysis.data_warning:
-                st.warning(analysis.data_warning, icon=":material/warning:")
-
-            _render_intel_section(analysis)
+            with tab_agents:
+                _render_intel_section(analysis)
 
     # ── Tableau récapitulatif final ──
     all_vbs = []
@@ -983,7 +994,19 @@ def page_history():
         icon=":material/search:",
     )
 
+    filt = st.pills(
+        "Filtre",
+        ["Tous", "Avec value", "Sans value"],
+        default="Tous",
+        label_visibility="collapsed",
+    )
+
     history = db.get_analysis_history(search=search.strip())
+
+    if filt == "Avec value":
+        history = [h for h in history if (h["n_value_bets"] or 0) > 0]
+    elif filt == "Sans value":
+        history = [h for h in history if not (h["n_value_bets"] or 0)]
 
     if not history:
         st.info(
@@ -1143,19 +1166,23 @@ def page_dashboard():
             border=True,
         )
 
-    # Graphique d'évolution du bankroll
-    backtester = init_modules()["backtester"]
-    result = backtester.run_backtest()
+    # Graphiques construits depuis la base (paris résolus, hors non joués)
+    resolved = db.get_resolved_bets()
 
-    if result.bankroll_history:
+    if resolved:
         st.space("small")
-        st.subheader(":material/finance_mode: Évolution du bankroll")
+        st.subheader(":material/finance_mode: Profit cumulé")
+
+        cumul, serie = 0.0, [0.0]
+        for b in resolved:
+            cumul += b["profit"] or 0
+            serie.append(cumul)
 
         fig = go.Figure()
         fig.add_trace(go.Scatter(
-            y=result.bankroll_history,
+            y=serie,
             mode='lines',
-            name='Bankroll',
+            name='Profit',
             line=dict(color=COLOR_GREEN, width=2),
             fill='tozeroy',
             fillcolor='rgba(52, 211, 153, 0.08)'
@@ -1164,7 +1191,7 @@ def page_dashboard():
         fig.update_layout(
             height=400,
             xaxis_title="Nombre de paris",
-            yaxis_title="Bankroll (FCFA)",
+            yaxis_title="Profit cumulé (FCFA)",
             margin=dict(l=40, r=40, t=20, b=40),
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
@@ -1174,6 +1201,49 @@ def page_dashboard():
         )
 
         st.plotly_chart(fig)
+
+        # Performance par marché
+        perf: dict = {}
+        for b in resolved:
+            market = (b["market"] or "Inconnu")[:30]
+            d = perf.setdefault(
+                market, {"bets": 0, "staked": 0.0, "profit": 0.0}
+            )
+            d["bets"] += 1
+            d["staked"] += b["recommended_stake"] or 0
+            d["profit"] += b["profit"] or 0
+
+        for d in perf.values():
+            d["roi"] = d["profit"] / max(d["staked"], 1) * 100
+
+        st.space("small")
+        st.subheader(":material/bar_chart: Performance par marché")
+
+        markets = sorted(
+            perf.items(), key=lambda kv: kv[1]["roi"], reverse=True
+        )
+        labels = [m for m, _ in markets]
+        rois = [d["roi"] for _, d in markets]
+        colors = [COLOR_GREEN if r >= 0 else COLOR_RED for r in rois]
+
+        fig_mk = go.Figure(go.Bar(
+            x=rois, y=labels, orientation="h",
+            marker_color=colors,
+            text=[f"{r:+.1f}% ({d['bets']} paris)"
+                  for r, (_, d) in zip(rois, markets)],
+            textposition="auto",
+        ))
+        fig_mk.update_layout(
+            height=max(220, 60 * len(labels)),
+            xaxis_title="ROI (%)",
+            margin=dict(l=40, r=40, t=10, b=40),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(color='#F1F5F9', family='Inter'),
+            xaxis=dict(gridcolor='#334155'),
+            yaxis=dict(gridcolor='rgba(0,0,0,0)'),
+        )
+        st.plotly_chart(fig_mk)
 
 
 # ══════════════════════════════════════════════════════
@@ -1199,32 +1269,38 @@ def page_backtesting():
         st.subheader(":material/pending: Paris en attente de résultat")
 
         for bet in pending:
-            col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
-
-            with col1:
-                st.write(
-                    f"**{bet['home_team']} vs {bet['away_team']}** — "
-                    f"{bet['market']} → {bet['selection']} @ {bet['bookmaker_odds']}"
+            with st.container(border=True):
+                col1, col2, col3, col4 = st.columns(
+                    [3, 1, 1, 1], vertical_alignment="center"
                 )
 
-            with col2:
-                if st.button("Gagné", key=f"win_{bet['id']}",
-                             icon=":material/check_circle:"):
-                    profit = bet['recommended_stake'] * (bet['bookmaker_odds'] - 1)
-                    db.update_bet_result(bet['id'], "win", profit)
-                    st.rerun()
+                with col1:
+                    st.markdown(
+                        f"**{bet['home_team']} vs {bet['away_team']}**  \n"
+                        f"{bet['market']} → {bet['selection']} "
+                        f":blue-badge[@ {bet['bookmaker_odds']:.2f}] "
+                        f":green-badge[mise "
+                        f"{bet['recommended_stake'] or 0:,.0f} FCFA]"
+                    )
 
-            with col3:
-                if st.button("Perdu", key=f"loss_{bet['id']}",
-                             icon=":material/cancel:"):
-                    db.update_bet_result(bet['id'], "loss", -bet['recommended_stake'])
-                    st.rerun()
+                with col2:
+                    if st.button("Gagné", key=f"win_{bet['id']}",
+                                 icon=":material/check_circle:"):
+                        profit = bet['recommended_stake'] * (bet['bookmaker_odds'] - 1)
+                        db.update_bet_result(bet['id'], "win", profit)
+                        st.rerun()
 
-            with col4:
-                if st.button("Non joué", key=f"void_{bet['id']}",
-                             icon=":material/remove_circle_outline:"):
-                    db.update_bet_result(bet['id'], "void", 0.0)
-                    st.rerun()
+                with col3:
+                    if st.button("Perdu", key=f"loss_{bet['id']}",
+                                 icon=":material/cancel:"):
+                        db.update_bet_result(bet['id'], "loss", -bet['recommended_stake'])
+                        st.rerun()
+
+                with col4:
+                    if st.button("Non joué", key=f"void_{bet['id']}",
+                                 icon=":material/remove_circle_outline:"):
+                        db.update_bet_result(bet['id'], "void", 0.0)
+                        st.rerun()
 
     # Lancer le backtest
     st.space("small")
@@ -1349,11 +1425,34 @@ def page_home():
     st.markdown(
         ":green-badge[:material/check: 25 marchés analysés] "
         ":blue-badge[:material/psychology: Poisson + Elo + stats réelles] "
-        ":violet-badge[:material/calculate: Mises Kelly]"
+        ":violet-badge[:material/groups: Conseil d'agents IA] "
+        ":orange-badge[:material/calculate: Mises Kelly]"
     )
+
+    # Activité réelle de l'utilisateur
+    db = init_modules()["db"]
+    history = db.get_analysis_history(limit=500)
+    stats = db.get_performance_stats()
+
+    if history:
+        st.space("medium")
+        n_vbs = sum(h["n_value_bets"] or 0 for h in history)
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Analyses réalisées", len(history), border=True)
+        c2.metric("Value bets détectés", n_vbs, border=True)
+        c3.metric(
+            "Paris suivis", stats.get("total_bets", 0) or 0, border=True
+        )
+        roi = stats.get("roi", 0) if stats.get("total_bets") else None
+        c4.metric(
+            "ROI réel",
+            f"{roi:+.1f}%" if roi is not None else "—",
+            border=True,
+        )
 
     st.space("medium")
 
+    nav = st.session_state.get("nav_pages", {})
     col1, col2, col3 = st.columns(3)
 
     with col1:
@@ -1363,6 +1462,9 @@ def page_home():
                 "Dépose tes captures Betclic : matchs, cotes et marchés "
                 "sont lus et fusionnés automatiquement."
             )
+            if nav.get("upload"):
+                st.page_link(nav["upload"], label="Analyser des captures",
+                             icon=":material/arrow_forward:")
 
     with col2:
         with st.container(border=True):
@@ -1371,6 +1473,9 @@ def page_home():
                 "Entre les cotes à la main, du 1X2 aux tirs cadrés, "
                 "quand tu n'as pas de capture sous la main."
             )
+            if nav.get("saisie"):
+                st.page_link(nav["saisie"], label="Saisir un match",
+                             icon=":material/arrow_forward:")
 
     with col3:
         with st.container(border=True):
@@ -1379,6 +1484,9 @@ def page_home():
                 "Suis ton ROI réel, ton bankroll et la performance du "
                 "modèle sur tes paris enregistrés."
             )
+            if nav.get("dashboard"):
+                st.page_link(nav["dashboard"], label="Voir mes stats",
+                             icon=":material/arrow_forward:")
 
     st.space("medium")
     st.caption(
@@ -1390,6 +1498,11 @@ def page_home():
 
 def main():
     """Point d'entrée de l'application Streamlit."""
+
+    st.logo(
+        "https://img.icons8.com/color/96/football2--v1.png",
+        size="large",
+    )
 
     bankroll, min_value, min_confidence, deep_analysis = (
         render_sidebar_settings()
@@ -1403,23 +1516,29 @@ def main():
         page_manual_entry(bankroll, min_value, min_confidence,
                           deep_analysis)
 
-    pg = st.navigation([
-        st.Page(page_home, title="Accueil",
-                icon=":material/home:", default=True),
-        st.Page(_upload, title="Upload captures",
-                icon=":material/photo_camera:", url_path="upload"),
-        st.Page(_manual, title="Saisie manuelle",
-                icon=":material/edit_note:", url_path="saisie"),
-        st.Page(page_dashboard, title="Tableau de bord",
-                icon=":material/monitoring:", url_path="dashboard"),
-        st.Page(page_history, title="Historique",
-                icon=":material/receipt_long:", url_path="historique"),
-        st.Page(page_backtesting, title="Backtesting",
-                icon=":material/history:", url_path="backtesting"),
-        st.Page(page_settings, title="Paramètres",
-                icon=":material/settings:", url_path="parametres"),
-    ])
+    pages = {
+        "home": st.Page(page_home, title="Accueil",
+                        icon=":material/home:", default=True),
+        "upload": st.Page(_upload, title="Upload captures",
+                          icon=":material/photo_camera:", url_path="upload"),
+        "saisie": st.Page(_manual, title="Saisie manuelle",
+                          icon=":material/edit_note:", url_path="saisie"),
+        "dashboard": st.Page(page_dashboard, title="Tableau de bord",
+                             icon=":material/monitoring:",
+                             url_path="dashboard"),
+        "historique": st.Page(page_history, title="Historique",
+                              icon=":material/receipt_long:",
+                              url_path="historique"),
+        "backtesting": st.Page(page_backtesting, title="Backtesting",
+                               icon=":material/history:",
+                               url_path="backtesting"),
+        "parametres": st.Page(page_settings, title="Paramètres",
+                              icon=":material/settings:",
+                              url_path="parametres"),
+    }
+    st.session_state["nav_pages"] = pages
 
+    pg = st.navigation(list(pages.values()))
     pg.run()
 
 

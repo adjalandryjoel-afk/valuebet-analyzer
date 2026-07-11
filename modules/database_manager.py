@@ -434,6 +434,23 @@ class DatabaseManager:
             rows = conn.execute(query, params).fetchall()
             return [dict(row) for row in rows]
 
+    def get_resolved_bets(self) -> List[Dict]:
+        """
+        Value bets résolus (hors « non joué »), du plus ancien au plus
+        récent — pour les graphiques de profit et de performance.
+        """
+
+        with self._get_connection() as conn:
+            rows = conn.execute("""
+                SELECT market, selection, bookmaker_odds,
+                       recommended_stake, result, profit, created_at
+                FROM value_bets
+                WHERE result IS NOT NULL AND result != 'void'
+                ORDER BY created_at ASC, id ASC
+            """).fetchall()
+
+            return [dict(row) for row in rows]
+
     def get_value_bets_for_match(self, match_id: int) -> List[Dict]:
         """Value bets enregistrés pour une analyse donnée."""
 
