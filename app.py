@@ -498,6 +498,17 @@ def analyze_matches_ui(matches, bankroll, min_value, min_confidence,
         analysis._stakes = stakes
         analysis._intel = intel_report
         analysis._verdict = verdict
+        analysis._data_sources = {
+            "elo": getattr(elo_pred, "elo_source", "estimé"),
+            "xg": bool(
+                getattr(context.home_stats, "xg_available", False)
+                or getattr(context.away_stats, "xg_available", False)
+            ),
+            "stats_api": "api" in {
+                getattr(context.home_stats, "data_source", ""),
+                getattr(context.away_stats, "data_source", ""),
+            },
+        }
 
         # 8. Persister dans l'historique (base SQLite)
         try:
@@ -928,6 +939,23 @@ def display_results(analyses, bankroll):
                     f":material/percent: Marge Betclic : **{analysis.bookmaker_margin:.1f}%** · "
                     f":material/verified: Confiance : **{analysis.analysis_confidence:.0f}/100**"
                 )
+
+                sources = getattr(analysis, "_data_sources", None)
+                if sources:
+                    badges = []
+                    if sources.get("elo") == "clubelo":
+                        badges.append(
+                            ":blue-badge[:material/leaderboard: Elo réel ClubElo]")
+                    if sources.get("xg"):
+                        badges.append(
+                            ":green-badge[:material/query_stats: xG saison récente]")
+                    if sources.get("stats_api"):
+                        badges.append(
+                            ":violet-badge[:material/database: Stats API]")
+                    if not badges:
+                        badges.append(
+                            ":gray-badge[:material/casino: Estimation par les cotes]")
+                    st.markdown("Sources de données : " + " ".join(badges))
 
                 if analysis.data_warning:
                     st.warning(analysis.data_warning, icon=":material/warning:")

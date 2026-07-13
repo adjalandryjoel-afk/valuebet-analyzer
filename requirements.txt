@@ -41,6 +41,7 @@ jinja2>=3.1.0
 # === UTILITAIRES ===
 python-dotenv>=1.0.0
 rapidfuzz>=3.2.0
+soccerdata>=1.8.0        # xG Understat (xg_provider.py)
 shin>=0.2.0
 tenacity>=8.2.0
 schedule>=1.2.0

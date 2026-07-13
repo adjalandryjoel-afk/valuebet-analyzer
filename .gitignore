@@ -16,3 +16,5 @@ reports/
 screenshots/
 models/
 data/football_data/
+data/clubelo_cache.json
+data/xg_cache.json

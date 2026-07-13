@@ -8,6 +8,12 @@ de ratings donne une espérance de victoire. Les ratings
 sont persistés dans data/elo_ratings.json et peuvent être
 initialisés depuis les cotes du marché quand une équipe
 est inconnue.
+
+Source prioritaire : ClubElo (clubelo.com), un vrai Elo
+européen indépendant des cotes — évite la circularité avec
+l'ancrage marché. Repli : ratings estimés depuis les cotes.
+ATTENTION : les deux échelles sont incompatibles (~1900 vs
+~1550 pour un top club) et ne sont jamais mélangées.
 """
 
 import os
@@ -19,6 +25,11 @@ from dataclasses import dataclass
 
 from config import Paths, EloConfig
 from modules.odds_utils import novig_probs
+
+try:
+    from modules.clubelo import ClubEloProvider
+except ImportError:
+    ClubEloProvider = None
 
 
 @dataclass
@@ -40,13 +51,28 @@ class EloPrediction:
 
     model_name: str = "Elo"
 
+    # Provenance des ratings : "clubelo" (Elo réel, les deux
+    # équipes trouvées) ou "estimé" (repli depuis les cotes)
+    elo_source: str = "estimé"
+
 
 class EloRatingSystem:
     """Gestion des ratings Elo des équipes."""
 
-    def __init__(self):
+    def __init__(self, clubelo=None):
         self.ratings: Dict[str, float] = {}
         self._load_ratings()
+
+        # Fournisseur ClubElo (Elo réel indépendant des cotes)
+        if clubelo is not None:
+            self.clubelo = clubelo
+        elif ClubEloProvider is not None:
+            try:
+                self.clubelo = ClubEloProvider()
+            except Exception:
+                self.clubelo = None
+        else:
+            self.clubelo = None
 
     # ─── PERSISTENCE ────────────────────────────────
 
@@ -126,10 +152,27 @@ class EloRatingSystem:
 
         Modèle de nul : la probabilité de nul est maximale quand
         les équipes sont proches et diminue avec l'écart de niveau.
+
+        Ratings : ClubElo si les DEUX équipes y sont trouvées
+        (l'échelle ClubElo est directement compatible avec la
+        logistique diff/400 et l'avantage domicile ~60 pts),
+        sinon repli sur les ratings estimés depuis les cotes.
+        Les deux échelles ne sont JAMAIS mélangées.
         """
 
-        home_rating = self.get_rating(home_team)
-        away_rating = self.get_rating(away_team)
+        elo_source = "estimé"
+        home_rating = away_rating = None
+
+        if self.clubelo is not None:
+            ce_home = self.clubelo.get_rating(home_team)
+            ce_away = self.clubelo.get_rating(away_team)
+            if ce_home is not None and ce_away is not None:
+                home_rating, away_rating = ce_home, ce_away
+                elo_source = "clubelo"
+
+        if home_rating is None or away_rating is None:
+            home_rating = self.get_rating(home_team)
+            away_rating = self.get_rating(away_team)
 
         # Espérance avec avantage domicile
         diff = (home_rating + EloConfig.HOME_ADVANTAGE_ELO) - away_rating
@@ -155,6 +198,7 @@ class EloRatingSystem:
             prob_home_win=round(prob_home, 4),
             prob_draw=round(prob_draw, 4),
             prob_away_win=round(prob_away, 4),
+            elo_source=elo_source,
         )
 
     # ─── MISE À JOUR APRÈS MATCH ────────────────────

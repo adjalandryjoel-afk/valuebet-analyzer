@@ -99,6 +99,14 @@ class DataCollector:
         self.historical = self._load_historical()
         self.api_collector = ApiFootballCollector()
 
+        # Fournisseur xG (soccerdata/Understat) — défensif : ne doit
+        # jamais empêcher le collecteur de fonctionner s'il est cassé
+        try:
+            from modules.xg_provider import XgProvider
+            self.xg_provider = XgProvider()
+        except Exception:
+            self.xg_provider = None
+
     def _load_historical(self) -> Dict:
         """Charge les stats historiques sauvegardées si présentes."""
 
@@ -153,8 +161,27 @@ class DataCollector:
                                               is_home=False)
         )
 
+        # Enrichissement xG (soccerdata/Understat) — 5 grands
+        # championnats uniquement (get_xg_profile filtre lui-même
+        # les autres ligues et retourne None sans requête)
+        xg_bonus = 0.0
+        if self.xg_provider is not None:
+            for stats in (context.home_stats, context.away_stats):
+                try:
+                    xg = self.xg_provider.get_xg_profile(
+                        stats.team_name, league
+                    )
+                except Exception:
+                    xg = None
+                if xg:
+                    stats.xg_scored = xg["xg_for_avg"]
+                    stats.xg_conceded = xg["xga_avg"]
+                    stats.xg_available = True
+                    xg_bonus += 10.0
+
         # Score de complétude
         completeness = 30.0  # cotes 1X2 = base
+        completeness += xg_bonus  # +10 par équipe avec profil xG
         if odds.get("over_2_5") and odds.get("under_2_5"):
             completeness += 15
         if odds.get("btts_oui") and odds.get("btts_non"):
