@@ -41,8 +41,11 @@ jinja2>=3.1.0
 # === UTILITAIRES ===
 python-dotenv>=1.0.0
 rapidfuzz>=3.2.0
-soccerdata>=1.8.0        # xG Understat (xg_provider.py)
-shin>=0.2.0
+# soccerdata>=1.8.0      # xG Understat — LOCAL uniquement (dépendances
+#                          lourdes qui cassent le build Streamlit Cloud ;
+#                          xg_provider dégrade proprement sans lui)
+# shin>=0.2.0            # wheel Rust sans build Linux py3.13 — remplacé
+#                          par l'implémentation pure Python d'odds_utils
 tenacity>=8.2.0
 schedule>=1.2.0
 pytz>=2023.3
