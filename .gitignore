@@ -18,3 +18,5 @@ models/
 data/football_data/
 data/clubelo_cache.json
 data/xg_cache.json
+data/clv_daemon.log
+data/clv_daemon_state.json
