@@ -71,8 +71,7 @@ def page_header(icon: str, title: str, caption: str = ""):
 def _expected_access_code() -> str:
     """
     Code d'accès attendu (secrets Streamlit ou variable
-    d'environnement). Chaîne vide = porte désactivée — l'app
-    reste ouverte, typiquement en local sur le PC.
+    d'environnement). Chaîne vide = pas de code en clair configuré.
     """
 
     try:
@@ -80,6 +79,57 @@ def _expected_access_code() -> str:
     except Exception:
         code = ""
     return code or os.getenv("APP_ACCESS_CODE", "").strip()
+
+
+def _access_gate_hash() -> dict:
+    """
+    Empreinte PBKDF2 du code d'accès (data/access_gate.json).
+
+    L'empreinte est publiable sans risque (300 000 itérations,
+    sel aléatoire) : elle permet d'activer le verrou sur le cloud
+    SANS toucher au tableau de bord Streamlit. Active uniquement
+    sur le cloud (/mount/src) ou si ACCESS_GATE_FORCE=1 — le PC
+    local reste sans friction.
+    """
+
+    on_cloud = os.path.exists("/mount/src")
+    forced = os.getenv("ACCESS_GATE_FORCE", "").strip() == "1"
+    if not (on_cloud or forced):
+        return {}
+
+    try:
+        with open(os.path.join(Paths.DATA_DIR, "access_gate.json"),
+                  encoding="utf-8") as f:
+            gate = json.load(f)
+        if gate.get("salt") and gate.get("hash"):
+            return gate
+    except Exception:
+        pass
+    return {}
+
+
+def _code_matches(saisie: str, expected: str, gate: dict) -> bool:
+    """Valide la saisie contre le code en clair OU l'empreinte."""
+
+    import hmac
+
+    if expected:
+        return hmac.compare_digest(saisie, expected)
+
+    if gate:
+        import hashlib
+        try:
+            h = hashlib.pbkdf2_hmac(
+                "sha256",
+                saisie.encode(),
+                bytes.fromhex(gate["salt"]),
+                int(gate.get("iterations", 300_000)),
+            ).hex()
+            return hmac.compare_digest(h, gate["hash"])
+        except Exception:
+            return False
+
+    return False
 
 
 def check_access() -> bool:
@@ -92,8 +142,9 @@ def check_access() -> bool:
     """
 
     expected = _expected_access_code()
-    if not expected:
-        return True  # pas de code configuré → accès libre (local)
+    gate = _access_gate_hash()
+    if not expected and not gate:
+        return True  # pas de verrou configuré → accès libre (local)
 
     if st.session_state.get("acces_valide"):
         return True
@@ -118,9 +169,8 @@ def check_access() -> bool:
             )
 
         if valider:
-            import hmac
             import time as _time
-            if hmac.compare_digest(saisie.strip(), expected):
+            if _code_matches(saisie.strip(), expected, gate):
                 st.session_state["acces_valide"] = True
                 st.rerun()
             else:
