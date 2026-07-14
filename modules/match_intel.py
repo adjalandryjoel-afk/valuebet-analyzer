@@ -303,13 +303,23 @@ class MatchIntelligence:
                     "D": "D", "L": "D"}.get(letter)
 
         if isinstance(entry, dict):
-            direct = str(entry.get("result", "") or "").strip().upper()[:1]
+            direct = str(entry.get("result") or entry.get("resultat")
+                         or "").strip().upper()[:1]
             if direct in ("V", "W"):
                 return "V"
             if direct == "N":
                 return "N"
             if direct in ("D", "L"):
                 return "D"
+
+            # Score texte "2-1" (buts de l'équipe d'abord)
+            score = str(entry.get("score") or "")
+            if "-" in score:
+                try:
+                    gf, ga = (int(x) for x in score.split("-", 1))
+                    return "V" if gf > ga else ("N" if gf == ga else "D")
+                except (TypeError, ValueError):
+                    pass
 
             for k_for, k_against in (("scored", "conceded"),
                                      ("goals_for", "goals_against"),
