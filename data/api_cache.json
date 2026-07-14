@@ -1,0 +1,2005 @@
+{
+  "paris saint germain": {
+    "team_id": 85,
+    "ts": 1784037531.8331797,
+    "stats": {
+      "avg_goals_scored": 2.6,
+      "avg_goals_conceded": 1.12,
+      "avg_goals_scored_home": 2.53,
+      "avg_goals_conceded_home": 0.87,
+      "avg_goals_scored_away": 2.68,
+      "avg_goals_conceded_away": 1.42,
+      "recent_form_score": 1.5,
+      "recent_results": [
+        {
+          "date": "2025-05-31",
+          "venue": "dom",
+          "adversaire": "Inter",
+          "score": "5-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-24",
+          "venue": "dom",
+          "adversaire": "Reims",
+          "score": "3-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-17",
+          "venue": "dom",
+          "adversaire": "Auxerre",
+          "score": "3-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-10",
+          "venue": "ext",
+          "adversaire": "Montpellier",
+          "score": "4-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-07",
+          "venue": "dom",
+          "adversaire": "Arsenal",
+          "score": "2-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-03",
+          "venue": "ext",
+          "adversaire": "Strasbourg",
+          "score": "1-2",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-04-29",
+          "venue": "ext",
+          "adversaire": "Arsenal",
+          "score": "1-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-25",
+          "venue": "dom",
+          "adversaire": "Nice",
+          "score": "1-3",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-04-22",
+          "venue": "ext",
+          "adversaire": "Nantes",
+          "score": "1-1",
+          "resultat": "N"
+        },
+        {
+          "date": "2025-04-19",
+          "venue": "dom",
+          "adversaire": "Le Havre",
+          "score": "2-1",
+          "resultat": "V"
+        }
+      ],
+      "matches_played": 15,
+      "last_match_date": "2025-05-31",
+      "stale": true,
+      "age_days": 409
+    }
+  },
+  "_meta": {
+    "season": 2024
+  },
+  "marseille": {
+    "team_id": 81,
+    "ts": 1784037534.1729121,
+    "stats": {
+      "avg_goals_scored": 2.29,
+      "avg_goals_conceded": 1.6,
+      "avg_goals_scored_home": 3.28,
+      "avg_goals_conceded_home": 1.26,
+      "avg_goals_scored_away": 1.16,
+      "avg_goals_conceded_away": 1.99,
+      "recent_form_score": 1.5,
+      "recent_results": [
+        {
+          "date": "2025-05-17",
+          "venue": "dom",
+          "adversaire": "Rennes",
+          "score": "4-2",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-10",
+          "venue": "ext",
+          "adversaire": "Le Havre",
+          "score": "3-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-04",
+          "venue": "ext",
+          "adversaire": "Lille",
+          "score": "1-1",
+          "resultat": "N"
+        },
+        {
+          "date": "2025-04-27",
+          "venue": "dom",
+          "adversaire": "Stade Brestois 29",
+          "score": "4-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-19",
+          "venue": "dom",
+          "adversaire": "Montpellier",
+          "score": "5-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-12",
+          "venue": "ext",
+          "adversaire": "Monaco",
+          "score": "0-3",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-04-06",
+          "venue": "dom",
+          "adversaire": "Toulouse",
+          "score": "3-2",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-03-29",
+          "venue": "ext",
+          "adversaire": "Reims",
+          "score": "1-3",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-03-16",
+          "venue": "ext",
+          "adversaire": "Paris Saint Germain",
+          "score": "1-3",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-03-08",
+          "venue": "dom",
+          "adversaire": "Lens",
+          "score": "0-1",
+          "resultat": "D"
+        }
+      ],
+      "matches_played": 15,
+      "last_match_date": "2025-05-17",
+      "stale": true,
+      "age_days": 423
+    }
+  },
+  "lyon": {
+    "team_id": 80,
+    "ts": 1784037536.2202044,
+    "stats": {
+      "avg_goals_scored": 2.38,
+      "avg_goals_conceded": 1.61,
+      "avg_goals_scored_home": 2.6,
+      "avg_goals_conceded_home": 1.12,
+      "avg_goals_scored_away": 2.12,
+      "avg_goals_conceded_away": 2.17,
+      "recent_form_score": 1.5,
+      "recent_results": [
+        {
+          "date": "2025-05-17",
+          "venue": "dom",
+          "adversaire": "Angers",
+          "score": "2-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-10",
+          "venue": "ext",
+          "adversaire": "Monaco",
+          "score": "0-2",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-05-04",
+          "venue": "dom",
+          "adversaire": "Lens",
+          "score": "1-2",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-04-26",
+          "venue": "dom",
+          "adversaire": "Rennes",
+          "score": "4-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-20",
+          "venue": "ext",
+          "adversaire": "Saint Etienne",
+          "score": "1-2",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-04-17",
+          "venue": "ext",
+          "adversaire": "Manchester United",
+          "score": "4-5",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-04-13",
+          "venue": "ext",
+          "adversaire": "Auxerre",
+          "score": "3-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-10",
+          "venue": "dom",
+          "adversaire": "Manchester United",
+          "score": "2-2",
+          "resultat": "N"
+        },
+        {
+          "date": "2025-04-05",
+          "venue": "dom",
+          "adversaire": "Lille",
+          "score": "2-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-03-28",
+          "venue": "ext",
+          "adversaire": "Strasbourg",
+          "score": "2-4",
+          "resultat": "D"
+        }
+      ],
+      "matches_played": 15,
+      "last_match_date": "2025-05-17",
+      "stale": true,
+      "age_days": 423
+    }
+  },
+  "monaco": {
+    "team_id": 91,
+    "ts": 1784037538.4689112,
+    "stats": {
+      "avg_goals_scored": 1.9,
+      "avg_goals_conceded": 1.14,
+      "avg_goals_scored_home": 2.38,
+      "avg_goals_conceded_home": 0.41,
+      "avg_goals_scored_away": 1.48,
+      "avg_goals_conceded_away": 1.76,
+      "recent_form_score": 1.5,
+      "recent_results": [
+        {
+          "date": "2025-05-17",
+          "venue": "ext",
+          "adversaire": "Lens",
+          "score": "0-4",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-05-10",
+          "venue": "dom",
+          "adversaire": "Lyon",
+          "score": "2-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-03",
+          "venue": "ext",
+          "adversaire": "Saint Etienne",
+          "score": "3-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-26",
+          "venue": "ext",
+          "adversaire": "Le Havre",
+          "score": "1-1",
+          "resultat": "N"
+        },
+        {
+          "date": "2025-04-19",
+          "venue": "dom",
+          "adversaire": "Strasbourg",
+          "score": "0-0",
+          "resultat": "N"
+        },
+        {
+          "date": "2025-04-12",
+          "venue": "dom",
+          "adversaire": "Marseille",
+          "score": "3-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-05",
+          "venue": "ext",
+          "adversaire": "Stade Brestois 29",
+          "score": "1-2",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-03-29",
+          "venue": "dom",
+          "adversaire": "Nice",
+          "score": "2-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-03-15",
+          "venue": "ext",
+          "adversaire": "Angers",
+          "score": "2-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-03-07",
+          "venue": "ext",
+          "adversaire": "Toulouse",
+          "score": "1-1",
+          "resultat": "N"
+        }
+      ],
+      "matches_played": 15,
+      "last_match_date": "2025-05-17",
+      "stale": true,
+      "age_days": 423
+    }
+  },
+  "manchester city": {
+    "team_id": 50,
+    "ts": 1784037540.8523536,
+    "stats": {
+      "avg_goals_scored": 1.73,
+      "avg_goals_conceded": 0.65,
+      "avg_goals_scored_home": 2.57,
+      "avg_goals_conceded_home": 0.99,
+      "avg_goals_scored_away": 1.01,
+      "avg_goals_conceded_away": 0.37,
+      "recent_form_score": 1.5,
+      "recent_results": [
+        {
+          "date": "2025-05-25",
+          "venue": "ext",
+          "adversaire": "Fulham",
+          "score": "2-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-20",
+          "venue": "dom",
+          "adversaire": "Bournemouth",
+          "score": "3-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-17",
+          "venue": "ext",
+          "adversaire": "Crystal Palace",
+          "score": "0-1",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-05-10",
+          "venue": "ext",
+          "adversaire": "Southampton",
+          "score": "0-0",
+          "resultat": "N"
+        },
+        {
+          "date": "2025-05-02",
+          "venue": "dom",
+          "adversaire": "Wolves",
+          "score": "1-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-27",
+          "venue": "ext",
+          "adversaire": "Nottingham Forest",
+          "score": "2-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-22",
+          "venue": "dom",
+          "adversaire": "Aston Villa",
+          "score": "2-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-19",
+          "venue": "ext",
+          "adversaire": "Everton",
+          "score": "2-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-12",
+          "venue": "dom",
+          "adversaire": "Crystal Palace",
+          "score": "5-2",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-06",
+          "venue": "ext",
+          "adversaire": "Manchester United",
+          "score": "0-0",
+          "resultat": "N"
+        }
+      ],
+      "matches_played": 15,
+      "last_match_date": "2025-05-25",
+      "stale": true,
+      "age_days": 415
+    }
+  },
+  "manchester united": {
+    "team_id": 33,
+    "ts": 1784037543.035189,
+    "stats": {
+      "avg_goals_scored": 1.95,
+      "avg_goals_conceded": 1.64,
+      "avg_goals_scored_home": 2.39,
+      "avg_goals_conceded_home": 1.47,
+      "avg_goals_scored_away": 1.41,
+      "avg_goals_conceded_away": 1.84,
+      "recent_form_score": 1.5,
+      "recent_results": [
+        {
+          "date": "2025-08-03",
+          "venue": "dom",
+          "adversaire": "Everton",
+          "score": "2-2",
+          "resultat": "N"
+        },
+        {
+          "date": "2025-07-31",
+          "venue": "dom",
+          "adversaire": "Bournemouth",
+          "score": "4-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-07-26",
+          "venue": "dom",
+          "adversaire": "West Ham",
+          "score": "2-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-25",
+          "venue": "dom",
+          "adversaire": "Aston Villa",
+          "score": "2-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-21",
+          "venue": "ext",
+          "adversaire": "Tottenham",
+          "score": "0-1",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-05-16",
+          "venue": "ext",
+          "adversaire": "Chelsea",
+          "score": "0-1",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-05-11",
+          "venue": "dom",
+          "adversaire": "West Ham",
+          "score": "0-2",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-05-08",
+          "venue": "dom",
+          "adversaire": "Athletic Club",
+          "score": "4-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-04",
+          "venue": "ext",
+          "adversaire": "Brentford",
+          "score": "3-4",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-05-01",
+          "venue": "ext",
+          "adversaire": "Athletic Club",
+          "score": "3-0",
+          "resultat": "V"
+        }
+      ],
+      "matches_played": 15,
+      "last_match_date": "2025-08-03",
+      "stale": true,
+      "age_days": 345
+    }
+  },
+  "liverpool": {
+    "team_id": 40,
+    "ts": 1784037545.0496538,
+    "stats": {
+      "avg_goals_scored": 1.74,
+      "avg_goals_conceded": 1.23,
+      "avg_goals_scored_home": 1.9,
+      "avg_goals_conceded_home": 1.01,
+      "avg_goals_scored_away": 1.5,
+      "avg_goals_conceded_away": 1.57,
+      "recent_form_score": 1.5,
+      "recent_results": [
+        {
+          "date": "2025-05-25",
+          "venue": "dom",
+          "adversaire": "Crystal Palace",
+          "score": "1-1",
+          "resultat": "N"
+        },
+        {
+          "date": "2025-05-19",
+          "venue": "ext",
+          "adversaire": "Brighton",
+          "score": "2-3",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-05-11",
+          "venue": "dom",
+          "adversaire": "Arsenal",
+          "score": "2-2",
+          "resultat": "N"
+        },
+        {
+          "date": "2025-05-04",
+          "venue": "ext",
+          "adversaire": "Chelsea",
+          "score": "1-3",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-04-27",
+          "venue": "dom",
+          "adversaire": "Tottenham",
+          "score": "5-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-20",
+          "venue": "ext",
+          "adversaire": "Leicester",
+          "score": "1-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-13",
+          "venue": "dom",
+          "adversaire": "West Ham",
+          "score": "2-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-06",
+          "venue": "ext",
+          "adversaire": "Fulham",
+          "score": "2-3",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-04-02",
+          "venue": "dom",
+          "adversaire": "Everton",
+          "score": "1-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-03-16",
+          "venue": "dom",
+          "adversaire": "Newcastle",
+          "score": "1-2",
+          "resultat": "D"
+        }
+      ],
+      "matches_played": 15,
+      "last_match_date": "2025-05-25",
+      "stale": true,
+      "age_days": 415
+    }
+  },
+  "arsenal": {
+    "team_id": 42,
+    "ts": 1784037857.6249743,
+    "stats": {
+      "avg_goals_scored": 1.66,
+      "avg_goals_conceded": 1.07,
+      "avg_goals_scored_home": 1.43,
+      "avg_goals_conceded_home": 1.0,
+      "avg_goals_scored_away": 2.0,
+      "avg_goals_conceded_away": 1.18,
+      "recent_form_score": 1.5,
+      "recent_results": [
+        {
+          "date": "2025-05-25",
+          "venue": "ext",
+          "adversaire": "Southampton",
+          "score": "2-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-18",
+          "venue": "dom",
+          "adversaire": "Newcastle",
+          "score": "1-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-11",
+          "venue": "ext",
+          "adversaire": "Liverpool",
+          "score": "2-2",
+          "resultat": "N"
+        },
+        {
+          "date": "2025-05-07",
+          "venue": "ext",
+          "adversaire": "Paris Saint Germain",
+          "score": "1-2",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-05-03",
+          "venue": "dom",
+          "adversaire": "Bournemouth",
+          "score": "1-2",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-04-29",
+          "venue": "dom",
+          "adversaire": "Paris Saint Germain",
+          "score": "0-1",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-04-23",
+          "venue": "dom",
+          "adversaire": "Crystal Palace",
+          "score": "2-2",
+          "resultat": "N"
+        },
+        {
+          "date": "2025-04-20",
+          "venue": "ext",
+          "adversaire": "Ipswich",
+          "score": "4-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-16",
+          "venue": "ext",
+          "adversaire": "Real Madrid",
+          "score": "2-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-12",
+          "venue": "dom",
+          "adversaire": "Brentford",
+          "score": "1-1",
+          "resultat": "N"
+        }
+      ],
+      "matches_played": 15,
+      "last_match_date": "2025-05-25",
+      "stale": true,
+      "age_days": 415
+    }
+  },
+  "chelsea": {
+    "team_id": 49,
+    "ts": 1784037870.6580675,
+    "stats": {
+      "avg_goals_scored": 1.62,
+      "avg_goals_conceded": 0.73,
+      "avg_goals_scored_home": 1.43,
+      "avg_goals_conceded_home": 0.7,
+      "avg_goals_scored_away": 1.78,
+      "avg_goals_conceded_away": 0.76,
+      "recent_form_score": 1.5,
+      "recent_results": [
+        {
+          "date": "2025-05-28",
+          "venue": "ext",
+          "adversaire": "Real Betis",
+          "score": "4-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-25",
+          "venue": "ext",
+          "adversaire": "Nottingham Forest",
+          "score": "1-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-16",
+          "venue": "dom",
+          "adversaire": "Manchester United",
+          "score": "1-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-11",
+          "venue": "ext",
+          "adversaire": "Newcastle",
+          "score": "0-2",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-05-08",
+          "venue": "dom",
+          "adversaire": "Djurgardens IF",
+          "score": "1-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-04",
+          "venue": "dom",
+          "adversaire": "Liverpool",
+          "score": "3-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-01",
+          "venue": "ext",
+          "adversaire": "Djurgardens IF",
+          "score": "4-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-26",
+          "venue": "dom",
+          "adversaire": "Everton",
+          "score": "1-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-20",
+          "venue": "ext",
+          "adversaire": "Fulham",
+          "score": "2-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-17",
+          "venue": "dom",
+          "adversaire": "Legia Warszawa",
+          "score": "1-2",
+          "resultat": "D"
+        }
+      ],
+      "matches_played": 15,
+      "last_match_date": "2025-05-28",
+      "stale": true,
+      "age_days": 412
+    }
+  },
+  "tottenham": {
+    "team_id": 47,
+    "ts": 1784037883.9952893,
+    "stats": {
+      "avg_goals_scored": 1.13,
+      "avg_goals_conceded": 1.74,
+      "avg_goals_scored_home": 1.41,
+      "avg_goals_conceded_home": 1.59,
+      "avg_goals_scored_away": 0.88,
+      "avg_goals_conceded_away": 1.87,
+      "recent_form_score": 1.5,
+      "recent_results": [
+        {
+          "date": "2025-05-25",
+          "venue": "dom",
+          "adversaire": "Brighton",
+          "score": "1-4",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-05-21",
+          "venue": "dom",
+          "adversaire": "Manchester United",
+          "score": "1-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-16",
+          "venue": "ext",
+          "adversaire": "Aston Villa",
+          "score": "0-2",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-05-11",
+          "venue": "dom",
+          "adversaire": "Crystal Palace",
+          "score": "0-2",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-05-08",
+          "venue": "ext",
+          "adversaire": "Bodo/Glimt",
+          "score": "2-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-04",
+          "venue": "ext",
+          "adversaire": "West Ham",
+          "score": "1-1",
+          "resultat": "N"
+        },
+        {
+          "date": "2025-05-01",
+          "venue": "dom",
+          "adversaire": "Bodo/Glimt",
+          "score": "3-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-27",
+          "venue": "ext",
+          "adversaire": "Liverpool",
+          "score": "1-5",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-04-21",
+          "venue": "dom",
+          "adversaire": "Nottingham Forest",
+          "score": "1-2",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-04-17",
+          "venue": "ext",
+          "adversaire": "Eintracht Frankfurt",
+          "score": "1-0",
+          "resultat": "V"
+        }
+      ],
+      "matches_played": 15,
+      "last_match_date": "2025-05-25",
+      "stale": true,
+      "age_days": 415
+    }
+  },
+  "real madrid": {
+    "team_id": 541,
+    "ts": 1784037896.6642883,
+    "stats": {
+      "avg_goals_scored": 1.87,
+      "avg_goals_conceded": 1.59,
+      "avg_goals_scored_home": 2.12,
+      "avg_goals_conceded_home": 1.59,
+      "avg_goals_scored_away": 1.59,
+      "avg_goals_conceded_away": 1.58,
+      "recent_form_score": 1.5,
+      "recent_results": [
+        {
+          "date": "2025-05-24",
+          "venue": "dom",
+          "adversaire": "Real Sociedad",
+          "score": "2-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-18",
+          "venue": "ext",
+          "adversaire": "Sevilla",
+          "score": "2-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-14",
+          "venue": "dom",
+          "adversaire": "Mallorca",
+          "score": "2-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-11",
+          "venue": "ext",
+          "adversaire": "Barcelona",
+          "score": "3-4",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-05-04",
+          "venue": "dom",
+          "adversaire": "Celta Vigo",
+          "score": "3-2",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-26",
+          "venue": "ext",
+          "adversaire": "Barcelona",
+          "score": "2-3",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-04-23",
+          "venue": "ext",
+          "adversaire": "Getafe",
+          "score": "1-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-20",
+          "venue": "dom",
+          "adversaire": "Athletic Club",
+          "score": "1-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-16",
+          "venue": "dom",
+          "adversaire": "Arsenal",
+          "score": "1-2",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-04-13",
+          "venue": "ext",
+          "adversaire": "Alaves",
+          "score": "1-0",
+          "resultat": "V"
+        }
+      ],
+      "matches_played": 15,
+      "last_match_date": "2025-05-24",
+      "stale": true,
+      "age_days": 416
+    }
+  },
+  "barcelona": {
+    "team_id": 529,
+    "ts": 1784037909.706767,
+    "stats": {
+      "avg_goals_scored": 2.35,
+      "avg_goals_conceded": 1.54,
+      "avg_goals_scored_home": 2.75,
+      "avg_goals_conceded_home": 1.9,
+      "avg_goals_scored_away": 1.88,
+      "avg_goals_conceded_away": 1.14,
+      "recent_form_score": 1.5,
+      "recent_results": [
+        {
+          "date": "2025-05-25",
+          "venue": "ext",
+          "adversaire": "Athletic Club",
+          "score": "3-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-18",
+          "venue": "dom",
+          "adversaire": "Villarreal",
+          "score": "2-3",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-05-15",
+          "venue": "ext",
+          "adversaire": "Espanyol",
+          "score": "2-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-11",
+          "venue": "dom",
+          "adversaire": "Real Madrid",
+          "score": "4-3",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-06",
+          "venue": "ext",
+          "adversaire": "Inter",
+          "score": "3-4",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-05-03",
+          "venue": "ext",
+          "adversaire": "Valladolid",
+          "score": "2-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-30",
+          "venue": "dom",
+          "adversaire": "Inter",
+          "score": "3-3",
+          "resultat": "N"
+        },
+        {
+          "date": "2025-04-26",
+          "venue": "dom",
+          "adversaire": "Real Madrid",
+          "score": "3-2",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-22",
+          "venue": "dom",
+          "adversaire": "Mallorca",
+          "score": "1-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-19",
+          "venue": "dom",
+          "adversaire": "Celta Vigo",
+          "score": "4-3",
+          "resultat": "V"
+        }
+      ],
+      "matches_played": 15,
+      "last_match_date": "2025-05-25",
+      "stale": true,
+      "age_days": 415
+    }
+  },
+  "atletico madrid": {
+    "team_id": 530,
+    "ts": 1784037922.6897733,
+    "stats": {
+      "avg_goals_scored": 1.83,
+      "avg_goals_conceded": 1.11,
+      "avg_goals_scored_home": 2.63,
+      "avg_goals_conceded_home": 1.12,
+      "avg_goals_scored_away": 1.14,
+      "avg_goals_conceded_away": 1.1,
+      "recent_form_score": 1.5,
+      "recent_results": [
+        {
+          "date": "2025-05-25",
+          "venue": "ext",
+          "adversaire": "Girona",
+          "score": "4-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-18",
+          "venue": "dom",
+          "adversaire": "Real Betis",
+          "score": "4-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-15",
+          "venue": "ext",
+          "adversaire": "Osasuna",
+          "score": "0-2",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-05-10",
+          "venue": "dom",
+          "adversaire": "Real Sociedad",
+          "score": "4-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-03",
+          "venue": "ext",
+          "adversaire": "Alaves",
+          "score": "0-0",
+          "resultat": "N"
+        },
+        {
+          "date": "2025-04-24",
+          "venue": "dom",
+          "adversaire": "Rayo Vallecano",
+          "score": "3-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-19",
+          "venue": "ext",
+          "adversaire": "Las Palmas",
+          "score": "0-1",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-04-14",
+          "venue": "dom",
+          "adversaire": "Valladolid",
+          "score": "4-2",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-06",
+          "venue": "ext",
+          "adversaire": "Sevilla",
+          "score": "2-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-02",
+          "venue": "dom",
+          "adversaire": "Barcelona",
+          "score": "0-1",
+          "resultat": "D"
+        }
+      ],
+      "matches_played": 15,
+      "last_match_date": "2025-05-25",
+      "stale": true,
+      "age_days": 415
+    }
+  },
+  "juventus": {
+    "team_id": 496,
+    "ts": 1784037935.7270622,
+    "stats": {
+      "avg_goals_scored": 1.22,
+      "avg_goals_conceded": 1.18,
+      "avg_goals_scored_home": 1.45,
+      "avg_goals_conceded_home": 0.83,
+      "avg_goals_scored_away": 1.03,
+      "avg_goals_conceded_away": 1.49,
+      "recent_form_score": 1.5,
+      "recent_results": [
+        {
+          "date": "2025-05-25",
+          "venue": "ext",
+          "adversaire": "Venezia",
+          "score": "3-2",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-18",
+          "venue": "dom",
+          "adversaire": "Udinese",
+          "score": "2-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-10",
+          "venue": "ext",
+          "adversaire": "Lazio",
+          "score": "1-1",
+          "resultat": "N"
+        },
+        {
+          "date": "2025-05-04",
+          "venue": "ext",
+          "adversaire": "Bologna",
+          "score": "1-1",
+          "resultat": "N"
+        },
+        {
+          "date": "2025-04-27",
+          "venue": "dom",
+          "adversaire": "Monza",
+          "score": "2-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-23",
+          "venue": "ext",
+          "adversaire": "Parma",
+          "score": "0-1",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-04-12",
+          "venue": "dom",
+          "adversaire": "Lecce",
+          "score": "2-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-06",
+          "venue": "ext",
+          "adversaire": "AS Roma",
+          "score": "1-1",
+          "resultat": "N"
+        },
+        {
+          "date": "2025-03-29",
+          "venue": "dom",
+          "adversaire": "Genoa",
+          "score": "1-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-03-16",
+          "venue": "ext",
+          "adversaire": "Fiorentina",
+          "score": "0-3",
+          "resultat": "D"
+        }
+      ],
+      "matches_played": 15,
+      "last_match_date": "2025-05-25",
+      "stale": true,
+      "age_days": 415
+    }
+  },
+  "inter": {
+    "team_id": 505,
+    "ts": 1784037948.7101512,
+    "stats": {
+      "avg_goals_scored": 1.6,
+      "avg_goals_conceded": 1.68,
+      "avg_goals_scored_home": 1.72,
+      "avg_goals_conceded_home": 1.72,
+      "avg_goals_scored_away": 1.49,
+      "avg_goals_conceded_away": 1.64,
+      "recent_form_score": 1.5,
+      "recent_results": [
+        {
+          "date": "2025-05-31",
+          "venue": "ext",
+          "adversaire": "Paris Saint Germain",
+          "score": "0-5",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-05-23",
+          "venue": "ext",
+          "adversaire": "Como",
+          "score": "2-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-18",
+          "venue": "dom",
+          "adversaire": "Lazio",
+          "score": "2-2",
+          "resultat": "N"
+        },
+        {
+          "date": "2025-05-11",
+          "venue": "ext",
+          "adversaire": "Torino",
+          "score": "2-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-06",
+          "venue": "dom",
+          "adversaire": "Barcelona",
+          "score": "4-3",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-03",
+          "venue": "dom",
+          "adversaire": "Hellas Verona",
+          "score": "1-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-30",
+          "venue": "ext",
+          "adversaire": "Barcelona",
+          "score": "3-3",
+          "resultat": "N"
+        },
+        {
+          "date": "2025-04-27",
+          "venue": "dom",
+          "adversaire": "AS Roma",
+          "score": "0-1",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-04-23",
+          "venue": "dom",
+          "adversaire": "AC Milan",
+          "score": "0-3",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-04-20",
+          "venue": "ext",
+          "adversaire": "Bologna",
+          "score": "0-1",
+          "resultat": "D"
+        }
+      ],
+      "matches_played": 15,
+      "last_match_date": "2025-05-31",
+      "stale": true,
+      "age_days": 409
+    }
+  },
+  "ac milan": {
+    "team_id": 489,
+    "ts": 1784037961.919277,
+    "stats": {
+      "avg_goals_scored": 1.79,
+      "avg_goals_conceded": 1.12,
+      "avg_goals_scored_home": 1.38,
+      "avg_goals_conceded_home": 1.1,
+      "avg_goals_scored_away": 2.27,
+      "avg_goals_conceded_away": 1.14,
+      "recent_form_score": 1.5,
+      "recent_results": [
+        {
+          "date": "2025-05-24",
+          "venue": "dom",
+          "adversaire": "Monza",
+          "score": "2-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-18",
+          "venue": "ext",
+          "adversaire": "AS Roma",
+          "score": "1-3",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-05-14",
+          "venue": "dom",
+          "adversaire": "Bologna",
+          "score": "0-1",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-05-09",
+          "venue": "dom",
+          "adversaire": "Bologna",
+          "score": "3-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-05",
+          "venue": "ext",
+          "adversaire": "Genoa",
+          "score": "2-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-27",
+          "venue": "ext",
+          "adversaire": "Venezia",
+          "score": "2-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-23",
+          "venue": "ext",
+          "adversaire": "Inter",
+          "score": "3-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-20",
+          "venue": "dom",
+          "adversaire": "Atalanta",
+          "score": "0-1",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-04-11",
+          "venue": "ext",
+          "adversaire": "Udinese",
+          "score": "4-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-05",
+          "venue": "dom",
+          "adversaire": "Fiorentina",
+          "score": "2-2",
+          "resultat": "N"
+        }
+      ],
+      "matches_played": 15,
+      "last_match_date": "2025-05-24",
+      "stale": true,
+      "age_days": 416
+    }
+  },
+  "bayern munich": {
+    "team_id": 1860,
+    "ts": 1784037974.729022,
+    "stats": {
+      "avg_goals_scored": 2.34,
+      "avg_goals_conceded": 0.94,
+      "avg_goals_scored_home": 2.58,
+      "avg_goals_conceded_home": 1.0,
+      "avg_goals_scored_away": 1.99,
+      "avg_goals_conceded_away": 0.83,
+      "recent_form_score": 1.5,
+      "recent_results": [
+        {
+          "date": "2025-05-11",
+          "venue": "dom",
+          "adversaire": "SGS Essen W",
+          "score": "3-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-05",
+          "venue": "ext",
+          "adversaire": "Carl Zeiss Jena  W",
+          "score": "1-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-01",
+          "venue": "dom",
+          "adversaire": "Werder Bremen W",
+          "score": "4-2",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-27",
+          "venue": "dom",
+          "adversaire": "SC Freiburg W",
+          "score": "3-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-12",
+          "venue": "ext",
+          "adversaire": "Eintracht Frankfurt W",
+          "score": "3-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-03-30",
+          "venue": "dom",
+          "adversaire": "Bayer Leverkusen W",
+          "score": "2-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-03-26",
+          "venue": "ext",
+          "adversaire": "Lyon W",
+          "score": "1-4",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-03-22",
+          "venue": "dom",
+          "adversaire": "1899 Hoffenheim W",
+          "score": "3-2",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-03-18",
+          "venue": "dom",
+          "adversaire": "Lyon W",
+          "score": "0-2",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-03-14",
+          "venue": "dom",
+          "adversaire": "VfL Wolfsburg W",
+          "score": "3-1",
+          "resultat": "V"
+        }
+      ],
+      "matches_played": 15,
+      "last_match_date": "2025-05-11",
+      "stale": true,
+      "age_days": 429
+    }
+  },
+  "borussia dortmund": {
+    "team_id": 165,
+    "ts": 1784037987.7756224,
+    "stats": {
+      "avg_goals_scored": 2.31,
+      "avg_goals_conceded": 1.34,
+      "avg_goals_scored_home": 2.48,
+      "avg_goals_conceded_home": 0.84,
+      "avg_goals_scored_away": 2.16,
+      "avg_goals_conceded_away": 1.77,
+      "recent_form_score": 1.5,
+      "recent_results": [
+        {
+          "date": "2025-05-17",
+          "venue": "dom",
+          "adversaire": "Holstein Kiel",
+          "score": "3-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-11",
+          "venue": "ext",
+          "adversaire": "Bayer Leverkusen",
+          "score": "4-2",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-03",
+          "venue": "dom",
+          "adversaire": "VfL Wolfsburg",
+          "score": "4-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-26",
+          "venue": "ext",
+          "adversaire": "1899 Hoffenheim",
+          "score": "3-2",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-20",
+          "venue": "dom",
+          "adversaire": "Borussia Mönchengladbach",
+          "score": "3-2",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-15",
+          "venue": "dom",
+          "adversaire": "Barcelona",
+          "score": "3-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-12",
+          "venue": "ext",
+          "adversaire": "Bayern München",
+          "score": "2-2",
+          "resultat": "N"
+        },
+        {
+          "date": "2025-04-09",
+          "venue": "ext",
+          "adversaire": "Barcelona",
+          "score": "0-4",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-04-05",
+          "venue": "ext",
+          "adversaire": "SC Freiburg",
+          "score": "4-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-03-30",
+          "venue": "dom",
+          "adversaire": "FSV Mainz 05",
+          "score": "3-1",
+          "resultat": "V"
+        }
+      ],
+      "matches_played": 15,
+      "last_match_date": "2025-05-17",
+      "stale": true,
+      "age_days": 423
+    }
+  },
+  "asec mimosas": {
+    "team_id": 4512,
+    "ts": 1784038001.1345384,
+    "stats": {
+      "avg_goals_scored": 1.81,
+      "avg_goals_conceded": 0.69,
+      "avg_goals_scored_home": 1.74,
+      "avg_goals_conceded_home": 0.57,
+      "avg_goals_scored_away": 1.87,
+      "avg_goals_conceded_away": 0.79,
+      "recent_form_score": 1.5,
+      "recent_results": [
+        {
+          "date": "2025-05-18",
+          "venue": "ext",
+          "adversaire": "SOA",
+          "score": "2-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-11",
+          "venue": "dom",
+          "adversaire": "Bouaké",
+          "score": "2-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-03",
+          "venue": "ext",
+          "adversaire": "Denguélé",
+          "score": "4-2",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-20",
+          "venue": "ext",
+          "adversaire": "Lys Sassandra",
+          "score": "2-2",
+          "resultat": "N"
+        },
+        {
+          "date": "2025-04-14",
+          "venue": "dom",
+          "adversaire": "SOL",
+          "score": "3-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-09",
+          "venue": "ext",
+          "adversaire": "Renaissance Berkane",
+          "score": "0-1",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-04-02",
+          "venue": "dom",
+          "adversaire": "Renaissance Berkane",
+          "score": "0-1",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-03-28",
+          "venue": "ext",
+          "adversaire": "ISCA",
+          "score": "1-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-03-23",
+          "venue": "dom",
+          "adversaire": "San-Pédro",
+          "score": "3-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-03-12",
+          "venue": "ext",
+          "adversaire": "Stade d'Abidjan",
+          "score": "0-0",
+          "resultat": "N"
+        }
+      ],
+      "matches_played": 15,
+      "last_match_date": "2025-05-18",
+      "stale": true,
+      "age_days": 422
+    }
+  },
+  "africa sports": {
+    "team_id": 4514,
+    "ts": 1784038014.142363,
+    "stats": null
+  },
+  "h2h::81-85": {
+    "ts": 1784038020.7249558,
+    "stats": {
+      "matches": [
+        {
+          "date": "2026-02-08",
+          "home": "Paris Saint Germain",
+          "away": "Marseille",
+          "score": "5-0"
+        },
+        {
+          "date": "2026-01-08",
+          "home": "Paris Saint Germain",
+          "away": "Marseille",
+          "score": "2-2"
+        },
+        {
+          "date": "2025-09-22",
+          "home": "Marseille",
+          "away": "Paris Saint Germain",
+          "score": "1-0"
+        },
+        {
+          "date": "2025-03-16",
+          "home": "Paris Saint Germain",
+          "away": "Marseille",
+          "score": "3-1"
+        },
+        {
+          "date": "2024-10-27",
+          "home": "Marseille",
+          "away": "Paris Saint Germain",
+          "score": "0-3"
+        },
+        {
+          "date": "2024-03-31",
+          "home": "Marseille",
+          "away": "Paris Saint Germain",
+          "score": "0-2"
+        },
+        {
+          "date": "2023-09-24",
+          "home": "Paris Saint Germain",
+          "away": "Marseille",
+          "score": "4-0"
+        },
+        {
+          "date": "2023-02-26",
+          "home": "Marseille",
+          "away": "Paris Saint Germain",
+          "score": "0-3"
+        },
+        {
+          "date": "2023-02-08",
+          "home": "Marseille",
+          "away": "Paris Saint Germain",
+          "score": "2-1"
+        },
+        {
+          "date": "2022-10-16",
+          "home": "Paris Saint Germain",
+          "away": "Marseille",
+          "score": "1-0"
+        }
+      ],
+      "team1_wins": 2,
+      "draws": 1,
+      "team2_wins": 7,
+      "avg_goals": 3.0,
+      "btts_rate": 0.3,
+      "team1_avg_scored": 0.6,
+      "team2_avg_scored": 2.4,
+      "sample": 10
+    }
+  },
+  "h2h::529-541": {
+    "ts": 1784038026.8232925,
+    "stats": {
+      "matches": [
+        {
+          "date": "2026-05-10",
+          "home": "Barcelona",
+          "away": "Real Madrid",
+          "score": "2-0"
+        },
+        {
+          "date": "2026-01-11",
+          "home": "Barcelona",
+          "away": "Real Madrid",
+          "score": "3-2"
+        },
+        {
+          "date": "2025-10-26",
+          "home": "Real Madrid",
+          "away": "Barcelona",
+          "score": "2-1"
+        },
+        {
+          "date": "2025-05-11",
+          "home": "Barcelona",
+          "away": "Real Madrid",
+          "score": "4-3"
+        },
+        {
+          "date": "2025-04-26",
+          "home": "Barcelona",
+          "away": "Real Madrid",
+          "score": "3-2"
+        },
+        {
+          "date": "2025-01-12",
+          "home": "Real Madrid",
+          "away": "Barcelona",
+          "score": "2-5"
+        },
+        {
+          "date": "2024-10-26",
+          "home": "Real Madrid",
+          "away": "Barcelona",
+          "score": "0-4"
+        },
+        {
+          "date": "2024-08-03",
+          "home": "Barcelona",
+          "away": "Real Madrid",
+          "score": "2-1"
+        },
+        {
+          "date": "2024-04-21",
+          "home": "Real Madrid",
+          "away": "Barcelona",
+          "score": "3-2"
+        },
+        {
+          "date": "2024-01-14",
+          "home": "Real Madrid",
+          "away": "Barcelona",
+          "score": "4-1"
+        }
+      ],
+      "team1_wins": 7,
+      "draws": 0,
+      "team2_wins": 3,
+      "avg_goals": 4.6,
+      "btts_rate": 0.8,
+      "team1_avg_scored": 2.7,
+      "team2_avg_scored": 1.9,
+      "sample": 10
+    }
+  },
+  "h2h::40-50": {
+    "ts": 1784038033.3396294,
+    "stats": {
+      "matches": [
+        {
+          "date": "2026-04-04",
+          "home": "Manchester City",
+          "away": "Liverpool",
+          "score": "4-0"
+        },
+        {
+          "date": "2026-02-08",
+          "home": "Liverpool",
+          "away": "Manchester City",
+          "score": "1-2"
+        },
+        {
+          "date": "2025-11-09",
+          "home": "Manchester City",
+          "away": "Liverpool",
+          "score": "3-0"
+        },
+        {
+          "date": "2025-02-23",
+          "home": "Manchester City",
+          "away": "Liverpool",
+          "score": "0-2"
+        },
+        {
+          "date": "2024-12-01",
+          "home": "Liverpool",
+          "away": "Manchester City",
+          "score": "2-0"
+        },
+        {
+          "date": "2024-03-10",
+          "home": "Liverpool",
+          "away": "Manchester City",
+          "score": "1-1"
+        },
+        {
+          "date": "2023-11-25",
+          "home": "Manchester City",
+          "away": "Liverpool",
+          "score": "1-1"
+        },
+        {
+          "date": "2023-04-01",
+          "home": "Manchester City",
+          "away": "Liverpool",
+          "score": "4-1"
+        },
+        {
+          "date": "2022-12-22",
+          "home": "Manchester City",
+          "away": "Liverpool",
+          "score": "3-2"
+        },
+        {
+          "date": "2022-10-16",
+          "home": "Liverpool",
+          "away": "Manchester City",
+          "score": "1-0"
+        }
+      ],
+      "team1_wins": 3,
+      "draws": 2,
+      "team2_wins": 5,
+      "avg_goals": 2.9,
+      "btts_rate": 0.5,
+      "team1_avg_scored": 1.1,
+      "team2_avg_scored": 1.8,
+      "sample": 10
+    }
+  },
+  "h2h::42-49": {
+    "ts": 1784038039.8254132,
+    "stats": {
+      "matches": [
+        {
+          "date": "2026-03-01",
+          "home": "Arsenal",
+          "away": "Chelsea",
+          "score": "2-1"
+        },
+        {
+          "date": "2026-02-03",
+          "home": "Arsenal",
+          "away": "Chelsea",
+          "score": "1-0"
+        },
+        {
+          "date": "2026-01-14",
+          "home": "Chelsea",
+          "away": "Arsenal",
+          "score": "2-3"
+        },
+        {
+          "date": "2025-11-30",
+          "home": "Chelsea",
+          "away": "Arsenal",
+          "score": "1-1"
+        },
+        {
+          "date": "2025-03-16",
+          "home": "Arsenal",
+          "away": "Chelsea",
+          "score": "1-0"
+        },
+        {
+          "date": "2024-11-10",
+          "home": "Chelsea",
+          "away": "Arsenal",
+          "score": "1-1"
+        },
+        {
+          "date": "2024-04-23",
+          "home": "Arsenal",
+          "away": "Chelsea",
+          "score": "5-0"
+        },
+        {
+          "date": "2023-10-21",
+          "home": "Chelsea",
+          "away": "Arsenal",
+          "score": "2-2"
+        },
+        {
+          "date": "2023-05-02",
+          "home": "Arsenal",
+          "away": "Chelsea",
+          "score": "3-1"
+        },
+        {
+          "date": "2022-11-06",
+          "home": "Chelsea",
+          "away": "Arsenal",
+          "score": "0-1"
+        }
+      ],
+      "team1_wins": 7,
+      "draws": 3,
+      "team2_wins": 0,
+      "avg_goals": 2.8,
+      "btts_rate": 0.6,
+      "team1_avg_scored": 2.0,
+      "team2_avg_scored": 0.8,
+      "sample": 10
+    }
+  },
+  "h2h::165-1860": {
+    "ts": 1784038046.3052962,
+    "stats": null
+  }
+}

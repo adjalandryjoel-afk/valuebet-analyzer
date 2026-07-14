@@ -39,6 +39,16 @@ from config import APIKeys, Paths, PoissonConfig
 #  COLLECTEUR API-FOOTBALL
 # ══════════════════════════════════════════════════════
 
+# Sur Streamlit Cloud (le dépôt vit sous /mount/src), on ne fait
+# JAMAIS d'appel à api-sports : les appels depuis des IP de
+# datacenter sont un motif de suspension des comptes gratuits.
+# Le cache data/api_cache.json, committé depuis le PC (IP
+# résidentielle), fait foi — même périmé.
+READONLY = (
+    os.getenv("API_FOOTBALL_READONLY", "").strip() == "1"
+    or os.path.exists("/mount/src")
+)
+
 _INSTANCE = None
 
 
@@ -142,9 +152,21 @@ class ApiFootballCollector:
         Ne lève jamais d'exception.
         """
 
+        if READONLY:
+            return None  # cloud : cache committé uniquement, zéro requête
+
         if not self.api_key:
             print("      ⚠️ API-Football indisponible : clé API absente (.env)")
             return None
+
+        # Régulateur : le plan gratuit tolère 10 requêtes/minute —
+        # espacer les appels évite les 429 (qui gâchent le quota)
+        now = time.time()
+        elapsed = now - getattr(self, "_last_request_ts", 0)
+        if elapsed < 6.5:
+            time.sleep(6.5 - elapsed)
+        self._last_request_ts = time.time()
+        self._last_was_ratelimit = False
 
         self._request_count += 1
 
@@ -157,6 +179,13 @@ class ApiFootballCollector:
             )
         except requests.RequestException as e:
             print(f"      ⚠️ API-Football indisponible : {e}")
+            return None
+
+        if response.status_code == 429:
+            # Rate limit : échec TRANSITOIRE — ne surtout pas le figer
+            self._last_was_ratelimit = True
+            print("      ⚠️ API-Football : limite de débit atteinte "
+                  "(10 req/min) — réessayer dans une minute")
             return None
 
         if response.status_code != 200:
@@ -534,7 +563,11 @@ class ApiFootballCollector:
         entry = entry if isinstance(entry, dict) else {}
 
         # 1. Résultat frais en cache (y compris un échec) → zéro requête
-        if "stats" in entry and (time.time() - entry.get("ts", 0)) < self.CACHE_TTL:
+        # (en lecture seule, un cache même périmé fait foi)
+        if "stats" in entry and (
+            READONLY
+            or (time.time() - entry.get("ts", 0)) < self.CACHE_TTL
+        ):
             return entry["stats"]
 
         # 2. team_id : cache (conservé à vie) ou recherche API
@@ -551,11 +584,13 @@ class ApiFootballCollector:
             stats = self._apply_freshness(stats)
 
         # Mémoriser même les échecs (stats=None) pour ne pas re-brûler
-        # des requêtes à chaque analyse pendant 24h
-        entry["ts"] = time.time()
-        entry["stats"] = stats
-        self.cache[key] = entry
-        self._save_cache()
+        # des requêtes à chaque analyse pendant 24h — SAUF si l'échec
+        # vient du rate-limit (transitoire : réessayer plus tard)
+        if stats or not getattr(self, "_last_was_ratelimit", False):
+            entry["ts"] = time.time()
+            entry["stats"] = stats
+            self.cache[key] = entry
+            self._save_cache()
 
         if not stats:
             return None
@@ -738,8 +773,10 @@ class ApiFootballCollector:
         # 2. Bilan frais en cache (y compris un échec) → zéro requête
         entry = self.cache.get(cache_key)
         entry = entry if isinstance(entry, dict) else {}
-        if "stats" in entry and \
-                (time.time() - entry.get("ts", 0)) < self.H2H_CACHE_TTL:
+        if "stats" in entry and (
+            READONLY
+            or (time.time() - entry.get("ts", 0)) < self.H2H_CACHE_TTL
+        ):
             return self._orient_h2h(entry["stats"], flip)
 
         # 3. Confrontations terminées → bilan

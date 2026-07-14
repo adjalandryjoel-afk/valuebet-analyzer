@@ -8,7 +8,6 @@ __pycache__/
 
 # Données générées localement
 data/valuebet.db*
-data/api_cache.json
 data/elo_ratings.json
 data/results_log.json
 data/historical_data.json
