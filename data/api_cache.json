@@ -89,7 +89,7 @@
     }
   },
   "_meta": {
-    "season": 2024
+    "season": 2022
   },
   "marseille": {
     "team_id": 81,
@@ -2179,5 +2179,572 @@
       "stale": true,
       "age_days": 240
     }
+  },
+  "cove rangers": {
+    "team_id": 6763,
+    "ts": 1784042309.0986514,
+    "stats": {
+      "avg_goals_scored": 1.52,
+      "avg_goals_conceded": 1.2,
+      "avg_goals_scored_home": 1.28,
+      "avg_goals_conceded_home": 1.44,
+      "avg_goals_scored_away": 1.73,
+      "avg_goals_conceded_away": 0.98,
+      "recent_form_score": 1.5,
+      "recent_results": [
+        {
+          "date": "2025-05-17",
+          "venue": "ext",
+          "adversaire": "Airdrie United",
+          "score": "0-0",
+          "resultat": "N"
+        },
+        {
+          "date": "2025-05-14",
+          "venue": "dom",
+          "adversaire": "Airdrie United",
+          "score": "1-2",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-05-10",
+          "venue": "dom",
+          "adversaire": "Queen of the South",
+          "score": "2-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-06",
+          "venue": "ext",
+          "adversaire": "Queen of the South",
+          "score": "0-0",
+          "resultat": "N"
+        },
+        {
+          "date": "2025-05-03",
+          "venue": "ext",
+          "adversaire": "Annan Athletic",
+          "score": "4-2",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-26",
+          "venue": "dom",
+          "adversaire": "Kelty Hearts",
+          "score": "2-2",
+          "resultat": "N"
+        },
+        {
+          "date": "2025-04-19",
+          "venue": "dom",
+          "adversaire": "Alloa Athletic",
+          "score": "1-1",
+          "resultat": "N"
+        },
+        {
+          "date": "2025-04-12",
+          "venue": "ext",
+          "adversaire": "Dumbarton",
+          "score": "3-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-05",
+          "venue": "dom",
+          "adversaire": "Inverness CT",
+          "score": "0-3",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-03-29",
+          "venue": "ext",
+          "adversaire": "Arbroath",
+          "score": "0-1",
+          "resultat": "D"
+        }
+      ],
+      "matches_played": 15,
+      "last_match_date": "2025-05-17",
+      "stale": true,
+      "age_days": 423
+    }
+  },
+  "east kilbride": {
+    "team_id": 6765,
+    "ts": 1784042322.099576,
+    "stats": {
+      "avg_goals_scored": 2.32,
+      "avg_goals_conceded": 1.64,
+      "avg_goals_scored_home": 2.71,
+      "avg_goals_conceded_home": 1.68,
+      "avg_goals_scored_away": 1.98,
+      "avg_goals_conceded_away": 1.6,
+      "recent_form_score": 1.5,
+      "recent_results": [
+        {
+          "date": "2025-05-17",
+          "venue": "ext",
+          "adversaire": "Bonnyrigg Rose Athletic",
+          "score": "0-0",
+          "resultat": "N"
+        },
+        {
+          "date": "2025-05-10",
+          "venue": "dom",
+          "adversaire": "Bonnyrigg Rose Athletic",
+          "score": "3-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-03",
+          "venue": "ext",
+          "adversaire": "Brora Rangers",
+          "score": "3-3",
+          "resultat": "N"
+        },
+        {
+          "date": "2025-04-26",
+          "venue": "dom",
+          "adversaire": "Brora Rangers",
+          "score": "4-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-19",
+          "venue": "dom",
+          "adversaire": "Bo'ness United",
+          "score": "3-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-12",
+          "venue": "ext",
+          "adversaire": "Tranent Juniors",
+          "score": "2-2",
+          "resultat": "N"
+        },
+        {
+          "date": "2025-04-09",
+          "venue": "dom",
+          "adversaire": "Linlithgow Rose",
+          "score": "0-2",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-04-02",
+          "venue": "ext",
+          "adversaire": "Stirling University",
+          "score": "2-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-03-25",
+          "venue": "ext",
+          "adversaire": "Civil Service Strollers",
+          "score": "2-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-03-22",
+          "venue": "dom",
+          "adversaire": "Cumbernauld Colts",
+          "score": "1-1",
+          "resultat": "N"
+        }
+      ],
+      "matches_played": 15,
+      "last_match_date": "2025-05-17",
+      "stale": true,
+      "age_days": 423
+    }
+  },
+  "h2h::6763-6765": {
+    "ts": 1784042328.6049004,
+    "stats": null
+  },
+  "clyde": {
+    "team_id": 6762,
+    "ts": 1784042452.6616483,
+    "stats": {
+      "avg_goals_scored": 1.65,
+      "avg_goals_conceded": 1.27,
+      "avg_goals_scored_home": 1.95,
+      "avg_goals_conceded_home": 1.02,
+      "avg_goals_scored_away": 1.39,
+      "avg_goals_conceded_away": 1.5,
+      "recent_form_score": 1.5,
+      "recent_results": [
+        {
+          "date": "2025-05-03",
+          "venue": "dom",
+          "adversaire": "Peterhead",
+          "score": "6-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-26",
+          "venue": "ext",
+          "adversaire": "Stirling Albion",
+          "score": "4-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-19",
+          "venue": "ext",
+          "adversaire": "Spartans",
+          "score": "0-2",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-04-12",
+          "venue": "dom",
+          "adversaire": "Forfar Athletic",
+          "score": "1-1",
+          "resultat": "N"
+        },
+        {
+          "date": "2025-04-05",
+          "venue": "ext",
+          "adversaire": "Edinburgh City",
+          "score": "1-2",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-03-29",
+          "venue": "ext",
+          "adversaire": "Stranraer",
+          "score": "2-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-03-22",
+          "venue": "dom",
+          "adversaire": "Bonnyrigg Rose Athletic",
+          "score": "3-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-03-15",
+          "venue": "ext",
+          "adversaire": "Elgin City",
+          "score": "0-2",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-03-08",
+          "venue": "dom",
+          "adversaire": "East Fife",
+          "score": "1-2",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-03-01",
+          "venue": "ext",
+          "adversaire": "Forfar Athletic",
+          "score": "1-0",
+          "resultat": "V"
+        }
+      ],
+      "matches_played": 15,
+      "last_match_date": "2025-05-03",
+      "stale": true,
+      "age_days": 437
+    }
+  },
+  "east fife": {
+    "team_id": 6764,
+    "ts": 1784042691.7720094,
+    "stats": {
+      "avg_goals_scored": 1.42,
+      "avg_goals_conceded": 1.18,
+      "avg_goals_scored_home": 2.05,
+      "avg_goals_conceded_home": 0.99,
+      "avg_goals_scored_away": 0.86,
+      "avg_goals_conceded_away": 1.36,
+      "recent_form_score": 1.5,
+      "recent_results": [
+        {
+          "date": "2025-05-16",
+          "venue": "ext",
+          "adversaire": "Annan Athletic",
+          "score": "1-1",
+          "resultat": "N"
+        },
+        {
+          "date": "2025-05-13",
+          "venue": "dom",
+          "adversaire": "Annan Athletic",
+          "score": "3-2",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-10",
+          "venue": "dom",
+          "adversaire": "Edinburgh City",
+          "score": "3-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-05-06",
+          "venue": "ext",
+          "adversaire": "Edinburgh City",
+          "score": "0-1",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-05-03",
+          "venue": "dom",
+          "adversaire": "Elgin City",
+          "score": "2-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-26",
+          "venue": "ext",
+          "adversaire": "Peterhead",
+          "score": "0-1",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-04-19",
+          "venue": "dom",
+          "adversaire": "Stirling Albion",
+          "score": "2-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-12",
+          "venue": "ext",
+          "adversaire": "Bonnyrigg Rose Athletic",
+          "score": "2-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-04-05",
+          "venue": "ext",
+          "adversaire": "Forfar Athletic",
+          "score": "0-1",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-03-29",
+          "venue": "dom",
+          "adversaire": "Spartans",
+          "score": "4-2",
+          "resultat": "V"
+        }
+      ],
+      "matches_played": 15,
+      "last_match_date": "2025-05-16",
+      "stale": true,
+      "age_days": 424
+    }
+  },
+  "greenock morton": {
+    "team_id": 23338,
+    "ts": 1784042711.2814538,
+    "stats": null
+  },
+  "h2h::6764-23338": {
+    "ts": 1784042717.766938,
+    "stats": null
+  },
+  "brechin city": {
+    "team_id": 1390,
+    "ts": 1784043184.638265,
+    "stats": null
+  },
+  "livingston": {
+    "team_id": 255,
+    "ts": 1784043197.6244247,
+    "stats": null
+  },
+  "h2h::255-1390": {
+    "ts": 1784043204.2471306,
+    "stats": {
+      "matches": [
+        {
+          "date": "2023-07-15",
+          "home": "Brechin",
+          "away": "Livingston",
+          "score": "0-3"
+        },
+        {
+          "date": "2021-07-10",
+          "home": "Brechin",
+          "away": "Livingston",
+          "score": "0-3"
+        },
+        {
+          "date": "2018-04-21",
+          "home": "Livingston",
+          "away": "Brechin",
+          "score": "3-0"
+        },
+        {
+          "date": "2018-01-13",
+          "home": "Brechin",
+          "away": "Livingston",
+          "score": "0-2"
+        },
+        {
+          "date": "2017-10-28",
+          "home": "Livingston",
+          "away": "Brechin",
+          "score": "3-2"
+        },
+        {
+          "date": "2017-08-12",
+          "home": "Brechin",
+          "away": "Livingston",
+          "score": "2-2"
+        },
+        {
+          "date": "2017-04-01",
+          "home": "Brechin",
+          "away": "Livingston",
+          "score": "0-2"
+        },
+        {
+          "date": "2017-01-28",
+          "home": "Livingston",
+          "away": "Brechin",
+          "score": "3-0"
+        },
+        {
+          "date": "2016-10-29",
+          "home": "Brechin",
+          "away": "Livingston",
+          "score": "0-3"
+        },
+        {
+          "date": "2016-09-17",
+          "home": "Livingston",
+          "away": "Brechin",
+          "score": "2-1"
+        }
+      ],
+      "team1_wins": 9,
+      "draws": 1,
+      "team2_wins": 0,
+      "avg_goals": 3.1,
+      "btts_rate": 0.3,
+      "team1_avg_scored": 2.6,
+      "team2_avg_scored": 0.5,
+      "sample": 10
+    }
+  },
+  "brora rangers": {
+    "team_id": 6760,
+    "ts": 1784043236.7618566,
+    "stats": null
+  },
+  "aberdeen": {
+    "team_id": 252,
+    "ts": 1784043249.6990123,
+    "stats": null
+  },
+  "h2h::252-6760": {
+    "ts": 1784043256.177313,
+    "stats": null
+  },
+  "annan": {
+    "team_id": 6757,
+    "ts": 1784043269.2332544,
+    "stats": null
+  },
+  "dundee": {
+    "team_id": 253,
+    "ts": 1784043282.2313392,
+    "stats": null
+  },
+  "h2h::253-6757": {
+    "ts": 1784043288.713124,
+    "stats": null
+  },
+  "forfar": {
+    "team_id": 4250,
+    "ts": 1784043301.793394,
+    "stats": null
+  },
+  "partick": {
+    "team_id": 901,
+    "ts": 1784043314.758106,
+    "stats": null
+  },
+  "h2h::901-4250": {
+    "ts": 1784043321.2664397,
+    "stats": {
+      "matches": [
+        {
+          "date": "2025-11-29",
+          "home": "Forfar Athletic",
+          "away": "Partick",
+          "score": "0-2"
+        },
+        {
+          "date": "2021-03-30",
+          "home": "Partick",
+          "away": "Forfar Athletic",
+          "score": "2-2"
+        },
+        {
+          "date": "2020-12-12",
+          "home": "Forfar Athletic",
+          "away": "Partick",
+          "score": "0-2"
+        }
+      ],
+      "team1_wins": 2,
+      "draws": 1,
+      "team2_wins": 0,
+      "avg_goals": 2.67,
+      "btts_rate": 0.33,
+      "team1_avg_scored": 2.0,
+      "team2_avg_scored": 0.67,
+      "sample": 3
+    }
+  },
+  "kelty hearts": {
+    "team_id": 6773,
+    "ts": 1784043334.2818754,
+    "stats": null
+  },
+  "queens park fc": {
+    "team_id": 7689,
+    "ts": 1784043360.4277081,
+    "stats": null
+  },
+  "h2h::6773-7689": {
+    "ts": 1784043366.7749424,
+    "stats": null
+  },
+  "montrose": {
+    "team_id": 4251,
+    "ts": 1784043380.064669,
+    "stats": null
+  },
+  "dundee utd": {
+    "team_id": 1386,
+    "ts": 1784043393.0847478,
+    "stats": null
+  },
+  "h2h::1386-4251": {
+    "ts": 1784043399.5885563,
+    "stats": null
+  },
+  "linlithgow r": {
+    "team_id": 6744,
+    "ts": 1784043412.6547835,
+    "stats": null
+  },
+  "st johnstone": {
+    "team_id": 258,
+    "ts": 1784043425.6795936,
+    "stats": null
+  },
+  "h2h::258-6744": {
+    "ts": 1784043432.1878176,
+    "stats": null
   }
 }

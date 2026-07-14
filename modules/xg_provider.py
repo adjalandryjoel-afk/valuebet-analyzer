@@ -62,12 +62,60 @@ class XgProvider:
     # est jugé périmé et n'est pas utilisé
     MAX_STALENESS_DAYS = 550
 
+    # Snapshot committé depuis le PC : permet au cloud (sans
+    # soccerdata) de servir les profils xG quand même
+    SNAPSHOT_PATH = os.path.join(Paths.DATA_DIR, "xg_snapshot.json")
+
     def __init__(self):
         self.cache_path = os.path.join(Paths.DATA_DIR, "xg_cache.json")
         self._cache = self._load_cache()
         # DataFrames de ligue déjà chargés pendant cette session
         # clé : (ligue_soccerdata, saison)
         self._frames: Dict = {}
+        self._snapshot: Optional[Dict] = None  # chargé paresseusement
+
+    # ─── SNAPSHOT COMMITTÉ (repli cloud) ────────────
+
+    def _snapshot_profiles(self) -> Dict:
+        """Profils du snapshot data/xg_snapshot.json ({} si absent)."""
+
+        if self._snapshot is None:
+            try:
+                with open(self.SNAPSHOT_PATH, encoding="utf-8") as f:
+                    self._snapshot = json.load(f).get("profils", {})
+            except Exception:
+                self._snapshot = {}
+        return self._snapshot
+
+    def _profile_from_snapshot(self, team_name: str,
+                               league: str) -> Optional[Dict]:
+        """
+        Cherche le profil dans le snapshot committé : correspondance
+        exacte du nom normalisé, puis fuzzy au sein de la même ligue.
+        """
+
+        profils = self._snapshot_profiles()
+        if not profils:
+            return None
+
+        wanted = self._normalize(team_name)
+        exact = profils.get(f"{wanted}|{league}")
+        if exact:
+            return exact
+
+        candidats = {k: v for k, v in profils.items()
+                     if k.endswith(f"|{league}")}
+        if not candidats:
+            return None
+
+        noms = [k.rsplit("|", 1)[0] for k in candidats]
+        found = process.extractOne(
+            wanted, noms, scorer=fuzz.WRatio,
+            score_cutoff=self.FUZZY_THRESHOLD,
+        )
+        if found:
+            return candidats[f"{found[0]}|{league}"]
+        return None
 
     # ─── API PUBLIQUE ───────────────────────────────
 
@@ -99,6 +147,11 @@ class XgProvider:
             profile = self._compute_profile(team_name, sd_league)
         except Exception:
             profile = None
+
+        # Repli : snapshot committé depuis le PC (indispensable sur
+        # le cloud, où soccerdata n'est pas installé)
+        if profile is None:
+            profile = self._profile_from_snapshot(team_name, league)
 
         # Succès comme échec sont mis en cache 24h
         self._cache[key] = {"ts": time.time(), "profile": profile}
