@@ -512,6 +512,9 @@ def analyze_matches_ui(matches, bankroll, min_value, min_confidence,
 
         # 8. Persister dans l'historique (base SQLite)
         try:
+            # Une ré-analyse remplace les paris en attente du même match
+            modules["db"].supersede_pending_bets(home_name, away_name)
+
             match_id = modules["db"].save_match_analysis({
                 "home_team": home_name,
                 "away_team": away_name,

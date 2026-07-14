@@ -18,8 +18,8 @@ from typing import Dict, Optional
 from dataclasses import dataclass, field
 
 from config import Paths, PoissonConfig, SUPPORTED_LEAGUES
-from modules.api_football import ApiFootballCollector
-from modules.odds_utils import novig_probs
+from modules.api_football import get_api_collector
+from modules.odds_utils import novig_probs, margin_ok
 
 
 # ══════════════════════════════════════════════════════
@@ -97,7 +97,7 @@ class DataCollector:
 
     def __init__(self):
         self.historical = self._load_historical()
-        self.api_collector = ApiFootballCollector()
+        self.api_collector = get_api_collector()
 
         # Fournisseur xG (soccerdata/Understat) — défensif : ne doit
         # jamais empêcher le collecteur de fonctionner s'il est cassé
@@ -278,6 +278,12 @@ class DataCollector:
         if o1 <= 1 or o2 <= 1:
             return stats  # pas de cotes exploitables → défauts
 
+        # Cotes corrompues (marge aberrante) → défauts, pas d'ancrage
+        if ox > 1 and not margin_ok([o1, ox, o2]):
+            return stats
+        if ox <= 1 and not margin_ok([o1, o2], max_margin=0.20):
+            return stats
+
         # Probabilités no-vig (méthode de Shin : corrige le biais
         # favori-outsider de la normalisation proportionnelle)
         if ox > 1:
@@ -291,7 +297,7 @@ class DataCollector:
         total_goals = league_avg
         o_over = float(odds.get("over_2_5", 0) or 0)
         o_under = float(odds.get("under_2_5", 0) or 0)
-        if o_over > 1 and o_under > 1:
+        if o_over > 1 and o_under > 1 and margin_ok([o_over, o_under]):
             p_over = novig_probs([o_over, o_under])[0]
             total_goals = self._total_goals_from_over25(p_over)
 

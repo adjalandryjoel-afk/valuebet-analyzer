@@ -379,6 +379,24 @@ class DatabaseManager:
 
     # ─── REQUÊTES DE CONSULTATION ────────────────────
 
+    def supersede_pending_bets(self, home_team: str, away_team: str):
+        """
+        Supprime les paris EN ATTENTE des analyses précédentes du même
+        match : une ré-analyse (cotes fraîches) remplace les anciens
+        signaux au lieu de les dupliquer dans le suivi. Les paris déjà
+        résolus (gagné/perdu/non joué) sont conservés.
+        """
+
+        with self._get_connection() as conn:
+            conn.execute("""
+                DELETE FROM value_bets
+                WHERE result IS NULL
+                  AND match_id IN (
+                      SELECT id FROM matches
+                      WHERE home_team = ? AND away_team = ?
+                  )
+            """, (home_team, away_team))
+
     def get_pending_bets(self) -> List[Dict]:
         """Récupère les paris en attente de résultat."""
 
@@ -407,7 +425,7 @@ class DatabaseManager:
                     AVG(value_percentage) as avg_value,
                     AVG(confidence_score) as avg_confidence
                 FROM value_bets
-                WHERE result IS NOT NULL
+                WHERE result IS NOT NULL AND result != 'void'
             """).fetchone()
 
             if row:

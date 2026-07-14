@@ -139,7 +139,10 @@ class XgProvider:
 
         cache_key = (sd_league, season)
         if cache_key in self._frames:
-            return self._frames[cache_key]
+            ts, frame = self._frames[cache_key]
+            if __import__("time").time() - ts < 24 * 3600:
+                return frame
+            del self._frames[cache_key]
 
         try:
             import soccerdata as sd
@@ -153,7 +156,7 @@ class XgProvider:
         except Exception:
             df = None
 
-        self._frames[cache_key] = df
+        self._frames[cache_key] = (__import__("time").time(), df)
         return df
 
     def _match_team_name(self, team_name: str, df) -> Optional[str]:

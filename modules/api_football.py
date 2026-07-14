@@ -39,6 +39,23 @@ from config import APIKeys, Paths, PoissonConfig
 #  COLLECTEUR API-FOOTBALL
 # ══════════════════════════════════════════════════════
 
+_INSTANCE = None
+
+
+def get_api_collector() -> "ApiFootballCollector":
+    """
+    Instance partagée du collecteur : un seul cache mémoire et un
+    seul écrivain de data/api_cache.json pour toute l'application
+    (DataCollector ET MatchIntelligence) — évite de doubler le quota
+    et l'écrasement croisé du cache disque.
+    """
+
+    global _INSTANCE
+    if _INSTANCE is None:
+        _INSTANCE = ApiFootballCollector()
+    return _INSTANCE
+
+
 class ApiFootballCollector:
     """
     Collecte les stats d'une équipe via l'API api-sports.io (v3).

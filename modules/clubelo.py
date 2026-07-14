@@ -238,6 +238,7 @@ class ClubEloProvider:
         sinon cache périmé.
         """
 
+        self._loaded_at = time.time()
         cached = self._read_cache()
 
         # 1. Cache frais → zéro requête
@@ -327,6 +328,15 @@ class ClubEloProvider:
         introuvable (club non européen, nom irrésoluble) ou si le
         snapshot n'a pas pu être chargé. Ne lève jamais d'exception.
         """
+
+        # Rafraîchissement paresseux : sous st.cache_resource le
+        # process peut vivre des jours — recharger après le TTL
+        if time.time() - getattr(self, "_loaded_at", 0) > self.CACHE_TTL:
+            try:
+                self._load()
+                self._resolved.clear()
+            except Exception:
+                self._loaded_at = time.time()
 
         if not team_name or not team_name.strip() or not self.ratings:
             return None

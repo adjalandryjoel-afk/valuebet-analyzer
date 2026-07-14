@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 
 from config import PoissonConfig
 from modules.data_collector import MatchContext
-from modules.odds_utils import novig_probs
+from modules.odds_utils import novig_probs, margin_ok
 
 
 # ══════════════════════════════════════════════════════
@@ -223,6 +223,11 @@ class PoissonPredictor:
         if o1 <= 1 or ox <= 1 or o2 <= 1:
             return None
 
+        # Cotes corrompues (OCR) : ne JAMAIS s'ancrer dessus —
+        # sinon tous les marchés héritent d'une ancre fausse
+        if not margin_ok([o1, ox, o2]):
+            return None
+
         probs = novig_probs([o1, ox, o2])
         if not probs:
             return None
@@ -231,7 +236,7 @@ class PoissonPredictor:
         # Total de buts cible
         o_over = float(odds.get("over_2_5", 0) or 0)
         o_under = float(odds.get("under_2_5", 0) or 0)
-        if o_over > 1 and o_under > 1:
+        if o_over > 1 and o_under > 1 and margin_ok([o_over, o_under]):
             p_over = novig_probs([o_over, o_under])[0]
             total_candidates = [self._invert_over25(p_over)]
         else:

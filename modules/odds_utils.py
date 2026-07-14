@@ -70,6 +70,21 @@ def _shin_pure(odds: List[float]) -> Optional[List[float]]:
     return [p / total for p in probs]
 
 
+def margin_ok(odds: List[float], max_margin: float = 0.15) -> bool:
+    """
+    Vérifie que la marge d'un marché est plausible (0 à max_margin).
+
+    Une marge négative ou énorme signale des cotes corrompues
+    (erreur de lecture OCR, mauvais marché) : elles ne doivent servir
+    d'ancre à AUCUN calcul.
+    """
+
+    if not odds or any(o is None or o <= 1 for o in odds):
+        return False
+    margin = sum(1 / o for o in odds) - 1
+    return 0 <= margin <= max_margin
+
+
 def novig_probs(odds: List[float]) -> Optional[List[float]]:
     """
     Convertit une liste de cotes décimales (2 issues ou plus, toutes

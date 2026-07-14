@@ -104,10 +104,13 @@ class ValueBetDetector:
                 (défaut : valeurs de config)
         """
 
-        self._min_value = (min_value if min_value is not None
-                           else ValueBetConfig.MIN_VALUE_THRESHOLD)
-        self._min_confidence = (min_confidence if min_confidence is not None
-                                else ValueBetConfig.MIN_CONFIDENCE_SCORE)
+        # Seuils effectifs — passés en paramètres aux évaluations
+        # (jamais stockés sur l'instance : elle est partagée entre
+        # les sessions Streamlit via st.cache_resource)
+        min_value_eff = (min_value if min_value is not None
+                         else ValueBetConfig.MIN_VALUE_THRESHOLD)
+        min_conf_eff = (min_confidence if min_confidence is not None
+                        else ValueBetConfig.MIN_CONFIDENCE_SCORE)
 
         analysis = MatchAnalysis(
             home_team=home_team,
@@ -271,6 +274,8 @@ class ValueBetDetector:
                 book_odds, model_prob, model_agreement,
                 analysis.bookmaker_margin,
                 confidence_penalty=penalty,
+                min_value=min_value_eff,
+                min_confidence=min_conf_eff,
             )
             if vb:
                 analysis.value_bets.append(vb)
@@ -323,7 +328,9 @@ class ValueBetDetector:
                              selection: str, book_odds: float,
                              model_prob: float, model_agreement: float,
                              margin: float,
-                             confidence_penalty: float = 0.0
+                             confidence_penalty: float = 0.0,
+                             min_value: float = None,
+                             min_confidence: float = None
                              ) -> Optional[ValueBet]:
         """
         Évalue une sélection et retourne un ValueBet si les seuils passent.
@@ -343,9 +350,8 @@ class ValueBetDetector:
         # ── Filtres ──
         # Seuil progressif selon la cote (biais favori-outsider :
         # les grosses cotes exigent plus de value pour être crédibles)
-        base_threshold = getattr(
-            self, "_min_value", ValueBetConfig.MIN_VALUE_THRESHOLD
-        )
+        base_threshold = (min_value if min_value is not None
+                          else ValueBetConfig.MIN_VALUE_THRESHOLD)
         multiplier = ValueBetConfig.VALUE_THRESHOLD_MULTIPLIERS[-1][1]
         for odds_cap, mult in ValueBetConfig.VALUE_THRESHOLD_MULTIPLIERS:
             if book_odds < odds_cap:
@@ -375,8 +381,9 @@ class ValueBetDetector:
 
         confidence = max(0, min(100, confidence))
 
-        if confidence < getattr(self, "_min_confidence",
-                                ValueBetConfig.MIN_CONFIDENCE_SCORE):
+        min_conf = (min_confidence if min_confidence is not None
+                    else ValueBetConfig.MIN_CONFIDENCE_SCORE)
+        if confidence < min_conf:
             return None
 
         # ── Rating étoiles ──

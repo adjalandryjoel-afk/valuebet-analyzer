@@ -29,7 +29,7 @@ from typing import Dict, List, Optional
 from dataclasses import dataclass, field
 
 from config import APIKeys, OCRConfig
-from modules.api_football import ApiFootballCollector
+from modules.api_football import get_api_collector
 from modules.data_collector import MatchContext
 
 
@@ -105,7 +105,7 @@ class MatchIntelligence:
     """
 
     def __init__(self):
-        self.api = ApiFootballCollector()
+        self.api = get_api_collector()
 
         self.openai_client = None
         if APIKeys.OPENAI_API_KEY:
