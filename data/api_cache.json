@@ -2090,5 +2090,94 @@
       "stale": true,
       "age_days": 423
     }
+  },
+  "france": {
+    "team_id": 2,
+    "ts": 1784038816.569664,
+    "stats": {
+      "avg_goals_scored": 2.43,
+      "avg_goals_conceded": 0.94,
+      "avg_goals_scored_home": 2.45,
+      "avg_goals_conceded_home": 0.2,
+      "avg_goals_scored_away": 2.41,
+      "avg_goals_conceded_away": 1.46,
+      "recent_form_score": 1.5,
+      "recent_results": [
+        {
+          "date": "2025-11-16",
+          "venue": "ext",
+          "adversaire": "Azerbaijan",
+          "score": "3-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-11-13",
+          "venue": "dom",
+          "adversaire": "Ukraine",
+          "score": "4-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-10-13",
+          "venue": "ext",
+          "adversaire": "Iceland",
+          "score": "2-2",
+          "resultat": "N"
+        },
+        {
+          "date": "2025-10-10",
+          "venue": "dom",
+          "adversaire": "Azerbaijan",
+          "score": "3-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-09-09",
+          "venue": "dom",
+          "adversaire": "Iceland",
+          "score": "2-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-09-05",
+          "venue": "ext",
+          "adversaire": "Ukraine",
+          "score": "2-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-06-08",
+          "venue": "ext",
+          "adversaire": "Germany",
+          "score": "2-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-06-05",
+          "venue": "ext",
+          "adversaire": "Spain",
+          "score": "4-5",
+          "resultat": "D"
+        },
+        {
+          "date": "2025-03-23",
+          "venue": "dom",
+          "adversaire": "Croatia",
+          "score": "2-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2025-03-20",
+          "venue": "ext",
+          "adversaire": "Croatia",
+          "score": "0-2",
+          "resultat": "D"
+        }
+      ],
+      "matches_played": 15,
+      "last_match_date": "2025-11-16",
+      "stale": true,
+      "age_days": 240
+    }
   }
 }

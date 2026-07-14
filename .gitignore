@@ -1,6 +1,7 @@
 # Secrets — ne JAMAIS pousser les clés API
 .env
 secrets_streamlit.toml
+.streamlit/secrets.toml
 
 # Python
 __pycache__/

@@ -65,6 +65,72 @@ def page_header(icon: str, title: str, caption: str = ""):
 
 
 # ══════════════════════════════════════════════════════
+#  PORTE D'ACCÈS
+# ══════════════════════════════════════════════════════
+
+def _expected_access_code() -> str:
+    """
+    Code d'accès attendu (secrets Streamlit ou variable
+    d'environnement). Chaîne vide = porte désactivée — l'app
+    reste ouverte, typiquement en local sur le PC.
+    """
+
+    try:
+        code = str(st.secrets.get("APP_ACCESS_CODE", "")).strip()
+    except Exception:
+        code = ""
+    return code or os.getenv("APP_ACCESS_CODE", "").strip()
+
+
+def check_access() -> bool:
+    """
+    Porte d'accès de l'application.
+
+    Protège les clés API (chaque analyse consomme du crédit
+    OpenAI) : sans le bon code, rien ne se charge. Activée
+    uniquement quand APP_ACCESS_CODE est défini dans les secrets.
+    """
+
+    expected = _expected_access_code()
+    if not expected:
+        return True  # pas de code configuré → accès libre (local)
+
+    if st.session_state.get("acces_valide"):
+        return True
+
+    # ── Écran de connexion ──
+    st.space("large")
+    _, centre, _ = st.columns([1, 1.2, 1])
+    with centre:
+        st.title(":material/sports_soccer: Value Bet Analyzer",
+                 text_alignment="center")
+        st.caption("Application privée — entre ton code d'accès.",
+                   text_alignment="center")
+
+        with st.form("porte_acces", border=True):
+            saisie = st.text_input(
+                "Code d'accès", type="password",
+                icon=":material/key:",
+            )
+            valider = st.form_submit_button(
+                "Entrer", type="primary", width="stretch",
+                icon=":material/login:",
+            )
+
+        if valider:
+            import hmac
+            import time as _time
+            if hmac.compare_digest(saisie.strip(), expected):
+                st.session_state["acces_valide"] = True
+                st.rerun()
+            else:
+                _time.sleep(1.5)  # freine les essais en rafale
+                st.error("Code incorrect.", icon=":material/lock:")
+
+    return False
+
+
+# ══════════════════════════════════════════════════════
 #  INITIALISATION DES MODULES (avec cache Streamlit)
 # ══════════════════════════════════════════════════════
 
@@ -1807,6 +1873,9 @@ def page_home():
 
 def main():
     """Point d'entrée de l'application Streamlit."""
+
+    if not check_access():
+        st.stop()
 
     st.logo(
         "https://img.icons8.com/color/96/football2--v1.png",
