@@ -36,6 +36,9 @@ from modules.backtester import Backtester
 from modules.match_intel import get_match_intelligence
 from modules.clv_tracker import ClvTracker
 from modules.monte_carlo import simulate_bets
+from modules.settlement import settle_match
+from modules.score_fetcher import ScoreFetcher
+from modules.odds_utils import novig_probs
 
 
 # ══════════════════════════════════════════════════════
@@ -1415,6 +1418,66 @@ def page_validation():
             "pas encore — c'est le rôle de tes notes de contexte."
         )
 
+    # ── Calibration continue sur TES analyses ──
+    db_cal = init_modules()["db"]
+    rows = db_cal.get_calibration_rows()
+
+    st.space("small")
+    st.subheader(":material/track_changes: Calibration sur tes analyses")
+
+    if len(rows) < 20:
+        st.caption(
+            f":material/hourglass_top: {len(rows)}/20 analyses avec "
+            "résultat final — règle les scores de tes matchs (page "
+            "Backtesting) pour construire ta propre courbe de "
+            "calibration."
+        )
+    else:
+        import numpy as _np
+
+        outcomes = {"1": 0, "X": 1, "2": 2}
+        brier_modele, brier_marche, n_ok = 0.0, 0.0, 0
+
+        for r in rows:
+            probs_m = [r["model_prob_1"], r["model_prob_x"],
+                       r["model_prob_2"]]
+            if any(p is None for p in probs_m):
+                continue
+            reel = outcomes.get(r["actual_result"])
+            if reel is None:
+                continue
+            cible = [0.0, 0.0, 0.0]
+            cible[reel] = 1.0
+            brier_modele += sum(
+                (p - c) ** 2 for p, c in zip(probs_m, cible))
+
+            probs_mk = None
+            if all((r.get(k) or 0) > 1
+                   for k in ("odds_1", "odds_x", "odds_2")):
+                probs_mk = novig_probs(
+                    [r["odds_1"], r["odds_x"], r["odds_2"]])
+            if probs_mk:
+                brier_marche += sum(
+                    (p - c) ** 2 for p, c in zip(probs_mk, cible))
+            else:
+                brier_marche += sum(
+                    (p - c) ** 2 for p, c in zip(probs_m, cible))
+            n_ok += 1
+
+        if n_ok:
+            b1, b2, b3 = st.columns(3)
+            b1.metric("Analyses réglées", n_ok, border=True)
+            b2.metric("Brier de TON modèle",
+                      f"{brier_modele / n_ok:.4f}", border=True,
+                      help="Plus bas = probabilités plus honnêtes")
+            b3.metric("Brier du marché (référence)",
+                      f"{brier_marche / n_ok:.4f}", border=True)
+            st.caption(
+                "Si ton Brier reste au-dessus de celui du marché après "
+                "100+ analyses, le modèle est trop confiant sur tes "
+                "ligues — on ajustera."
+            )
+
     # ── Paramètres empiriques ──
     st.space("small")
     with st.expander("Paramètres mesurés vs configuration",
@@ -1669,6 +1732,106 @@ def page_backtesting():
     # Charger les paris en attente
     db = init_modules()["db"]
     pending = db.get_pending_bets()
+
+    # ── Scores finaux : la boucle de résultats ──
+    attente = db.get_matches_awaiting_result()
+
+    if attente:
+        st.subheader(":material/scoreboard: Scores finaux")
+        st.caption(
+            "Entre le score (ou récupère-le automatiquement) : les paris "
+            "du match se règlent seuls, l'Elo apprend, la calibration "
+            "s'accumule. Le score mi-temps (optionnel) débloque les "
+            "marchés 1MT/2MT."
+        )
+
+        if st.button("Récupérer les scores automatiquement",
+                     icon=":material/cloud_download:",
+                     help="Scores des 3 derniers jours via The Odds API "
+                          "(~14 crédits). Les ligues non couvertes "
+                          "restent en saisie manuelle."):
+            with st.spinner("Récupération des scores..."):
+                fetcher = ScoreFetcher()
+                events = fetcher.fetch_completed()
+                trouves = 0
+                for m in attente:
+                    score = fetcher.find_score(
+                        m["home_team"], m["away_team"], events
+                    )
+                    if score:
+                        settle_match(
+                            db, m["id"], m["home_team"], m["away_team"],
+                            score[0], score[1],
+                            elo=init_modules()["elo"],
+                        )
+                        trouves += 1
+            if trouves:
+                st.success(
+                    f"{trouves} match(s) réglé(s) automatiquement — "
+                    f"quota The Odds API restant : "
+                    f"{fetcher.quota_restant or '?'}",
+                    icon=":material/check_circle:",
+                )
+                st.rerun()
+            else:
+                st.info(
+                    "Aucun score trouvé (matchs trop anciens, pas encore "
+                    "joués, ou ligues non couvertes) — utilise la saisie "
+                    "manuelle ci-dessous.",
+                    icon=":material/info:",
+                )
+
+        for m in attente:
+            with st.container(border=True):
+                st.markdown(
+                    f"**{m['home_team']} vs {m['away_team']}** "
+                    f":blue-badge[{m['n_pending']} pari(s) en attente]  \n"
+                    f":material/event: analysé le "
+                    f"{(m['analysis_date'] or '')[:16]}"
+                )
+
+                c1, c2, c3 = st.columns([1, 1, 1.2],
+                                        vertical_alignment="bottom")
+                fthg = c1.number_input(
+                    f"Buts {m['home_team'][:14]}", min_value=0,
+                    max_value=15, value=0, key=f"fthg_{m['id']}")
+                ftag = c2.number_input(
+                    f"Buts {m['away_team'][:14]}", min_value=0,
+                    max_value=15, value=0, key=f"ftag_{m['id']}")
+
+                with st.expander("Score mi-temps (optionnel)",
+                                 icon=":material/timer:"):
+                    h1, h2_ = st.columns(2)
+                    hthg = h1.number_input(
+                        "1MT domicile", min_value=0, max_value=15,
+                        value=0, key=f"hthg_{m['id']}")
+                    htag = h2_.number_input(
+                        "1MT extérieur", min_value=0, max_value=15,
+                        value=0, key=f"htag_{m['id']}")
+                    ht_fourni = st.checkbox(
+                        "Utiliser ce score mi-temps",
+                        key=f"htok_{m['id']}")
+
+                if c3.button("Régler le match", type="primary",
+                             icon=":material/gavel:",
+                             key=f"settle_{m['id']}"):
+                    bilan = settle_match(
+                        db, m["id"], m["home_team"], m["away_team"],
+                        int(fthg), int(ftag),
+                        hthg=int(hthg) if ht_fourni else None,
+                        htag=int(htag) if ht_fourni else None,
+                        elo=init_modules()["elo"],
+                    )
+                    st.success(
+                        f"{bilan['gagnes']} gagné(s), "
+                        f"{bilan['perdus']} perdu(s), "
+                        f"{bilan['indecidables']} à régler à la main — "
+                        f"profit {bilan['profit']:+,.0f} FCFA",
+                        icon=":material/check_circle:",
+                    )
+                    st.rerun()
+
+        st.space("small")
 
     if pending:
         st.subheader(":material/pending: Paris en attente de résultat")

@@ -529,6 +529,43 @@ class DatabaseManager:
 
             return [dict(row) for row in rows]
 
+    def get_matches_awaiting_result(self) -> List[Dict]:
+        """
+        Matchs analysés ayant encore des paris en attente —
+        candidats à la saisie/récupération du score final.
+        """
+
+        with self._get_connection() as conn:
+            rows = conn.execute("""
+                SELECT m.id, m.home_team, m.away_team, m.competition,
+                       m.analysis_date, COUNT(vb.id) AS n_pending
+                FROM matches m
+                JOIN value_bets vb ON vb.match_id = m.id
+                WHERE vb.result IS NULL
+                GROUP BY m.id
+                ORDER BY m.analysis_date DESC
+            """).fetchall()
+
+            return [dict(row) for row in rows]
+
+    def get_calibration_rows(self) -> List[Dict]:
+        """
+        Analyses dont le résultat réel est connu : matière première
+        de la calibration continue (probabilités 1X2 du modèle vs
+        issues réelles).
+        """
+
+        with self._get_connection() as conn:
+            rows = conn.execute("""
+                SELECT model_prob_1, model_prob_x, model_prob_2,
+                       odds_1, odds_x, odds_2, actual_result
+                FROM matches
+                WHERE actual_result IN ('1', 'X', '2')
+                  AND model_prob_1 IS NOT NULL
+            """).fetchall()
+
+            return [dict(row) for row in rows]
+
     def get_resolved_bets(self) -> List[Dict]:
         """
         Value bets résolus (hors « non joué »), du plus ancien au plus
