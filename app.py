@@ -144,6 +144,14 @@ def check_access() -> bool:
     uniquement quand APP_ACCESS_CODE est défini dans les secrets.
     """
 
+    # Verrou actif uniquement sur le cloud (ou forcé) : sur le PC
+    # local, APP_ACCESS_CODE dans le .env sert seulement à déchiffrer
+    # les identifiants Supabase, jamais à afficher la porte.
+    on_cloud = os.path.exists("/mount/src")
+    forced = os.getenv("ACCESS_GATE_FORCE", "").strip() == "1"
+    if not (on_cloud or forced):
+        return True
+
     expected = _expected_access_code()
     gate = _access_gate_hash()
     if not expected and not gate:
