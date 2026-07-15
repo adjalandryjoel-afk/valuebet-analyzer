@@ -268,7 +268,7 @@ class ValueBetDetector:
         # l'approximation et le marché se lit à tort comme de la
         # value et produit des paris fantômes sur chaque match.
         from modules.poisson_model import PoissonPredictor
-        from modules.odds_utils import novig_probs
+        from modules.odds_utils import novig_probs, margin_ok
         from config import PoissonConfig
 
         analysis.model_probs["SOT_HOME"] = {}
@@ -306,6 +306,15 @@ class ValueBetDetector:
             lams_marche = []
             for line, paire in lignes.items():
                 if "over" not in paire or "under" not in paire:
+                    continue
+                # Cotes corrompues (lecture OCR) : ne JAMAIS s'ancrer
+                # dessus. Le λ étant moyenné sur les lignes du côté,
+                # une seule cote fausse le décale et fait passer les
+                # lignes SAINES en value fantôme. Seuil 0.20 : marché
+                # de niche à deux issues, marge plus large que le 1X2
+                # (même seuil que data_collector pour ce cas).
+                if not margin_ok([paire["over"], paire["under"]],
+                                 max_margin=0.20):
                     continue
                 probs = novig_probs([paire["over"], paire["under"]])
                 if not probs:
