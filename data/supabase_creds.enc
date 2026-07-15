@@ -1,0 +1,5 @@
+{
+ "algo": "fernet+pbkdf2_sha256_300000",
+ "salt": "0f90d0a55a72bb2786792ef9ad51c918",
+ "token": "gAAAAABqV7lwPsCeTWSD0VcPb4M6X1C7Wzo-8fmAIo06K1dJ2Mfcsp5hIGi-UIdBr1oArwyzchtSGx_NwO-I_tTknlgETBdAsEUVvbxLwRqweG_SoeGHqynsbZYmwZZ61Sh9MgcbdkYB9ougzR7VAXMG_-E4hQk_-TY38TYOm7OS8QaYVCqO1ez9364dXluH_jIovtZl1C56CmAxKZIBs0CRrK5VZ0DTZw=="
+}
