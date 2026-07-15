@@ -258,39 +258,90 @@ class ValueBetDetector:
                     float(odds.get(f"{prefix}_under_{line}", 0) or 0),
                     1 - p_over, 8))
 
-        # ── Tirs cadrés par équipe et du match (approximation depuis
-        #    les buts attendus → forte pénalité de confiance) ──
+        # ── Tirs cadrés (équipe ou match) ──
+        # Le modèle n'a AUCUNE donnée propre sur les tirs : il ne sait
+        # que les déduire des buts attendus (× SOT_PER_GOAL), une
+        # approximation qui dérive vite du réel. Le bookmaker, lui,
+        # dispose des vraies stats de tirs. On ancre donc le λ au
+        # marché (même principe que MARKET_WEIGHT sur les buts,
+        # calibré par backtest) : sans cet ancrage, l'écart entre
+        # l'approximation et le marché se lit à tort comme de la
+        # value et produit des paris fantômes sur chaque match.
         from modules.poisson_model import PoissonPredictor
+        from modules.odds_utils import novig_probs
+        from config import PoissonConfig
+
         analysis.model_probs["SOT_HOME"] = {}
         analysis.model_probs["SOT_AWAY"] = {}
         analysis.model_probs["SOT_TOTAL"] = {}
         sot_pattern = re.compile(
             r"^sot_(home|away|total)_(over|under)_(\d+_5)$")
+
+        # 1) Regrouper les cotes de tirs cadrés par côté et par ligne
+        sot_odds: Dict[str, Dict[str, Dict[str, float]]] = {}
         for key, value in odds.items():
             m = sot_pattern.match(str(key))
             if not m:
                 continue
             side, direction, line = m.groups()
-            lam_sot = {
-                "home": poisson_pred.sot_lambda_home,
-                "away": poisson_pred.sot_lambda_away,
-                "total": getattr(poisson_pred, "sot_lambda_total", 0)
-                or (poisson_pred.sot_lambda_home
-                    + poisson_pred.sot_lambda_away),
-            }[side]
+            try:
+                cote = float(value or 0)
+            except (TypeError, ValueError):
+                continue
+            if cote > 1:
+                sot_odds.setdefault(side, {}).setdefault(
+                    line, {})[direction] = cote
+
+        proxy = {
+            "home": poisson_pred.sot_lambda_home,
+            "away": poisson_pred.sot_lambda_away,
+            "total": getattr(poisson_pred, "sot_lambda_total", 0)
+            or (poisson_pred.sot_lambda_home
+                + poisson_pred.sot_lambda_away),
+        }
+
+        for side, lignes in sot_odds.items():
+            # 2) λ implicite du marché, moyenné sur les lignes
+            #    complètes (over ET under cotés → marge retirable)
+            lams_marche = []
+            for line, paire in lignes.items():
+                if "over" not in paire or "under" not in paire:
+                    continue
+                probs = novig_probs([paire["over"], paire["under"]])
+                if not probs:
+                    continue
+                lam = PoissonPredictor.fit_lambda_from_over(probs[0], line)
+                if lam:
+                    lams_marche.append(lam)
+
+            lam_proxy = proxy.get(side, 0)
+            if lams_marche:
+                lam_marche = sum(lams_marche) / len(lams_marche)
+                lam_sot = (PoissonConfig.MARKET_WEIGHT * lam_marche
+                           + (1 - PoissonConfig.MARKET_WEIGHT) * lam_proxy
+                           if lam_proxy > 0 else lam_marche)
+            else:
+                lam_sot = lam_proxy  # aucune ligne complète : repli
+
             if lam_sot <= 0:
                 continue
-            p_over = PoissonPredictor.poisson_over(lam_sot, line)
-            p = p_over if direction == "over" else 1 - p_over
+
             cible = {"home": home_team, "away": away_team,
                      "total": "du match"}[side]
-            line_txt = line.replace("_", ".")
-            analysis.model_probs[f"SOT_{side.upper()}"][
-                f"{direction}_{line}"] = round(p, 4)
-            candidates.append((
-                f"Tirs cadrés {cible}",
-                f"{'Over' if direction == 'over' else 'Under'} {line_txt}",
-                float(value or 0), p, 15))
+
+            # 3) Probabilités et candidats
+            for line, paire in lignes.items():
+                p_over = PoissonPredictor.poisson_over(lam_sot, line)
+                line_txt = line.replace("_", ".")
+                for direction, cote in paire.items():
+                    p = p_over if direction == "over" else 1 - p_over
+                    analysis.model_probs[f"SOT_{side.upper()}"][
+                        f"{direction}_{line}"] = round(p, 4)
+                    candidates.append((
+                        f"Tirs cadrés {cible}",
+                        f"{'Over' if direction == 'over' else 'Under'} "
+                        f"{line_txt}",
+                        cote, p, 15))
 
         implausible_count = 0
 

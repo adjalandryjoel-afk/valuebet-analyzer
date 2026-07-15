@@ -915,10 +915,10 @@ def display_results(analyses, bankroll):
                                     f"{side}_{ou}_{line}",
                                 ))
 
-                    # Buts par mi-temps (1MT / 2MT over/under 0.5, 1.5)
+                    # Buts par mi-temps (1MT / 2MT over/under 0.5, 1.5, 2.5)
                     for half, half_label in (("h1", "1MT"), ("h2", "2MT")):
                         probs_half = analysis.model_probs.get(half.upper(), {})
-                        for line in ("0_5", "1_5"):
+                        for line in ("0_5", "1_5", "2_5"):
                             for ou in ("over", "under"):
                                 extra_rows.append((
                                     f"{half_label} {ou.capitalize()} {line.replace('_', '.')}",
@@ -934,7 +934,7 @@ def display_results(analyses, bankroll):
                         ("h2_away", "H2_AWAY", "2MT", analysis.away_team),
                     ):
                         probs_th = analysis.model_probs.get(group, {})
-                        for line in ("0_5", "1_5"):
+                        for line in ("0_5", "1_5", "2_5"):
                             for ou in ("over", "under"):
                                 extra_rows.append((
                                     f"{mt_label} {team} {ou.capitalize()} "

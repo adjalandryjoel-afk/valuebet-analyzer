@@ -94,14 +94,14 @@ Ne JAMAIS confondre un total d'équipe avec le total du match
 - Buts par mi-temps du MATCH ENTIER — libellé "1ère mi-temps \
 (seule) - Nombre total de buts" ou "2ème mi-temps (seule) - Nombre \
 total de buts" SANS nom d'équipe à la fin : clés h1_over_0_5, \
-h1_under_0_5, h1_over_1_5, h1_under_1_5 (idem h2_ pour la 2ème \
-mi-temps). Lignes 0,5 / 1,5 uniquement
+h1_under_0_5, h1_over_1_5, h1_under_1_5, h1_over_2_5, h1_under_2_5 \
+(idem h2_ pour la 2ème mi-temps). Lignes 0,5 / 1,5 / 2,5 uniquement
 - Buts par mi-temps PAR ÉQUIPE — libellé "1ère mi-temps (seule) - \
 Nombre total de buts - [Équipe]" ou "2ème mi-temps (seule) - \
 Nombre total de buts - [Équipe]" (le nom d'équipe à la fin) : \
 clés h1_home_over_0_5, h1_home_under_0_5, h1_home_over_1_5, \
-h1_home_under_1_5 (idem h1_away_, h2_home_, h2_away_). \
-Lignes 0,5 / 1,5 uniquement
+h1_home_under_1_5, h1_home_over_2_5, h1_home_under_2_5 (idem \
+h1_away_, h2_home_, h2_away_). Lignes 0,5 / 1,5 / 2,5 uniquement
 - Tirs cadrés PAR ÉQUIPE — libellé "Nombre de tirs cadrés - \
 [Équipe]" ou "Tirs cadrés de [équipe]" : clés sot_home_over_N_5 / \
 sot_home_under_N_5 (idem sot_away_) avec N,5 = la ligne réellement \

@@ -405,22 +405,49 @@ class PoissonPredictor:
         lam_total = lam_h + lam_a
         lam_h1 = lam_total * share
         lam_h2 = lam_total * (1 - share)
-        pred.h1_totals = self._over_probs(lam_h1, ("0_5", "1_5"))
-        pred.h2_totals = self._over_probs(lam_h2, ("0_5", "1_5"))
+        # Lignes 0,5 / 1,5 / 2,5 : celles réellement proposées par
+        # Betclic sur les marchés de mi-temps
+        half_lines = ("0_5", "1_5", "2_5")
+        pred.h1_totals = self._over_probs(lam_h1, half_lines)
+        pred.h2_totals = self._over_probs(lam_h2, half_lines)
 
         # ── Buts par mi-temps ET par équipe (λ équipe × part MT) ──
-        pred.h1_team_home = self._over_probs(lam_h * share, ("0_5", "1_5"))
-        pred.h1_team_away = self._over_probs(lam_a * share, ("0_5", "1_5"))
+        pred.h1_team_home = self._over_probs(lam_h * share, half_lines)
+        pred.h1_team_away = self._over_probs(lam_a * share, half_lines)
         pred.h2_team_home = self._over_probs(
-            lam_h * (1 - share), ("0_5", "1_5"))
+            lam_h * (1 - share), half_lines)
         pred.h2_team_away = self._over_probs(
-            lam_a * (1 - share), ("0_5", "1_5"))
+            lam_a * (1 - share), half_lines)
 
         # ── Tirs cadrés attendus (approximation depuis les buts) ──
         pred.sot_lambda_home = round(lam_h * PoissonConfig.SOT_PER_GOAL, 2)
         pred.sot_lambda_away = round(lam_a * PoissonConfig.SOT_PER_GOAL, 2)
         pred.sot_lambda_total = round(
             pred.sot_lambda_home + pred.sot_lambda_away, 2)
+
+    @classmethod
+    def fit_lambda_from_over(cls, p_over: float, line: str,
+                             lo: float = 0.05, hi: float = 40.0
+                             ) -> Optional[float]:
+        """
+        λ tel que P(N > ligne) = p_over pour N ~ Poisson(λ).
+
+        Inversion par bissection (P(N > ligne) est strictement
+        croissante en λ). Sert à lire le λ que le marché implique
+        sur un marché où le modèle n'a aucune donnée propre.
+        Retourne None si p_over n'est pas une probabilité utile.
+        """
+
+        if not (0.001 < p_over < 0.999):
+            return None
+
+        for _ in range(60):
+            mid = (lo + hi) / 2
+            if cls.poisson_over(mid, line) < p_over:
+                lo = mid
+            else:
+                hi = mid
+        return round((lo + hi) / 2, 3)
 
     @classmethod
     def _over_probs(cls, lam: float, lines: tuple) -> Dict[str, float]:
