@@ -205,6 +205,16 @@ class DatabaseManager:
                 )
             """)
 
+            # ── Pierres tombales du miroir cloud ──
+            # bet_keys supprimés localement par supersede : ne
+            # jamais les ré-importer ni les re-pousser vers le cloud
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS cloud_tombstones (
+                    bet_key TEXT PRIMARY KEY,
+                    created_at TEXT DEFAULT (datetime('now'))
+                )
+            """)
+
             # ── Migrations idempotentes (CLV tracking) ──
             # Ajoute les colonnes de clôture aux bases existantes ;
             # sqlite3.OperationalError "duplicate column" = déjà migré.
@@ -234,6 +244,279 @@ class DatabaseManager:
                 CREATE INDEX IF NOT EXISTS idx_elo_team
                 ON elo_history(team_name)
             """)
+
+    # ─── MIROIR CLOUD (Supabase) ─────────────────────
+    # Le SQLite local reste la source de vérité de l'appareil ;
+    # Supabase est un miroir permanent partagé entre le PC et le
+    # cloud Streamlit. Chaque écriture importante est poussée au
+    # fil de l'eau ; hydrate_from_cloud() reconstitue le local au
+    # démarrage. Tout est silencieux en cas d'échec réseau.
+
+    @property
+    def cloud(self):
+        if not hasattr(self, "_cloud_checked"):
+            self._cloud_checked = True
+            self._cloud = None
+            try:
+                from modules.cloud_store import get_cloud_store
+                self._cloud = get_cloud_store()
+            except Exception:
+                pass
+        return self._cloud
+
+    @staticmethod
+    def _match_key(row: Dict) -> str:
+        """Clé naturelle stable d'un match, identique sur tous les
+        appareils : équipes + date du match (ou jour d'analyse)."""
+        date = (row.get("match_date")
+                or str(row.get("analysis_date") or "")[:10])
+        return (f"{str(row.get('home_team') or '').strip()}|"
+                f"{str(row.get('away_team') or '').strip()}|{date}")
+
+    @classmethod
+    def _bet_key(cls, match_row: Dict, bet_row: Dict) -> str:
+        # created_at (fixé par SQLite à l'insertion, transporté tel
+        # quel dans le payload cloud) discrimine chaque analyse : un
+        # nouveau pari ne peut jamais retomber sur la clé d'un pari
+        # antérieur déjà réglé et écraser son résultat.
+        return (f"{cls._match_key(match_row)}|"
+                f"{bet_row.get('market')}|{bet_row.get('selection')}|"
+                f"{str(bet_row.get('created_at') or '')}")
+
+    def _row_dict(self, table: str, row_id: int) -> Optional[Dict]:
+        with self._get_connection() as conn:
+            row = conn.execute(
+                f"SELECT * FROM {table} WHERE id = ?", (row_id,)
+            ).fetchone()
+        return dict(row) if row else None
+
+    def _cloud_push_match(self, match_id: int):
+        if not self.cloud or not match_id:
+            return
+        try:
+            m = self._row_dict("matches", match_id)
+            if m:
+                payload = {k: v for k, v in m.items() if k != "id"}
+                self.cloud.upsert_match(self._match_key(m), payload)
+        except Exception:
+            pass
+
+    def _cloud_push_bet(self, bet_id: int):
+        if not self.cloud or not bet_id:
+            return
+        try:
+            b = self._row_dict("value_bets", bet_id)
+            if not b:
+                return
+            m = self._row_dict("matches", b.get("match_id") or 0)
+            if not m:
+                return
+            bet_key = self._bet_key(m, b)
+
+            # Jamais re-pousser un pari supersédé : il ressusciterait
+            # dans le cloud puis sur tous les appareils
+            with self._get_connection() as conn:
+                mort = conn.execute(
+                    "SELECT 1 FROM cloud_tombstones WHERE bet_key = ?",
+                    (bet_key,)).fetchone()
+            if mort:
+                return
+
+            payload = {k: v for k, v in b.items()
+                       if k not in ("id", "match_id")}
+            self.cloud.upsert_bet(bet_key, self._match_key(m), payload)
+        except Exception:
+            pass
+
+    def hydrate_from_cloud(self) -> Dict:
+        """
+        Reconstitue/synchronise le SQLite local depuis Supabase :
+          • matchs et paris absents localement → insérés ;
+          • paris locaux en attente réglés ailleurs → mis à jour
+            (résultat, profit, cote de clôture, CLV) ;
+          • résultats de matchs enregistrés ailleurs → repris.
+        Retourne {"matchs": n, "paris": n, "maj": n}.
+        """
+
+        bilan = {"matchs": 0, "paris": 0, "maj": 0}
+        if not self.cloud:
+            return bilan
+
+        try:
+            remote_matches = self.cloud.fetch_matches()
+            remote_bets = self.cloud.fetch_bets()
+        except Exception:
+            return bilan
+        if not remote_matches and not remote_bets:
+            return bilan
+
+        a_remarquer = []  # pierres tombales à re-poser côté cloud
+
+        try:
+            with self._get_connection() as conn:
+                # Sérialise avec le robot CLV (autre process) : une
+                # seule hydratation écrit à la fois, l'index lu reste
+                # cohérent avec les insertions qui suivent
+                conn.execute("BEGIN IMMEDIATE")
+
+                mcols = {r[1] for r in conn.execute(
+                    "PRAGMA table_info(matches)")}
+                bcols = {r[1] for r in conn.execute(
+                    "PRAGMA table_info(value_bets)")}
+                tombales = {r[0] for r in conn.execute(
+                    "SELECT bet_key FROM cloud_tombstones")}
+
+                # ── Index local : clé naturelle → ligne ──
+                local_matches = {}
+                for row in conn.execute("SELECT * FROM matches"):
+                    local_matches[self._match_key(dict(row))] = dict(row)
+
+                key_to_id = {k: v["id"]
+                             for k, v in local_matches.items()}
+
+                # ── Matchs distants ──
+                for rm in remote_matches:
+                    key = rm.get("match_key")
+                    payload = rm.get("payload") or {}
+                    if not key or not isinstance(payload, dict):
+                        continue
+
+                    if key not in key_to_id:
+                        data = {k: v for k, v in payload.items()
+                                if k in mcols and k != "id"}
+                        if not data.get("home_team"):
+                            continue
+                        cols = ", ".join(data)
+                        marks = ", ".join("?" * len(data))
+                        cur = conn.execute(
+                            f"INSERT INTO matches ({cols}) "
+                            f"VALUES ({marks})", list(data.values()))
+                        key_to_id[key] = cur.lastrowid
+                        bilan["matchs"] += 1
+                    else:
+                        local = local_matches[key]
+                        if (payload.get("actual_result")
+                                and not local.get("actual_result")):
+                            conn.execute(
+                                "UPDATE matches SET actual_score = ?, "
+                                "actual_result = ? WHERE id = ?",
+                                (payload.get("actual_score"),
+                                 payload.get("actual_result"),
+                                 local["id"]))
+                            bilan["maj"] += 1
+
+                # ── Index local des paris ──
+                local_bets = {}
+                for row in conn.execute("""
+                    SELECT vb.*, m.home_team AS _h, m.away_team AS _a,
+                           m.match_date AS _md, m.analysis_date AS _ad
+                    FROM value_bets vb
+                    JOIN matches m ON m.id = vb.match_id
+                """):
+                    b = dict(row)
+                    mrow = {"home_team": b["_h"], "away_team": b["_a"],
+                            "match_date": b["_md"],
+                            "analysis_date": b["_ad"]}
+                    local_bets[self._bet_key(mrow, b)] = b
+
+                # ── Paris distants ──
+                for rb in remote_bets:
+                    key = rb.get("bet_key")
+                    payload = rb.get("payload") or {}
+                    if not key or not isinstance(payload, dict):
+                        continue
+
+                    # Colonnes de tête (réglées par le robot CLV ou
+                    # un autre appareil) prioritaires sur le payload
+                    for col in ("result", "closing_odds", "clv_pct"):
+                        if rb.get(col) is not None:
+                            payload[col] = rb[col]
+
+                    resultat_distant = payload.get("result")
+
+                    # Pari supprimé ICI par une ré-analyse : jamais
+                    # ré-importé. S'il est resté « en attente » côté
+                    # cloud (échec réseau passé), re-poser la tombale.
+                    if key in tombales:
+                        if resultat_distant is None:
+                            a_remarquer.append(key)
+                        continue
+
+                    # Pari supersédé AILLEURS : purge du pending local
+                    if resultat_distant == "superseded":
+                        local = local_bets.get(key)
+                        if local and not local.get("result"):
+                            conn.execute(
+                                "DELETE FROM value_bets WHERE id = ?",
+                                (local["id"],))
+                            bilan["maj"] += 1
+                        continue
+
+                    if key not in local_bets:
+                        match_id = key_to_id.get(rb.get("match_key"))
+                        if not match_id:
+                            # Match jamais poussé (échec réseau passé) :
+                            # squelette reconstruit depuis la clé
+                            # home|away|date pour ne pas perdre le pari
+                            parts = str(rb.get("match_key")
+                                        or "").split("|")
+                            if (len(parts) < 3 or not parts[0]
+                                    or not parts[1]):
+                                continue
+                            cur = conn.execute(
+                                "INSERT INTO matches (home_team, "
+                                "away_team, match_date) "
+                                "VALUES (?, ?, ?)",
+                                (parts[0], parts[1],
+                                 parts[2] or None))
+                            match_id = cur.lastrowid
+                            key_to_id[rb.get("match_key")] = match_id
+                            bilan["matchs"] += 1
+
+                        data = {k: v for k, v in payload.items()
+                                if k in bcols and k != "id"}
+                        data["match_id"] = match_id
+                        if not data.get("market"):
+                            continue
+                        cols = ", ".join(data)
+                        marks = ", ".join("?" * len(data))
+                        conn.execute(
+                            f"INSERT INTO value_bets ({cols}) "
+                            f"VALUES ({marks})", list(data.values()))
+                        bilan["paris"] += 1
+                    else:
+                        local = local_bets[key]
+                        updates = {}
+                        if (payload.get("result")
+                                and not local.get("result")):
+                            updates["result"] = payload["result"]
+                            updates["profit"] = payload.get("profit", 0)
+                        if (payload.get("closing_odds")
+                                and not local.get("closing_odds")):
+                            updates["closing_odds"] = \
+                                payload["closing_odds"]
+                            updates["clv_pct"] = payload.get("clv_pct")
+                        if updates:
+                            sets = ", ".join(
+                                f"{c} = ?" for c in updates)
+                            conn.execute(
+                                f"UPDATE value_bets SET {sets} "
+                                f"WHERE id = ?",
+                                list(updates.values()) + [local["id"]])
+                            bilan["maj"] += 1
+        except Exception as e:
+            print(f"   ⚠️ Hydratation cloud interrompue : "
+                  f"{type(e).__name__}")
+            return bilan
+
+        # Rattrapage réseau : re-pose des tombales côté cloud
+        for key in a_remarquer[:20]:
+            try:
+                self.cloud.mark_superseded_key(key)
+            except Exception:
+                pass
+
+        return bilan
 
     # ─── OPÉRATIONS SUR LES MATCHS ──────────────────
 
@@ -303,8 +586,10 @@ class DatabaseManager:
                 analysis_data.get("bookmaker_margin"),
                 analysis_data.get("source_images"),
             ))
+            new_id = cursor.lastrowid
 
-            return cursor.lastrowid
+        self._cloud_push_match(new_id)
+        return new_id
 
     def save_value_bet(self, match_id: int, vb_data: Dict) -> int:
         """Sauvegarde un value bet détecté."""
@@ -334,8 +619,10 @@ class DatabaseManager:
                 vb_data.get("kelly_stake"),
                 vb_data.get("recommended_stake"),
             ))
+            new_id = cursor.lastrowid
 
-            return cursor.lastrowid
+        self._cloud_push_bet(new_id)
+        return new_id
 
     def update_bet_result(self, bet_id: int, result: str, profit: float):
         """Met à jour le résultat d'un value bet."""
@@ -346,6 +633,8 @@ class DatabaseManager:
                 SET result = ?, profit = ?
                 WHERE id = ?
             """, (result, profit, bet_id))
+
+        self._cloud_push_bet(bet_id)
 
     def update_bet_closing(self, bet_id: int, closing_odds: float,
                            clv_pct: float):
@@ -366,6 +655,8 @@ class DatabaseManager:
                 WHERE id = ?
             """, (closing_odds, clv_pct, bet_id))
 
+        self._cloud_push_bet(bet_id)
+
     def update_match_result(self, match_id: int, actual_score: str,
                             actual_result: str):
         """Met à jour le résultat réel d'un match."""
@@ -376,6 +667,8 @@ class DatabaseManager:
                 SET actual_score = ?, actual_result = ?
                 WHERE id = ?
             """, (actual_score, actual_result, match_id))
+
+        self._cloud_push_match(match_id)
 
     # ─── REQUÊTES DE CONSULTATION ────────────────────
 
@@ -388,6 +681,31 @@ class DatabaseManager:
         """
 
         with self._get_connection() as conn:
+            # Pierres tombales : mémorise les bet_keys supprimés pour
+            # ne jamais les ré-importer ni les re-pousser (la même
+            # transaction que la suppression → jamais d'écart)
+            rows = conn.execute("""
+                SELECT vb.*, m.home_team AS _h, m.away_team AS _a,
+                       m.match_date AS _md, m.analysis_date AS _ad
+                FROM value_bets vb
+                JOIN matches m ON m.id = vb.match_id
+                WHERE vb.result IS NULL
+                  AND m.home_team = ? AND m.away_team = ?
+            """, (home_team, away_team)).fetchall()
+
+            for r in rows:
+                b = dict(r)
+                mrow = {"home_team": b["_h"], "away_team": b["_a"],
+                        "match_date": b["_md"],
+                        "analysis_date": b["_ad"]}
+                conn.execute(
+                    "INSERT OR IGNORE INTO cloud_tombstones "
+                    "(bet_key) VALUES (?)", (self._bet_key(mrow, b),))
+
+            conn.execute(
+                "DELETE FROM cloud_tombstones "
+                "WHERE created_at < datetime('now', '-30 days')")
+
             conn.execute("""
                 DELETE FROM value_bets
                 WHERE result IS NULL
@@ -396,6 +714,17 @@ class DatabaseManager:
                       WHERE home_team = ? AND away_team = ?
                   )
             """, (home_team, away_team))
+
+        # Propagation cloud PAR AFFICHE (couvre aussi les analyses
+        # d'un autre jour ou d'un autre appareil, que ce SQLite ne
+        # connaît pas). Marquage, jamais suppression : une ligne
+        # marquée ne peut pas être ressuscitée par un push retardataire.
+        if self.cloud:
+            try:
+                self.cloud.mark_superseded(
+                    home_team.strip(), away_team.strip())
+            except Exception:
+                pass
 
     def get_pending_bets(self) -> List[Dict]:
         """Récupère les paris en attente de résultat."""

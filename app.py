@@ -175,6 +175,14 @@ def check_access() -> bool:
             import time as _time
             if _code_matches(saisie.strip(), expected, gate):
                 st.session_state["acces_valide"] = True
+                # Le code d'accès sert aussi de clé de déchiffrement
+                # des identifiants Supabase (miroir cloud permanent)
+                os.environ.setdefault("APP_ACCESS_CODE", saisie.strip())
+                try:
+                    from modules.cloud_store import reset_cloud_store
+                    reset_cloud_store()
+                except Exception:
+                    pass
                 st.rerun()
             else:
                 _time.sleep(1.5)  # freine les essais en rafale
@@ -190,13 +198,23 @@ def check_access() -> bool:
 @st.cache_resource
 def init_modules():
     """Initialise tous les modules (appelé une seule fois)."""
+    db = DatabaseManager()
+    try:
+        # Miroir Supabase : reconstitue l'historique permanent
+        # (indispensable sur le cloud où SQLite s'efface)
+        bilan = db.hydrate_from_cloud()
+        if any(bilan.values()):
+            print(f"☁️ Historique cloud récupéré : {bilan}")
+    except Exception as e:
+        print(f"⚠️ Hydratation cloud impossible : {e}")
+
     return {
         "team_matcher": TeamMatcher(),
         "data_collector": DataCollector(),
         "poisson": PoissonPredictor(),
         "elo": EloRatingSystem(),
         "value_detector": ValueBetDetector(),
-        "db": DatabaseManager(),
+        "db": db,
         "backtester": Backtester(),
         "intel": get_match_intelligence(),
     }
@@ -1924,6 +1942,27 @@ def page_settings():
         "settings", "Paramètres",
         "Réglages des modèles et des clés API."
     )
+
+    # ── Miroir cloud (sauvegarde permanente Supabase) ──
+    db_sync = init_modules()["db"]
+    with st.container(border=True):
+        if db_sync.cloud:
+            c1, c2 = st.columns([3, 1], vertical_alignment="center")
+            c1.markdown(":material/cloud_done: **Sauvegarde cloud "
+                        "permanente : active** — analyses, paris et "
+                        "CLV partagés entre le téléphone et le PC.")
+            if c2.button("Resynchroniser", icon=":material/sync:",
+                         width="stretch"):
+                with st.spinner("Synchronisation..."):
+                    bilan = db_sync.hydrate_from_cloud()
+                st.success(
+                    f"{bilan['matchs']} match(s) et {bilan['paris']} "
+                    f"pari(s) récupérés, {bilan['maj']} mise(s) à "
+                    f"jour", icon=":material/check_circle:")
+        else:
+            st.markdown(":material/cloud_off: **Sauvegarde cloud "
+                        "inactive** — identifiants Supabase absents "
+                        "ou code d'accès non saisi.")
 
     tab1, tab2, tab3, tab4 = st.tabs([
         ":material/casino: Modèle Poisson",

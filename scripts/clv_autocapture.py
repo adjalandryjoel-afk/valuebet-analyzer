@@ -78,6 +78,16 @@ def main():
         return
 
     db = DatabaseManager()
+
+    # Miroir Supabase : rapatrie les paris faits depuis le
+    # téléphone pour leur capturer aussi la cote de clôture
+    try:
+        bilan_sync = db.hydrate_from_cloud()
+        if any(bilan_sync.values()):
+            say(f"Sync cloud : {bilan_sync}")
+    except Exception as e:
+        say(f"Sync cloud impossible : {e}")
+
     pending = [b for b in db.get_pending_bets()
                if not b.get("closing_odds")]
     if not pending:
