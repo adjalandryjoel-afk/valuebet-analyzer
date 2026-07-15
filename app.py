@@ -926,9 +926,27 @@ def display_results(analyses, bankroll):
                                     f"{half}_{ou}_{line}",
                                 ))
 
-                    # Tirs cadrés par équipe (lignes variables, déduites des cotes)
+                    # Buts par mi-temps ET par équipe
+                    for prefix, group, mt_label, team in (
+                        ("h1_home", "H1_HOME", "1MT", analysis.home_team),
+                        ("h1_away", "H1_AWAY", "1MT", analysis.away_team),
+                        ("h2_home", "H2_HOME", "2MT", analysis.home_team),
+                        ("h2_away", "H2_AWAY", "2MT", analysis.away_team),
+                    ):
+                        probs_th = analysis.model_probs.get(group, {})
+                        for line in ("0_5", "1_5"):
+                            for ou in ("over", "under"):
+                                extra_rows.append((
+                                    f"{mt_label} {team} {ou.capitalize()} "
+                                    f"{line.replace('_', '.')}",
+                                    probs_th.get(f"{ou}_{line}", 0),
+                                    f"{prefix}_{ou}_{line}",
+                                ))
+
+                    # Tirs cadrés par équipe et du match (lignes variables)
                     for side, team in (("home", analysis.home_team),
-                                       ("away", analysis.away_team)):
+                                       ("away", analysis.away_team),
+                                       ("total", "du match")):
                         probs_sot = analysis.model_probs.get(f"SOT_{side.upper()}", {})
                         prefix = f"sot_{side}_"
                         sot_lines = []

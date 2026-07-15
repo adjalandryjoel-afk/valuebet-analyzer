@@ -229,29 +229,66 @@ class ValueBetDetector:
                     f"Buts {label}", f"Under {line_txt}",
                     float(odds.get(f"{prefix}_under_{line}", 0) or 0), 1 - p_over, 5))
 
-        # ── Tirs cadrés par équipe (approximation depuis les buts
-        #    attendus → forte pénalité de confiance) ──
+        # ── Buts par équipe ET par mi-temps (λ équipe × part MT
+        #    → pénalité intermédiaire) ──
+        team_halves = (
+            ("h1_home", f"Buts 1MT {home_team}",
+             poisson_pred.h1_team_home, "H1_HOME"),
+            ("h1_away", f"Buts 1MT {away_team}",
+             poisson_pred.h1_team_away, "H1_AWAY"),
+            ("h2_home", f"Buts 2MT {home_team}",
+             poisson_pred.h2_team_home, "H2_HOME"),
+            ("h2_away", f"Buts 2MT {away_team}",
+             poisson_pred.h2_team_away, "H2_AWAY"),
+        )
+        for prefix, market_label, totals, probs_key in team_halves:
+            analysis.model_probs[probs_key] = {}
+            for line, p_over in totals.items():
+                line_txt = line.replace("_", ".")
+                analysis.model_probs[probs_key][
+                    f"over_{line}"] = round(p_over, 4)
+                analysis.model_probs[probs_key][
+                    f"under_{line}"] = round(1 - p_over, 4)
+                candidates.append((
+                    market_label, f"Over {line_txt}",
+                    float(odds.get(f"{prefix}_over_{line}", 0) or 0),
+                    p_over, 8))
+                candidates.append((
+                    market_label, f"Under {line_txt}",
+                    float(odds.get(f"{prefix}_under_{line}", 0) or 0),
+                    1 - p_over, 8))
+
+        # ── Tirs cadrés par équipe et du match (approximation depuis
+        #    les buts attendus → forte pénalité de confiance) ──
         from modules.poisson_model import PoissonPredictor
         analysis.model_probs["SOT_HOME"] = {}
         analysis.model_probs["SOT_AWAY"] = {}
-        sot_pattern = re.compile(r"^sot_(home|away)_(over|under)_(\d+_5)$")
+        analysis.model_probs["SOT_TOTAL"] = {}
+        sot_pattern = re.compile(
+            r"^sot_(home|away|total)_(over|under)_(\d+_5)$")
         for key, value in odds.items():
             m = sot_pattern.match(str(key))
             if not m:
                 continue
             side, direction, line = m.groups()
-            lam_sot = (poisson_pred.sot_lambda_home if side == "home"
-                       else poisson_pred.sot_lambda_away)
+            lam_sot = {
+                "home": poisson_pred.sot_lambda_home,
+                "away": poisson_pred.sot_lambda_away,
+                "total": getattr(poisson_pred, "sot_lambda_total", 0)
+                or (poisson_pred.sot_lambda_home
+                    + poisson_pred.sot_lambda_away),
+            }[side]
             if lam_sot <= 0:
                 continue
             p_over = PoissonPredictor.poisson_over(lam_sot, line)
             p = p_over if direction == "over" else 1 - p_over
-            team = home_team if side == "home" else away_team
+            cible = {"home": home_team, "away": away_team,
+                     "total": "du match"}[side]
             line_txt = line.replace("_", ".")
             analysis.model_probs[f"SOT_{side.upper()}"][
                 f"{direction}_{line}"] = round(p, 4)
             candidates.append((
-                f"Tirs cadrés {team}",
+                f"Tirs cadrés {cible}",
                 f"{'Over' if direction == 'over' else 'Under'} {line_txt}",
                 float(value or 0), p, 15))
 

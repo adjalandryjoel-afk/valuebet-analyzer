@@ -72,11 +72,16 @@ def settle_selection(market: str, selection: str,
             return "win" if not btts else "loss"
         return None
 
-    # ── Tirs cadrés : indécidable depuis le score ──
+    # ── Tirs cadrés (équipe ou match) : indécidable depuis le score ──
     if market.startswith("Tirs cadrés"):
         return None
 
-    # ── Buts par mi-temps (exige le score HT) ──
+    # ── Buts par mi-temps ET par équipe : indécidable (on ne collecte
+    #    pas le score mi-temps de chaque équipe séparément) ──
+    if market.startswith("Buts 1MT ") or market.startswith("Buts 2MT "):
+        return None
+
+    # ── Buts par mi-temps du match entier (exige le score HT) ──
     if market == "Buts 1ère mi-temps":
         if hthg is None or htag is None:
             return None

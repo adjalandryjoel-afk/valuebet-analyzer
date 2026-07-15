@@ -59,9 +59,16 @@ class PoissonPrediction:
     h1_totals: Dict[str, float] = field(default_factory=dict)
     h2_totals: Dict[str, float] = field(default_factory=dict)
 
+    # Buts par mi-temps ET par équipe — {"0_5": P(over), "1_5": ...}
+    h1_team_home: Dict[str, float] = field(default_factory=dict)
+    h1_team_away: Dict[str, float] = field(default_factory=dict)
+    h2_team_home: Dict[str, float] = field(default_factory=dict)
+    h2_team_away: Dict[str, float] = field(default_factory=dict)
+
     # Tirs cadrés attendus par équipe (λ, approximation depuis les buts)
     sot_lambda_home: float = 0.0
     sot_lambda_away: float = 0.0
+    sot_lambda_total: float = 0.0
 
     # Double chance
     prob_1x: float = 0.0
@@ -401,9 +408,19 @@ class PoissonPredictor:
         pred.h1_totals = self._over_probs(lam_h1, ("0_5", "1_5"))
         pred.h2_totals = self._over_probs(lam_h2, ("0_5", "1_5"))
 
+        # ── Buts par mi-temps ET par équipe (λ équipe × part MT) ──
+        pred.h1_team_home = self._over_probs(lam_h * share, ("0_5", "1_5"))
+        pred.h1_team_away = self._over_probs(lam_a * share, ("0_5", "1_5"))
+        pred.h2_team_home = self._over_probs(
+            lam_h * (1 - share), ("0_5", "1_5"))
+        pred.h2_team_away = self._over_probs(
+            lam_a * (1 - share), ("0_5", "1_5"))
+
         # ── Tirs cadrés attendus (approximation depuis les buts) ──
         pred.sot_lambda_home = round(lam_h * PoissonConfig.SOT_PER_GOAL, 2)
         pred.sot_lambda_away = round(lam_a * PoissonConfig.SOT_PER_GOAL, 2)
+        pred.sot_lambda_total = round(
+            pred.sot_lambda_home + pred.sot_lambda_away, 2)
 
     @classmethod
     def _over_probs(cls, lam: float, lines: tuple) -> Dict[str, float]:

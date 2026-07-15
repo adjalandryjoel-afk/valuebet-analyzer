@@ -55,8 +55,11 @@ avec un JSON valide, sans texte autour, au format :
         "away_under_0_5": 3.25,
         "h1_over_0_5": 1.28,
         "h2_under_1_5": 1.55,
+        "h1_home_over_0_5": 2.22,
+        "h2_away_under_1_5": 1.10,
         "sot_home_over_3_5": 1.80,
-        "sot_away_under_4_5": 1.90
+        "sot_away_under_4_5": 1.90,
+        "sot_total_over_7_5": 1.48
       }
     }
   ]
@@ -65,34 +68,56 @@ avec un JSON valide, sans texte autour, au format :
 Règles STRICTES :
 - Les cotes sont des nombres décimaux (point, pas virgule)
 - "cotes" (1/X/2) = UNIQUEMENT le marché explicitement libellé \
-"Résultat du match", "1N2", "1X2" ou "Vainqueur" avec ses 3 issues. \
-Ne JAMAIS y mettre les cotes d'un autre marché (double chance, \
-handicap, mi-temps, buteur...). Si ce marché n'est pas visible, \
-mets {"1": 0, "X": 0, "2": 0}
+"Résultat du match", "1N2", "1X2" ou "Vainqueur" avec ses 3 issues \
+(victoire / nul / victoire). Ne JAMAIS y mettre un marché à DEUX \
+issues (Qualification, Vainqueur de la rencontre en élimination \
+directe, double chance...) ni handicap, mi-temps, buteur. Si le \
+1X2 à 3 issues n'est pas visible, mets {"1": 0, "X": 0, "2": 0}
 - "over_2_5"/"under_2_5" = UNIQUEMENT la ligne exactement 2,5 buts \
-du marché "Nombre de buts" du MATCH ENTIER. Ignore les lignes 0,5 / \
-1,5 / 3,5 / 4,5 etc.
+du marché "Nombre de buts" / "Nombre total de buts" du MATCH ENTIER \
+(carte SANS nom d'équipe et SANS mention de mi-temps). Ignore les \
+lignes 0,5 / 1,5 / 3,5 / 4,5. ATTENTION : ne JAMAIS remplir \
+over_2_5/under_2_5 depuis une carte titrée "... - [Équipe]" (ex. \
+"Total de buts (t. rég) - Angleterre") : ça, c'est un total PAR \
+ÉQUIPE, il va dans home_/away_
 - "btts_oui"/"btts_non" = uniquement le marché "Les deux équipes \
 marquent"
-- Totaux par équipe (marché "Nombre de buts de [équipe]" ou "Total \
-de buts équipe") : clés home_over_0_5, home_under_0_5, home_over_1_5, \
-home_under_1_5, home_over_2_5, home_under_2_5 (idem away_). home_ = \
-la 1ère équipe affichée (domicile), away_ = la 2ème (extérieur). \
-Lignes 0,5 / 1,5 / 2,5 uniquement. Ne JAMAIS confondre le total \
-d'une équipe avec le total du match
-- Buts par mi-temps du match ENTIER (marché "Nombre de buts 1ère \
-mi-temps" / "2ème mi-temps", PAS par équipe) : clés h1_over_0_5, \
-h1_under_0_5, h1_over_1_5, h1_under_1_5 (idem h2_). Lignes 0,5 / \
-1,5 uniquement
-- Tirs cadrés par équipe (marché "Tirs cadrés de [équipe]") : clés \
-sot_home_over_N_5 / sot_home_under_N_5 (idem sot_away_) avec N,5 = \
-la ligne réellement affichée (ex. plus de 3,5 tirs cadrés domicile \
-→ sot_home_over_3_5). Ne JAMAIS confondre tirs cadrés et buts
+- Totaux par équipe — cartes titrées "Total de buts (t. rég) - \
+[Équipe]", "Nombre total de buts - [Équipe]" ou "Nombre de buts de \
+[équipe]" (un NOM D'ÉQUIPE dans le titre, SANS mention de \
+mi-temps). Onglet Betclic "Buts par équipes". Clés home_over_0_5, \
+home_under_0_5, home_over_1_5, home_under_1_5, home_over_2_5, \
+home_under_2_5 (idem away_). home_ = la 1ère équipe affichée \
+(domicile), away_ = la 2ème (extérieur). Lignes 0,5 / 1,5 / 2,5 \
+uniquement (ignore 3,5+). "+ de N,5" = over, "- de N,5" = under. \
+Ne JAMAIS confondre un total d'équipe avec le total du match
+- Buts par mi-temps du MATCH ENTIER — libellé "1ère mi-temps \
+(seule) - Nombre total de buts" ou "2ème mi-temps (seule) - Nombre \
+total de buts" SANS nom d'équipe à la fin : clés h1_over_0_5, \
+h1_under_0_5, h1_over_1_5, h1_under_1_5 (idem h2_ pour la 2ème \
+mi-temps). Lignes 0,5 / 1,5 uniquement
+- Buts par mi-temps PAR ÉQUIPE — libellé "1ère mi-temps (seule) - \
+Nombre total de buts - [Équipe]" ou "2ème mi-temps (seule) - \
+Nombre total de buts - [Équipe]" (le nom d'équipe à la fin) : \
+clés h1_home_over_0_5, h1_home_under_0_5, h1_home_over_1_5, \
+h1_home_under_1_5 (idem h1_away_, h2_home_, h2_away_). \
+Lignes 0,5 / 1,5 uniquement
+- Tirs cadrés PAR ÉQUIPE — libellé "Nombre de tirs cadrés - \
+[Équipe]" ou "Tirs cadrés de [équipe]" : clés sot_home_over_N_5 / \
+sot_home_under_N_5 (idem sot_away_) avec N,5 = la ligne réellement \
+affichée (ex. "+ de 3,5" tirs cadrés de l'équipe domicile → \
+sot_home_over_3_5). Toutes les lignes visibles
+- Tirs cadrés du MATCH ENTIER — libellé "Nombre total de tirs \
+cadrés" (sans nom d'équipe) : clés sot_total_over_N_5 / \
+sot_total_under_N_5 avec la ligne affichée (ex. "+ de 7,5" → \
+sot_total_over_7_5). Ne JAMAIS confondre tirs cadrés et buts
 - N'inclus dans marches_supplementaires que les marchés réellement \
 visibles et identifiés avec certitude — en cas de doute sur le \
 marché ou la ligne, omets la clé
 - Une capture peut montrer plusieurs écrans de marchés du MÊME match : \
-c'est un seul match, pas plusieurs
+c'est un seul match, pas plusieurs. Les onglets Betclic visibles \
+("Buts par équipes", "Buts par mi-temps", "Tirs cadrés"...) \
+indiquent la famille de marchés affichée
 - Si l'image n'est pas une capture de bookmaker (appli de stats, \
 scores...), réponds {"matchs": []}"""
 
