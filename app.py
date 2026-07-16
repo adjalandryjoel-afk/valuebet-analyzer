@@ -203,9 +203,38 @@ def check_access() -> bool:
 #  INITIALISATION DES MODULES (avec cache Streamlit)
 # ══════════════════════════════════════════════════════
 
-@st.cache_resource
+def _code_version() -> str:
+    """
+    Empreinte du code (mtimes de app.py + modules/*.py).
+
+    st.cache_resource garde les instances entre les reruns, mais NE
+    les invalide PAS quand le code d'un module change : après une
+    mise à jour, une instance périmée (ancienne signature) provoque
+    des erreurs tant qu'on n'a pas redémarré le processus. En passant
+    cette empreinte au cache, toute modification de fichier force une
+    ré-initialisation propre — plus besoin de redémarrer à la main.
+    """
+    import glob
+    base = os.path.dirname(os.path.abspath(__file__))
+    fichiers = [os.path.join(base, "app.py")]
+    fichiers += glob.glob(os.path.join(base, "modules", "*.py"))
+    total = 0.0
+    for f in fichiers:
+        try:
+            total += os.path.getmtime(f)
+        except OSError:
+            pass
+    return f"{total:.0f}"
+
+
 def init_modules():
-    """Initialise tous les modules (appelé une seule fois)."""
+    """Modules partagés (ré-initialisés si le code change)."""
+    return _init_modules_cached(_code_version())
+
+
+@st.cache_resource
+def _init_modules_cached(_version: str):
+    """Initialise tous les modules (une fois par version du code)."""
     db = DatabaseManager()
     try:
         # Miroir Supabase : reconstitue l'historique permanent
