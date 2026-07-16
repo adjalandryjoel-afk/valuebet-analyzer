@@ -1,21 +1,22 @@
-# ═══ Thème Value Bet Analyzer — sombre, financier, accent bleu ciel ═══
+# ═══ Thème Value Bet Analyzer — « Émeraude Nuit » ═══
+# Vert = argent / gains · touche d'or sur les cotes · nuit profonde
 
 [theme]
 base = "dark"
-primaryColor = "#38BDF8"             # Bleu ciel — couleur signature de l'app
-backgroundColor = "#0F172A"          # Ardoise profonde
-secondaryBackgroundColor = "#1E293B" # Ardoise plus claire (widgets, cartes)
-codeBackgroundColor = "#1E293B"
-textColor = "#F1F5F9"
-linkColor = "#38BDF8"
-borderColor = "#334155"
-codeTextColor = "#CBD5E1"
+primaryColor = "#10B981"             # Émeraude — couleur signature
+backgroundColor = "#081512"          # Nuit émeraude profonde
+secondaryBackgroundColor = "#0F231C" # Émeraude ardoise (widgets, cartes)
+codeBackgroundColor = "#0F231C"
+textColor = "#E9F6EF"                # Blanc cassé teinté vert
+linkColor = "#34D399"
+borderColor = "#1C3A2E"
+codeTextColor = "#A7D9C4"
 showWidgetBorder = true
 showSidebarBorder = true
 baseRadius = "8px"
 buttonRadius = "8px"
 
-# Typographie — Inter pour tout, JetBrains Mono pour les chiffres/code
+# Typographie — Inter partout, JetBrains Mono pour les chiffres/code
 font = "'Inter':https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
 headingFont = "'Inter':https://fonts.googleapis.com/css2?family=Inter:wght@600;700&display=swap"
 codeFont = "'JetBrains Mono':https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
@@ -26,28 +27,30 @@ headingFontSizes = ["28px", "22px", "18px", "16px", "14px", "12px"]
 headingFontWeights = [700, 600, 600, 600, 500, 500]
 linkUnderline = false
 
-# Couleurs sémantiques (gains/pertes/alertes)
+# Couleurs sémantiques (gains/pertes/alertes) — l'or sert d'accent
+# secondaire (cotes, valeurs mises en avant)
 greenColor = "#34D399"
 redColor = "#F87171"
-yellowColor = "#FBBF24"
+yellowColor = "#FBBF24"   # Or — cotes, chiffres en avant
 orangeColor = "#FB923C"
-blueColor = "#60A5FA"
+blueColor = "#38BDF8"
 violetColor = "#A78BFA"
-grayColor = "#94A3B8"
+grayColor = "#8CA79A"     # Gris teinté vert (choisi, pas neutre par défaut)
 
-# Palette des graphiques
+# Palette des graphiques — émeraude en tête, or en second
 chartCategoricalColors = [
+    "#10B981",
+    "#FBBF24",
+    "#34D399",
     "#38BDF8",
     "#F87171",
-    "#60A5FA",
-    "#FBBF24",
+    "#6EE7B7",
     "#A78BFA",
-    "#34D399",
-    "#94A3B8",
-    "#FB923C",
+    "#8CA79A",
 ]
 
 chartSequentialColors = [
+    "#052E26",
     "#064E3B",
     "#065F46",
     "#047857",
@@ -57,17 +60,16 @@ chartSequentialColors = [
     "#6EE7B7",
     "#A7F3D0",
     "#D1FAE5",
-    "#ECFDF5",
 ]
 
 # Tableaux
-dataframeBorderColor = "#334155"
-dataframeHeaderBackgroundColor = "#1E293B"
+dataframeBorderColor = "#1C3A2E"
+dataframeHeaderBackgroundColor = "#0F231C"
 
 [theme.sidebar]
-backgroundColor = "#0B1120"
-secondaryBackgroundColor = "#1E293B"
-codeBackgroundColor = "#1E293B"
-textColor = "#F1F5F9"
-borderColor = "#334155"
-primaryColor = "#38BDF8"
+backgroundColor = "#05100D"          # Plus sombre encore que le fond
+secondaryBackgroundColor = "#0F231C"
+codeBackgroundColor = "#0F231C"
+textColor = "#E9F6EF"
+borderColor = "#1C3A2E"
+primaryColor = "#10B981"

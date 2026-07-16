@@ -302,6 +302,16 @@ def render_sidebar_settings():
                  "analyste. Ajoute quelques secondes par match."
         )
 
+        st.subheader(":material/bolt: Affichage")
+        st.toggle(
+            "Mode Léger (données mobiles)",
+            value=st.session_state.get("lite_mode", False),
+            key="lite_mode",
+            help="Coupe les animations et allège les effets visuels "
+                 "pour un affichage plus rapide et fluide sur "
+                 "téléphone et connexion 3G/4G.",
+        )
+
         # Performance globale
         db = init_modules()["db"]
         stats = db.get_performance_stats()
@@ -2480,6 +2490,16 @@ def main():
     bankroll, min_value, min_confidence, deep_analysis = (
         render_sidebar_settings()
     )
+
+    # Mode Léger : coupe animations et transitions pour un rendu plus
+    # rapide et fluide sur téléphone / connexion mobile modeste.
+    if st.session_state.get("lite_mode"):
+        st.markdown(
+            "<style>*,*::before,*::after{animation:none!important;"
+            "transition:none!important;}"
+            "[data-testid='stSpinner']{animation:none!important;}</style>",
+            unsafe_allow_html=True,
+        )
 
     def _upload():
         page_upload_screenshots(bankroll, min_value, min_confidence,
