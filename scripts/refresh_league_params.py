@@ -31,7 +31,8 @@ def main():
     mesures = {}
 
     print("Mesure des paramètres réels par championnat\n")
-    for cle in fd.DIVISIONS:
+    toutes = list(fd.DIVISIONS) + list(fd.EXTRA_LEAGUES)
+    for cle in toutes:
         params = fd.league_params(cle)
         if not params:
             print(f"  {cle:16s} — indisponible")

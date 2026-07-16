@@ -332,6 +332,85 @@ SUPPORTED_LEAGUES = {
         "avg_goals": 2.54, "home_win_rate": 0.38,
         "first_half_share": 0.47,
     },
+    # ── Championnats supplémentaires (2e jeu football-data :
+    #    forme + H2H, sans mi-temps ni tirs cadrés) ──
+    "swe_allsvenskan": {
+        "name": "Allsvenskan", "country": "Suède",
+        "avg_goals": 2.95, "home_win_rate": 0.44,
+        "first_half_share": 0.45,
+    },
+    "nor_eliteserien": {
+        "name": "Eliteserien", "country": "Norvège",
+        "avg_goals": 3.05, "home_win_rate": 0.46,
+        "first_half_share": 0.45,
+    },
+    "fin_veikkaus": {
+        "name": "Veikkausliiga", "country": "Finlande",
+        "avg_goals": 2.75, "home_win_rate": 0.44,
+        "first_half_share": 0.45,
+    },
+    "den_superliga": {
+        "name": "Superliga", "country": "Danemark",
+        "avg_goals": 2.90, "home_win_rate": 0.43,
+        "first_half_share": 0.45,
+    },
+    "rus_premier": {
+        "name": "Premier Liga", "country": "Russie",
+        "avg_goals": 2.55, "home_win_rate": 0.45,
+        "first_half_share": 0.45,
+    },
+    "rou_superliga": {
+        "name": "Superliga", "country": "Roumanie",
+        "avg_goals": 2.55, "home_win_rate": 0.43,
+        "first_half_share": 0.45,
+    },
+    "aut_bundesliga": {
+        "name": "Bundesliga", "country": "Autriche",
+        "avg_goals": 3.00, "home_win_rate": 0.45,
+        "first_half_share": 0.45,
+    },
+    "pol_ekstraklasa": {
+        "name": "Ekstraklasa", "country": "Pologne",
+        "avg_goals": 2.60, "home_win_rate": 0.44,
+        "first_half_share": 0.45,
+    },
+    "irl_premier": {
+        "name": "Premier Division", "country": "Irlande",
+        "avg_goals": 2.55, "home_win_rate": 0.42,
+        "first_half_share": 0.45,
+    },
+    "usa_mls": {
+        "name": "MLS", "country": "États-Unis",
+        "avg_goals": 3.05, "home_win_rate": 0.48,
+        "first_half_share": 0.45,
+    },
+    "bra_serie_a": {
+        "name": "Brasileirão", "country": "Brésil",
+        "avg_goals": 2.45, "home_win_rate": 0.48,
+        "first_half_share": 0.45,
+    },
+    "arg_liga": {
+        "name": "Liga Profesional", "country": "Argentine",
+        "avg_goals": 2.35, "home_win_rate": 0.42,
+        "first_half_share": 0.45,
+    },
+    "mex_liga": {
+        "name": "Liga MX", "country": "Mexique",
+        "avg_goals": 2.75, "home_win_rate": 0.47,
+        "first_half_share": 0.45,
+    },
+    # Cotes seules (pas de forme/H2H : 2e division ou sélections)
+    "swe_superettan": {
+        "name": "Superettan", "country": "Suède",
+        "avg_goals": 2.80, "home_win_rate": 0.44,
+        "first_half_share": 0.45,
+    },
+    "world_cup": {
+        "name": "Coupe du Monde", "country": "International",
+        "avg_goals": 2.65, "home_win_rate": 0.40,
+        "first_half_share": 0.45,
+    },
+
     # ── Coupes d'Europe et local (pas de CSV football-data) ──
     "champions_league": {
         "name": "Champions League", "country": "Europe",

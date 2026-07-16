@@ -145,6 +145,84 @@
    "first_half_share": 0.465,
    "avg_sot": 3.987,
    "sot_par_but": 3.106
+  },
+  "swe_allsvenskan": {
+   "avg_goals": 3.196,
+   "home_win_rate": 0.402,
+   "matchs": 97,
+   "saison": "2026"
+  },
+  "nor_eliteserien": {
+   "avg_goals": 2.938,
+   "home_win_rate": 0.536,
+   "matchs": 97,
+   "saison": "2026"
+  },
+  "fin_veikkaus": {
+   "avg_goals": 2.7,
+   "home_win_rate": 0.5,
+   "matchs": 90,
+   "saison": "2026"
+  },
+  "den_superliga": {
+   "avg_goals": 3.099,
+   "home_win_rate": 0.417,
+   "matchs": 192,
+   "saison": "2025/2026"
+  },
+  "rus_premier": {
+   "avg_goals": 2.538,
+   "home_win_rate": 0.454,
+   "matchs": 240,
+   "saison": "2025/2026"
+  },
+  "rou_superliga": {
+   "avg_goals": 2.542,
+   "home_win_rate": 0.442,
+   "matchs": 321,
+   "saison": "2025/2026"
+  },
+  "aut_bundesliga": {
+   "avg_goals": 2.698,
+   "home_win_rate": 0.422,
+   "matchs": 192,
+   "saison": "2025/2026"
+  },
+  "pol_ekstraklasa": {
+   "avg_goals": 2.735,
+   "home_win_rate": 0.451,
+   "matchs": 306,
+   "saison": "2025/2026"
+  },
+  "irl_premier": {
+   "avg_goals": 2.793,
+   "home_win_rate": 0.405,
+   "matchs": 121,
+   "saison": "2026"
+  },
+  "usa_mls": {
+   "avg_goals": 3.303,
+   "home_win_rate": 0.482,
+   "matchs": 218,
+   "saison": "2026"
+  },
+  "bra_serie_a": {
+   "avg_goals": 2.661,
+   "home_win_rate": 0.492,
+   "matchs": 177,
+   "saison": "2026"
+  },
+  "arg_liga": {
+   "avg_goals": 2.055,
+   "home_win_rate": 0.409,
+   "matchs": 254,
+   "saison": "2026"
+  },
+  "mex_liga": {
+   "avg_goals": 2.905,
+   "home_win_rate": 0.47,
+   "matchs": 336,
+   "saison": "2025/2026"
   }
  }
 }

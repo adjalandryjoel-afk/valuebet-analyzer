@@ -115,9 +115,21 @@ class OddsAPICollector:
         # Deuxièmes divisions (lignes plus molles)
         "championship": "soccer_efl_champ",
         "bundesliga2": "soccer_germany_bundesliga2",
-        # Coupes d'Europe
+        # Championnats d'été / hors grands-5 (scan automatique)
+        "swe_allsvenskan": "soccer_sweden_allsvenskan",
+        "swe_superettan": "soccer_sweden_superettan",
+        "nor_eliteserien": "soccer_norway_eliteserien",
+        "fin_veikkaus": "soccer_finland_veikkausliiga",
+        "den_superliga": "soccer_denmark_superliga",
+        "aut_bundesliga": "soccer_austria_bundesliga",
+        "usa_mls": "soccer_usa_mls",
+        "bra_serie_a": "soccer_brazil_campeonato",
+        "arg_liga": "soccer_argentina_primera_division",
+        "mex_liga": "soccer_mexico_ligamx",
+        # Coupes d'Europe et Coupe du Monde
         "champions_league": "soccer_uefa_champs_league",
         "europa_league": "soccer_uefa_europa_league",
+        "world_cup": "soccer_fifa_world_cup",
     }
 
     # Bookmakers africains / francophones à surveiller

@@ -47,6 +47,11 @@ from rapidfuzz import fuzz, process
 from config import Paths
 
 BASE_URL = "https://www.football-data.co.uk/mmz4281"
+# Second jeu de données football-data (« new ») : un fichier par
+# pays, couvrant beaucoup plus de championnats (Scandinavie, Europe
+# de l'Est, Amériques...) avec scores et cotes — mais SANS mi-temps
+# ni tirs cadrés. Suffisant pour la forme et les confrontations.
+EXTRA_URL = "https://www.football-data.co.uk/new"
 CACHE_DIR = os.path.join(Paths.DATA_DIR, "football_data")
 
 # Colonnes exploitées (les autres sont ignorées)
@@ -190,6 +195,29 @@ class FootballData:
         "greece_super": "G1",
     }
 
+    # Championnats du 2e jeu « new » : clé interne → (code pays,
+    # nom de division dans le fichier). Un seul fichier par pays,
+    # toutes saisons confondues. Scores uniquement (pas de mi-temps
+    # ni de tirs cadrés) → forme et H2H, pas de profil de tirs.
+    EXTRA_LEAGUES = {
+        "swe_allsvenskan":  ("SWE", "Allsvenskan"),
+        "nor_eliteserien":  ("NOR", "Eliteserien"),
+        "fin_veikkaus":     ("FIN", "Veikkausliiga"),
+        "den_superliga":    ("DNK", "Superliga"),
+        "rus_premier":      ("RUS", "Premier League"),
+        "rou_superliga":    ("ROU", "Superliga"),
+        "aut_bundesliga":   ("AUT", "Bundesliga"),
+        "pol_ekstraklasa":  ("POL", "Ekstraklasa"),
+        # NB : football-data n'a PAS l'Islande — son fichier « ISL »
+        # sert en réalité les données irlandaises. Islande = non
+        # couverte (mieux vaut « indisponible » qu'une fausse équipe).
+        "irl_premier":      ("IRL", "Premier Division"),
+        "usa_mls":          ("USA", "MLS"),
+        "bra_serie_a":      ("BRA", "Serie A"),
+        "arg_liga":         ("ARG", "Liga Profesional"),
+        "mex_liga":         ("MEX", "Liga MX"),
+    }
+
     # Nombre de saisons chargées (la plus récente d'abord)
     N_SEASONS = 3
     # Un CSV en cache est rafraîchi passé ce délai (saison en cours)
@@ -277,6 +305,12 @@ class FootballData:
         if league in self._frames:
             return self._frames[league]
 
+        if league in self.EXTRA_LEAGUES:
+            df = self._extra_frame(league)
+            if df is not None:
+                self._frames[league] = df
+            return df
+
         div = self.DIVISIONS.get(league)
         if not div:
             return None
@@ -292,6 +326,69 @@ class FootballData:
         df = df.dropna(subset=["date_dt"]).sort_values("date_dt")
         self._frames[league] = df
         return df
+
+    def _extra_frame(self, league: str) -> Optional[pd.DataFrame]:
+        """
+        Charge un championnat du 2e jeu « new » (un fichier par pays)
+        et le ramène au même format interne que les fichiers
+        principaux, pour que forme/H2H/detect_league marchent tels
+        quels. Mi-temps et tirs cadrés absents (colonnes vides).
+        """
+
+        code, division = self.EXTRA_LEAGUES[league]
+        path = os.path.join(CACHE_DIR, f"new_{code}.csv")
+        frais = (os.path.exists(path)
+                 and time.time() - os.path.getmtime(path)
+                 < self.CACHE_TTL_SECONDS)
+
+        if not frais and not self.offline:
+            try:
+                r = requests.get(f"{EXTRA_URL}/{code}.csv",
+                                 headers={"User-Agent": "Mozilla/5.0"},
+                                 timeout=60)
+                if r.status_code == 200 and len(r.content) > 500:
+                    with open(path, "wb") as f:
+                        f.write(r.content)
+            except requests.RequestException:
+                pass
+
+        if not os.path.exists(path):
+            return None
+        try:
+            raw = pd.read_csv(path, encoding="latin-1", on_bad_lines="skip")
+        except Exception:
+            return None
+
+        besoin = {"League", "Season", "Date", "Home", "Away", "HG", "AG"}
+        if not besoin.issubset(raw.columns):
+            return None
+
+        # Division exacte (les noms peuvent avoir des espaces parasites)
+        raw["_lg"] = raw["League"].astype(str).str.strip()
+        raw = raw[raw["_lg"] == division]
+        raw = raw.dropna(subset=["Home", "Away", "HG", "AG"])
+        if raw.empty:
+            return None
+
+        # N dernières saisons présentes dans le fichier
+        saisons = sorted(raw["Season"].dropna().astype(str).unique())
+        raw = raw[raw["Season"].astype(str).isin(saisons[-self.N_SEASONS:])]
+
+        df = pd.DataFrame({
+            "Date": raw["Date"],
+            "HomeTeam": raw["Home"].astype(str).str.strip(),
+            "AwayTeam": raw["Away"].astype(str).str.strip(),
+            "FTHG": pd.to_numeric(raw["HG"], errors="coerce"),
+            "FTAG": pd.to_numeric(raw["AG"], errors="coerce"),
+            "FTR": raw.get("Res"),
+            "HTHG": None, "HTAG": None, "HST": None, "AST": None,
+            "saison": raw["Season"].astype(str),
+        })
+        df = df.dropna(subset=["FTHG", "FTAG"])
+        df["date_dt"] = pd.to_datetime(df["Date"], dayfirst=True,
+                                       errors="coerce")
+        df = df.dropna(subset=["date_dt"]).sort_values("date_dt")
+        return df if not df.empty else None
 
     # ─── NOMS D'ÉQUIPES ──────────────────────────────
 
@@ -372,6 +469,20 @@ class FootballData:
         "super lig": "super_lig", "turquie": "super_lig",
         "super league grece": "greece_super", "grece": "greece_super",
         "premiership": "scotland_prem", "ecosse": "scotland_prem",
+        # Championnats supplémentaires (2e jeu de données)
+        "allsvenskan": "swe_allsvenskan", "suede": "swe_allsvenskan",
+        "eliteserien": "nor_eliteserien", "norvege": "nor_eliteserien",
+        "veikkausliiga": "fin_veikkaus", "finlande": "fin_veikkaus",
+        "superligaen": "den_superliga", "danemark": "den_superliga",
+        "premier liga russie": "rus_premier", "russie": "rus_premier",
+        "superliga roumanie": "rou_superliga", "roumanie": "rou_superliga",
+        "bundesliga autriche": "aut_bundesliga", "autriche": "aut_bundesliga",
+        "ekstraklasa": "pol_ekstraklasa", "pologne": "pol_ekstraklasa",
+        "irlande": "irl_premier",
+        "mls": "usa_mls",
+        "serie a bresil": "bra_serie_a", "bresil": "bra_serie_a",
+        "liga profesional": "arg_liga", "argentine": "arg_liga",
+        "liga mx": "mex_liga", "mexique": "mex_liga",
     }
 
     def league_from_competition(self, competition: str) -> Optional[str]:
@@ -394,6 +505,11 @@ class FootballData:
         "ligue1_fr", "eredivisie", "primeira_liga", "belgium_pro",
         "super_lig", "championship", "scotland_prem", "greece_super",
         "bundesliga2", "serie_b", "la_liga2", "ligue2_fr",
+        # Championnats supplémentaires (2e jeu de données)
+        "swe_allsvenskan", "nor_eliteserien", "fin_veikkaus",
+        "den_superliga", "rus_premier", "rou_superliga",
+        "aut_bundesliga", "pol_ekstraklasa",
+        "irl_premier", "usa_mls", "bra_serie_a", "arg_liga", "mex_liga",
     ]
 
     def detect_league(self, home: str, away: str,
@@ -409,7 +525,7 @@ class FootballData:
 
         # 1. Indice de compétition
         cle = self.league_from_competition(competition)
-        if cle and cle in self.DIVISIONS:
+        if cle and (cle in self.DIVISIONS or cle in self.EXTRA_LEAGUES):
             # Confirmé seulement si les deux équipes y figurent ;
             # sinon on garde l'indice quand même (l'utilisateur a pu
             # saisir des noms que football-data écrit différemment).
