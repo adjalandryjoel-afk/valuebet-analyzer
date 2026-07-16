@@ -293,6 +293,169 @@ def render_sidebar_settings():
 
 
 # ══════════════════════════════════════════════════════
+#  PAGE : MATCHS DU JOUR (scan automatique)
+# ══════════════════════════════════════════════════════
+
+def page_daily(bankroll, min_value, min_confidence):
+    """Repère la value du jour sur des ligues entières, sans capture."""
+
+    page_header(
+        "today", "Matchs du jour",
+        "Scanne des championnats entiers pour repérer où se cache la "
+        "value aujourd'hui — sans capture d'écran."
+    )
+
+    st.info(
+        ":material/info: Ce scan lit le **1X2** et l'**Over/Under 2.5** "
+        "via The Odds API (~2 crédits par championnat). Pour les marchés "
+        "riches (tirs cadrés, buts par équipe/mi-temps), une capture "
+        "reste plus complète. Utilise le scan pour **repérer**, la "
+        "capture pour **approfondir**.",
+        icon=":material/lightbulb:",
+    )
+
+    from modules.daily_scanner import DailyScanner
+    from config import SUPPORTED_LEAGUES
+
+    scanner = st.session_state.get("_scanner")
+    if scanner is None:
+        scanner = DailyScanner()
+        st.session_state["_scanner"] = scanner
+
+    # ── Ligues en saison (gratuit, mis en cache) ──
+    ligues = st.session_state.get("_ligues_saison")
+    if ligues is None:
+        with st.spinner("Recherche des championnats en saison..."):
+            ligues = scanner.in_season_leagues()
+        st.session_state["_ligues_saison"] = ligues
+
+    if not ligues:
+        st.warning(
+            "Aucun championnat suivi n'est actuellement en saison "
+            "(ou l'accès à The Odds API a échoué). Réessaie en période "
+            "de championnat.",
+            icon=":material/event_busy:",
+        )
+        return
+
+    noms = {lg: SUPPORTED_LEAGUES.get(lg, {}).get("name", lg)
+            for lg in ligues}
+    c1, c2 = st.columns([2, 1], vertical_alignment="bottom")
+    choix = c1.multiselect(
+        "Championnats à scanner",
+        options=list(ligues.keys()),
+        default=list(ligues.keys())[:3],
+        format_func=lambda lg: noms.get(lg, lg),
+        help="Chaque championnat coûte ~2 crédits (sur 500/mois).",
+    )
+    fenetre = c2.select_slider(
+        "Horizon", options=[1, 2, 3, 5, 7], value=3,
+        format_func=lambda j: f"{j} jour{'s' if j > 1 else ''}",
+    )
+
+    cout = len(choix) * 2
+    if st.button(
+            f"Scanner ({cout} crédits)", type="primary",
+            icon=":material/travel_explore:", disabled=not choix):
+        _scan_du_jour(scanner, choix, fenetre, noms,
+                      bankroll, min_value, min_confidence)
+
+
+def _scan_du_jour(scanner, ligues_choisies, fenetre, noms,
+                  bankroll, min_value, min_confidence):
+    """Scanne les ligues choisies et affiche la value classée."""
+
+    from modules.team_matcher import TeamMatcher
+    from modules.value_detector import ValueBetDetector
+
+    modules = init_modules()
+    tm = modules["team_matcher"]
+    dc = modules["data_collector"]
+    detector = modules["value_detector"]
+    ligues_map = st.session_state.get("_ligues_saison", {})
+
+    lignes = []      # value bets trouvés
+    n_matchs = 0
+    barre = st.progress(0, text="Scan en cours...")
+
+    for idx, lg in enumerate(ligues_choisies):
+        sport_key = ligues_map.get(lg)
+        barre.progress((idx + 1) / len(ligues_choisies),
+                       text=f"Scan {noms.get(lg, lg)}...")
+        if not sport_key:
+            continue
+
+        for m in scanner.scan_league(sport_key, days_ahead=fenetre):
+            n_matchs += 1
+            home, away = m["equipe_domicile"], m["equipe_exterieur"]
+            all_odds = {**m["cotes"], **m["marches_supplementaires"]}
+            try:
+                info = tm.identify_match(home, away)
+                ctx = dc.collect_match_data(info, all_odds,
+                                            competition=m["competition"])
+                poisson = modules["poisson"].predict(ctx)
+                c = m["cotes"]
+                modules["elo"].estimate_rating_from_odds(
+                    ctx.home_team, c["1"], c["2"], is_home=True)
+                modules["elo"].estimate_rating_from_odds(
+                    ctx.away_team, c["2"], c["1"], is_home=False)
+                elo_pred = modules["elo"].predict(ctx.home_team, ctx.away_team)
+                analysis = detector.analyze_match(
+                    ctx.home_team, ctx.away_team, all_odds, poisson,
+                    elo_pred, m["competition"],
+                    min_value=min_value, min_confidence=min_confidence)
+            except Exception:
+                continue
+
+            for vb in analysis.value_bets:
+                lignes.append({
+                    "Coup d'envoi": m["kickoff"].strftime("%d/%m %H:%M"),
+                    "Match": f"{home} — {away}",
+                    "Marché": f"{vb.market} · {vb.selection}",
+                    "Cote": vb.bookmaker_odds,
+                    "Value %": round(vb.value_percentage * 100, 1),
+                    "Confiance": round(vb.confidence_score),
+                    "_ts": m["kickoff"],
+                })
+
+    barre.empty()
+
+    st.caption(
+        f":material/database: {n_matchs} match(s) scanné(s) · "
+        f"quota The Odds API restant : {scanner.quota_restant or '?'}"
+    )
+
+    if not lignes:
+        st.success(
+            "Aucune value détectée sur ces championnats — les cotes "
+            "sont bien calibrées. Reviens plus près des coups d'envoi "
+            "(les lignes bougent) ou scanne d'autres ligues.",
+            icon=":material/check_circle:",
+        )
+        return
+
+    lignes.sort(key=lambda r: r["Value %"], reverse=True)
+    st.subheader(f":material/trending_up: {len(lignes)} opportunité(s) "
+                 "repérée(s)")
+    st.dataframe(
+        [{k: v for k, v in ligne.items() if not k.startswith("_")}
+         for ligne in lignes],
+        width="stretch", hide_index=True,
+        column_config={
+            "Value %": st.column_config.NumberColumn(format="%.1f%%"),
+            "Cote": st.column_config.NumberColumn(format="%.2f"),
+            "Confiance": st.column_config.ProgressColumn(
+                min_value=0, max_value=100, format="%d"),
+        },
+    )
+    st.caption(
+        ":material/photo_camera: Un match t'intéresse ? Fais-en une "
+        "capture Betclic et passe par **Upload** pour l'analyse complète "
+        "(tous les marchés + agents H2H/forme/contexte)."
+    )
+
+
+# ══════════════════════════════════════════════════════
 #  CHAMP DE NOTES GUIDÉ (blessures, compos, enjeu...)
 # ══════════════════════════════════════════════════════
 
@@ -594,8 +757,14 @@ def page_manual_entry(bankroll, min_value, min_confidence,
 # ══════════════════════════════════════════════════════
 
 def analyze_matches_ui(matches, bankroll, min_value, min_confidence,
-                       user_notes="", deep=True):
-    """Analyse les matchs et affiche les résultats dans l'interface."""
+                       user_notes="", deep=True, persist=True):
+    """
+    Analyse les matchs et affiche les résultats dans l'interface.
+
+    persist=False : mode découverte (scan du jour) — on n'écrit RIEN
+    dans le journal de paris, pour ne pas le polluer avec des matchs
+    que l'utilisateur n'a pas (encore) joués.
+    """
 
     modules = init_modules()
     kelly = get_kelly_calculator(bankroll)
@@ -698,7 +867,12 @@ def analyze_matches_ui(matches, bankroll, min_value, min_confidence,
             },
         }
 
-        # 8. Persister dans l'historique (base SQLite)
+        # 8. Persister dans l'historique (base SQLite) — sauf en mode
+        # découverte (scan du jour), où l'on ne veut rien enregistrer
+        if not persist:
+            all_analyses.append(analysis)
+            all_value_bets.extend(analysis.value_bets)
+            continue
         try:
             # Une ré-analyse remplace les paris en attente du même match
             modules["db"].supersede_pending_bets(home_name, away_name)
@@ -2241,9 +2415,14 @@ def main():
         page_manual_entry(bankroll, min_value, min_confidence,
                           deep_analysis)
 
+    def _daily():
+        page_daily(bankroll, min_value, min_confidence)
+
     pages = {
         "home": st.Page(page_home, title="Accueil",
                         icon=":material/home:", default=True),
+        "daily": st.Page(_daily, title="Matchs du jour",
+                         icon=":material/today:", url_path="matchs-du-jour"),
         "upload": st.Page(_upload, title="Upload captures",
                           icon=":material/photo_camera:", url_path="upload"),
         "saisie": st.Page(_manual, title="Saisie manuelle",
