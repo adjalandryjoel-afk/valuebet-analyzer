@@ -101,6 +101,12 @@ class PoissonConfig:
     # des tirs cadrés finissent au fond → ratio central 3.1)
     SOT_PER_GOAL = 3.1
 
+    # Part du xG dans l'estimation de force d'une équipe (le reste =
+    # buts réels). Le xG prédit mieux l'avenir que les buts (moins
+    # bruité), mais les buts capturent la finition : ~2/3 xG est le
+    # compromis retenu par la plupart des modèles xG (ex. SPI).
+    XG_BLEND = 0.65
+
     # Correction Dixon-Coles (1997) : dépendance des scores faibles.
     # rho négatif => gonfle 0-0 et 1-1, dégonfle 1-0 et 0-1.
     # Valeur typique estimée sur les grands championnats : -0.05 à -0.15.

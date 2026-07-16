@@ -40,10 +40,21 @@ class TeamStats:
     avg_goals_scored_away: float = 1.10
     avg_goals_conceded_away: float = 1.40
 
-    # xG (remplis par le module xg_scraper si dispo)
+    # xG (remplis par le module xg_provider si dispo). Le xG mesure
+    # la QUALITÉ des occasions, plus prédictif que les buts (moins
+    # bruité par la chance / les gardiens). Splits domicile/extérieur
+    # pour un croisement attaque × défense plus fin.
     xg_scored: float = 0.0
     xg_conceded: float = 0.0
+    xg_for_home: float = 0.0
+    xg_against_home: float = 0.0
+    xg_for_away: float = 0.0
+    xg_against_away: float = 0.0
     xg_available: bool = False
+    # Sur/sous-performance : buts réels marqués − xG. > 0 = l'équipe
+    # a « surperformé » (chanceuse/finition clinique → régression
+    # possible) ; < 0 = malchanceuse (rebond possible).
+    xg_overperf: float = 0.0
 
     # Tirs cadrés réels (football-data.co.uk). Les buts ne suffisent
     # pas à les déduire : le ratio tirs/but varie fortement d'une
@@ -244,7 +255,19 @@ class DataCollector:
                 if xg:
                     stats.xg_scored = xg["xg_for_avg"]
                     stats.xg_conceded = xg["xga_avg"]
+                    # Splits domicile/extérieur (None → repli sur la
+                    # moyenne toutes venues)
+                    stats.xg_for_home = xg.get("xg_for_home") or xg["xg_for_avg"]
+                    stats.xg_against_home = (xg.get("xga_home")
+                                             or xg["xga_avg"])
+                    stats.xg_for_away = xg.get("xg_for_away") or xg["xg_for_avg"]
+                    stats.xg_against_away = (xg.get("xga_away")
+                                             or xg["xga_avg"])
                     stats.xg_available = True
+                    # Sur/sous-performance = buts réels − xG marqués
+                    if stats.avg_goals_scored:
+                        stats.xg_overperf = round(
+                            stats.avg_goals_scored - xg["xg_for_avg"], 2)
                     xg_bonus += 10.0
 
         # Score de complétude

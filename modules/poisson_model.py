@@ -175,8 +175,30 @@ class PoissonPredictor:
 
         def side_profile(stats, is_home):
             """(attaque, défense, estimé?, avantage domicile déjà inclus?)"""
+            if stats and stats.xg_available and stats.xg_for_home > 0:
+                # xG (splits domicile/extérieur) MÉLANGÉ aux buts réels.
+                # Le xG est plus prédictif (moins de bruit), mais les
+                # buts capturent la finition réelle : le mélange est
+                # plus robuste que le xG seul (best practice). Les
+                # splits incluent déjà l'avantage du terrain.
+                b = PoissonConfig.XG_BLEND
+                if is_home:
+                    xg_a, xg_d = stats.xg_for_home, stats.xg_against_home
+                    g_a, g_d = (stats.avg_goals_scored_home,
+                                stats.avg_goals_conceded_home)
+                else:
+                    xg_a, xg_d = stats.xg_for_away, stats.xg_against_away
+                    g_a, g_d = (stats.avg_goals_scored_away,
+                                stats.avg_goals_conceded_away)
+                # Si les splits de buts manquent, xG seul
+                if not (g_a and g_d):
+                    g_a, g_d = xg_a, xg_d
+                att = b * xg_a + (1 - b) * g_a
+                deff = b * xg_d + (1 - b) * g_d
+                return att, deff, stats.data_source == "estimated", True
             if stats and stats.xg_available:
-                # xG moyens toutes venues → avantage domicile à appliquer
+                # xG sans split : moyenne toutes venues → avantage
+                # domicile à appliquer ensuite
                 return stats.xg_scored, stats.xg_conceded, \
                     stats.data_source == "estimated", False
             if stats:

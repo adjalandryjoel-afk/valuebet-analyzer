@@ -896,6 +896,20 @@ def analyze_matches_ui(matches, bankroll, min_value, min_confidence,
             },
         }
 
+        # Signal xG : sur/sous-performance de chaque équipe (buts − xG).
+        # Une équipe qui surperforme son xG a été chanceuse → régression
+        # probable (le marché sur-cote parfois ces équipes).
+        hs, as_ = context.home_stats, context.away_stats
+        if getattr(hs, "xg_available", False) or getattr(as_, "xg_available", False):
+            analysis._xg_signal = {
+                "home": {"available": hs.xg_available,
+                         "for": hs.xg_scored, "against": hs.xg_conceded,
+                         "overperf": hs.xg_overperf},
+                "away": {"available": as_.xg_available,
+                         "for": as_.xg_scored, "against": as_.xg_conceded,
+                         "overperf": as_.xg_overperf},
+            }
+
         # 8. Persister dans l'historique (base SQLite) — sauf en mode
         # découverte (scan du jour), où l'on ne veut rien enregistrer
         if not persist:
@@ -1040,6 +1054,37 @@ def _render_intel_section(analysis):
                 ":material/tune: Ajustements du modèle : "
                 + " · ".join(report.adjust_reasons)
             )
+
+    # ── Signal xG (5 grands championnats) ──
+    xg = getattr(analysis, "_xg_signal", None)
+    if xg:
+        with st.container(border=True):
+            st.markdown(":material/insights: **Analyse xG** "
+                        "(qualité des occasions)")
+            st.caption(
+                "Le xG mesure la qualité des occasions, plus fiable que "
+                "les buts. Une équipe qui marque BEAUCOUP plus que son "
+                "xG a été chanceuse → une régression (baisse) est "
+                "probable, et le marché la sur-cote parfois."
+            )
+            for side, team in (("home", analysis.home_team),
+                               ("away", analysis.away_team)):
+                d = xg.get(side, {})
+                if not d.get("available"):
+                    continue
+                op = d.get("overperf", 0) or 0
+                if op >= 0.30:
+                    signal = (f":red-badge[surperforme de {op:+.2f} "
+                              "but/match — régression probable]")
+                elif op <= -0.30:
+                    signal = (f":green-badge[sous-performe de {op:+.2f} "
+                              "but/match — rebond probable]")
+                else:
+                    signal = ":gray-badge[conforme à son xG]"
+                st.markdown(
+                    f"**{team}** — xG {d.get('for', 0):.2f} marqué / "
+                    f"{d.get('against', 0):.2f} encaissé · {signal}"
+                )
 
     if verdict:
         with st.container(border=True):
