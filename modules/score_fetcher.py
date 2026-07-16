@@ -33,18 +33,40 @@ class ScoreFetcher:
         self.api_key = APIKeys.ODDS_API_KEY
         self.quota_restant = None
 
+    def _ligues_en_cours(self) -> Optional[set]:
+        """
+        Clés des compétitions actuellement en saison. L'endpoint
+        /sports est GRATUIT : le consulter d'abord évite de dépenser
+        2 crédits par championnat hors saison (l'app en suit 15, dont
+        plusieurs à l'arrêt selon la période de l'année).
+        """
+        try:
+            r = requests.get(f"{self.BASE_URL}/sports",
+                             params={"apiKey": self.api_key}, timeout=20)
+            if r.status_code != 200:
+                return None
+            return {s["key"] for s in r.json() if s.get("active")}
+        except (requests.RequestException, ValueError, KeyError):
+            return None
+
     def fetch_completed(self, days_from: int = 3) -> List[Dict]:
         """
         Scores des matchs TERMINÉS des `days_from` derniers jours,
-        toutes ligues connues confondues (2 crédits par ligue).
+        pour les championnats suivis actuellement en saison
+        (2 crédits par championnat interrogé).
         """
 
         if not self.api_key:
             return []
 
         events: List[Dict] = []
+        suivies = set(OddsAPICollector.LEAGUE_KEYS.values())
 
-        for sport_key in set(OddsAPICollector.LEAGUE_KEYS.values()):
+        en_cours = self._ligues_en_cours()
+        if en_cours is not None:
+            suivies &= en_cours  # hors saison → aucun crédit dépensé
+
+        for sport_key in suivies:
             try:
                 r = requests.get(
                     f"{self.BASE_URL}/sports/{sport_key}/scores/",

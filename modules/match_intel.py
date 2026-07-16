@@ -37,6 +37,16 @@ from modules.data_collector import MatchContext
 #  PARAMÈTRES DES AGENTS
 # ══════════════════════════════════════════════════════
 
+
+def _iso(date_fr: str) -> str:
+    """« 17/05/2026 » → « 2026-05-17 » (triable alphabétiquement)."""
+    try:
+        j, m, a = str(date_fr).split("/")
+        return f"{a}-{m}-{j}"
+    except ValueError:
+        return str(date_fr)
+
+
 # Bornes absolues des multiplicateurs de lambda
 LAMBDA_MULT_MIN = 0.85
 LAMBDA_MULT_MAX = 1.15
@@ -135,9 +145,15 @@ class MatchIntelligence:
 
         report = IntelReport()
 
-        self._agent_h2h(home_team, away_team, report)
-        self._agent_form(home_team, is_home=True, report=report)
-        self._agent_form(away_team, is_home=False, report=report)
+        # Ligue détectée par le TeamMatcher : elle indique à
+        # football-data.co.uk où chercher les vraies rencontres
+        league = getattr(context, "league", "unknown") or "unknown"
+
+        self._agent_h2h(home_team, away_team, report, league)
+        self._agent_form(home_team, is_home=True, report=report,
+                         league=league)
+        self._agent_form(away_team, is_home=False, report=report,
+                         league=league)
         self._agent_context(home_team, away_team, user_notes, report)
 
         # Borne FINALE des multiplicateurs : quel que soit le
@@ -154,19 +170,23 @@ class MatchIntelligence:
     # ─── AGENT H2H ──────────────────────────────────
 
     def _agent_h2h(self, home_team: str, away_team: str,
-                   report: IntelReport):
+                   report: IntelReport, league: str = "unknown"):
         """
-        Confrontations directes via API-Football.
+        Confrontations directes RÉELLES (football-data.co.uk).
 
-        La méthode get_h2h est en cours d'ajout côté collector :
-        code défensif (hasattr + try/except) pour fonctionner
-        avec ou sans elle.
+        Source principale : les résultats réels des championnats
+        européens, gratuits et sans clé. API-Football ne sert plus
+        que de repli (son plan gratuit ne couvrait pas la saison en
+        cours, et l'abonnement peut expirer).
         """
 
-        h2h = None
-        if hasattr(self.api, "get_h2h"):
+        h2h = self._h2h_football_data(league, home_team, away_team)
+        source = "football-data.co.uk (H2H réel)"
+
+        if h2h is None and hasattr(self.api, "get_h2h"):
             try:
                 h2h = self.api.get_h2h(home_team, away_team)
+                source = "API-Football (H2H)"
             except Exception:
                 h2h = None
 
@@ -174,7 +194,7 @@ class MatchIntelligence:
             return
 
         report.h2h = h2h
-        report.data_sources.append("API-Football (H2H)")
+        report.data_sources.append(source)
 
         try:
             sample = int(h2h.get("sample", 0) or 0)
@@ -206,10 +226,79 @@ class MatchIntelligence:
             f"λ extérieur ×{mult_away:.3f} (signal mineur)"
         )
 
+    # ─── SOURCE RÉELLE : football-data.co.uk ────────
+
+    @staticmethod
+    def _h2h_football_data(league: str, home_team: str,
+                           away_team: str) -> Optional[dict]:
+        """
+        H2H réel, traduit dans la forme attendue par le reste du
+        code (mêmes clés que l'ancien collector API-Football, pour
+        que synthèse et affichage fonctionnent sans changement).
+        """
+
+        try:
+            from modules.football_data import get_football_data
+            brut = get_football_data().h2h(league, home_team, away_team)
+        except Exception:
+            return None
+
+        if not isinstance(brut, dict) or not brut.get("total"):
+            return None
+
+        return {
+            "sample": brut["total"],
+            "avg_goals": brut["moy_buts"],
+            "team1_avg_scored": brut["buts_home"],
+            "team2_avg_scored": brut["buts_away"],
+            "team1_wins": brut["victoires_home"],
+            "team2_wins": brut["victoires_away"],
+            "draws": brut["nuls"],
+            "btts_rate": brut["btts_rate"],
+            # Clés attendues par l'affichage (_render_intel_section)
+            "matches": [
+                {"date": m["date"], "home": m["domicile"],
+                 "away": m["exterieur"], "score": m["score"]}
+                for m in reversed(brut["matchs"])  # plus récent d'abord
+            ],
+        }
+
+    @staticmethod
+    def _form_football_data(league: str, team_name: str) -> Optional[dict]:
+        """
+        Forme réelle, traduite dans la forme attendue :
+        recent_results avec date/adversaire/score/resultat.
+        """
+
+        try:
+            from modules.football_data import get_football_data
+            brut = get_football_data().team_form(league, team_name, n=8)
+        except Exception:
+            return None
+
+        if not isinstance(brut, dict) or not brut.get("matchs"):
+            return None
+
+        return {
+            "recent_results": [
+                {
+                    # Date ISO : _agent_form retrie par ordre
+                    # alphabétique décroissant — en jj/mm/aaaa,
+                    # « 28/04 » passerait avant « 03/05 »
+                    "date": _iso(m["date"]),
+                    "adversaire": m["adversaire"],
+                    "venue": m["venue"],
+                    "score": m["score"],
+                    "resultat": m["resultat"],
+                }
+                for m in reversed(brut["matchs"])  # plus récent d'abord
+            ],
+        }
+
     # ─── AGENT FORME ────────────────────────────────
 
     def _agent_form(self, team_name: str, is_home: bool,
-                    report: IntelReport):
+                    report: IntelReport, league: str = "unknown"):
         """
         Séquence V/N/D récente depuis get_team_stats().
 
@@ -220,10 +309,16 @@ class MatchIntelligence:
         de ±3% maximum.
         """
 
-        try:
-            stats = self.api.get_team_stats(team_name)
-        except Exception:
-            stats = None
+        # Source principale : résultats réels (football-data.co.uk)
+        stats = self._form_football_data(league, team_name)
+        source = "football-data.co.uk (forme réelle)"
+
+        if stats is None:
+            try:
+                stats = self.api.get_team_stats(team_name)
+                source = "API-Football (forme)"
+            except Exception:
+                stats = None
 
         if not isinstance(stats, dict):
             return
@@ -257,7 +352,6 @@ class MatchIntelligence:
         else:
             report.form_away = form
 
-        source = "API-Football (forme)"
         if source not in report.data_sources:
             report.data_sources.append(source)
 

@@ -330,8 +330,9 @@ def page_upload_screenshots(bankroll, min_value, min_confidence,
         user_notes = st.text_area(
             "Actus des matchs (optionnel)",
             placeholder="Blessés, suspensions, enjeu, turnover... "
-                        "Ex : « PSG sans Mbappé (blessé). Finale de coupe "
-                        "pour Marseille. »",
+                        "Ex : « Le buteur titulaire est suspendu. Match "
+                        "décisif pour le maintien. L'adversaire a joué "
+                        "les prolongations il y a 3 jours. »",
             help="L'agent contexte structure ces informations et ajuste "
                  "le modèle en conséquence. Il n'utilise QUE ce que tu "
                  "écris ici — rien n'est inventé."

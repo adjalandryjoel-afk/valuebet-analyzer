@@ -8,6 +8,7 @@ Toutes les constantes et paramètres du logiciel sont
 centralisés ici. Les clés API sont lues depuis le .env.
 """
 
+import json
 import os
 import sys
 from dotenv import load_dotenv
@@ -238,61 +239,136 @@ class OCRConfig:
 # ══════════════════════════════════════════════════════
 
 # clé interne → infos de la ligue
+#
+# Les valeurs ci-dessous ne sont que des DÉFAUTS de secours : les
+# vraies sont mesurées sur la dernière saison complète et chargées
+# depuis data/league_params.json (voir plus bas). Régénérer avec
+# scripts/refresh_league_params.py après chaque saison.
 SUPPORTED_LEAGUES = {
+    # ── Grands championnats ──
     "premier_league": {
-        "name": "Premier League",
-        "country": "Angleterre",
-        "avg_goals": 2.85,
-        "home_win_rate": 0.44,
-        "first_half_share": 0.445,
+        "name": "Premier League", "country": "Angleterre",
+        "avg_goals": 2.75, "home_win_rate": 0.43,
+        "first_half_share": 0.43,
     },
     "la_liga": {
-        "name": "La Liga",
-        "country": "Espagne",
-        "avg_goals": 2.55,
-        "home_win_rate": 0.46,
-        "first_half_share": 0.44,
+        "name": "La Liga", "country": "Espagne",
+        "avg_goals": 2.70, "home_win_rate": 0.49,
+        "first_half_share": 0.43,
     },
     "serie_a": {
-        "name": "Serie A",
-        "country": "Italie",
-        "avg_goals": 2.65,
-        "home_win_rate": 0.42,
-        "first_half_share": 0.44,
+        "name": "Serie A", "country": "Italie",
+        "avg_goals": 2.43, "home_win_rate": 0.39,
+        "first_half_share": 0.43,
     },
     "bundesliga": {
-        "name": "Bundesliga",
-        "country": "Allemagne",
-        "avg_goals": 3.10,
-        "home_win_rate": 0.44,
-        "first_half_share": 0.465,
+        "name": "Bundesliga", "country": "Allemagne",
+        "avg_goals": 3.24, "home_win_rate": 0.44,
+        "first_half_share": 0.45,
     },
     "ligue1_fr": {
-        "name": "Ligue 1",
-        "country": "France",
-        "avg_goals": 2.60,
-        "home_win_rate": 0.45,
+        "name": "Ligue 1", "country": "France",
+        "avg_goals": 2.82, "home_win_rate": 0.46,
+        "first_half_share": 0.43,
+    },
+    # ── Autres championnats européens ──
+    "eredivisie": {
+        "name": "Eredivisie", "country": "Pays-Bas",
+        "avg_goals": 3.18, "home_win_rate": 0.44,
         "first_half_share": 0.45,
     },
-    "ligue1_ci": {
-        "name": "Ligue 1 Côte d'Ivoire",
-        "country": "Côte d'Ivoire",
-        "avg_goals": 2.20,
-        "home_win_rate": 0.48,
+    "primeira_liga": {
+        "name": "Primeira Liga", "country": "Portugal",
+        "avg_goals": 2.68, "home_win_rate": 0.41,
         "first_half_share": 0.45,
     },
+    "belgium_pro": {
+        "name": "Pro League", "country": "Belgique",
+        "avg_goals": 2.68, "home_win_rate": 0.41,
+        "first_half_share": 0.45,
+    },
+    "super_lig": {
+        "name": "Süper Lig", "country": "Turquie",
+        "avg_goals": 2.65, "home_win_rate": 0.42,
+        "first_half_share": 0.43,
+    },
+    "greece_super": {
+        "name": "Super League", "country": "Grèce",
+        "avg_goals": 2.57, "home_win_rate": 0.41,
+        "first_half_share": 0.47,
+    },
+    "scotland_prem": {
+        "name": "Premiership", "country": "Écosse",
+        "avg_goals": 2.78, "home_win_rate": 0.45,
+        "first_half_share": 0.45,
+    },
+    # ── Deuxièmes divisions (lignes plus molles = plus de value) ──
+    "championship": {
+        "name": "Championship", "country": "Angleterre",
+        "avg_goals": 2.61, "home_win_rate": 0.42,
+        "first_half_share": 0.46,
+    },
+    "bundesliga2": {
+        "name": "2. Bundesliga", "country": "Allemagne",
+        "avg_goals": 2.93, "home_win_rate": 0.46,
+        "first_half_share": 0.45,
+    },
+    "serie_b": {
+        "name": "Serie B", "country": "Italie",
+        "avg_goals": 2.56, "home_win_rate": 0.45,
+        "first_half_share": 0.45,
+    },
+    "la_liga2": {
+        "name": "La Liga 2", "country": "Espagne",
+        "avg_goals": 2.63, "home_win_rate": 0.45,
+        "first_half_share": 0.45,
+    },
+    "ligue2_fr": {
+        "name": "Ligue 2", "country": "France",
+        "avg_goals": 2.54, "home_win_rate": 0.38,
+        "first_half_share": 0.47,
+    },
+    # ── Coupes d'Europe et local (pas de CSV football-data) ──
     "champions_league": {
-        "name": "Champions League",
-        "country": "Europe",
-        "avg_goals": 2.90,
-        "home_win_rate": 0.45,
+        "name": "Champions League", "country": "Europe",
+        "avg_goals": 2.90, "home_win_rate": 0.45,
         "first_half_share": 0.46,
     },
     "europa_league": {
-        "name": "Europa League",
-        "country": "Europe",
-        "avg_goals": 2.80,
-        "home_win_rate": 0.44,
+        "name": "Europa League", "country": "Europe",
+        "avg_goals": 2.80, "home_win_rate": 0.44,
         "first_half_share": 0.46,
     },
+    "ligue1_ci": {
+        "name": "Ligue 1 Côte d'Ivoire", "country": "Côte d'Ivoire",
+        "avg_goals": 2.20, "home_win_rate": 0.48,
+        "first_half_share": 0.45,
+    },
 }
+
+
+# ── Paramètres MESURÉS (écrasent les défauts ci-dessus) ──
+# data/league_params.json est produit par scripts/refresh_league_params.py
+# à partir des résultats réels de football-data.co.uk, puis committé :
+# le cloud en profite sans aucune requête réseau.
+def _charger_params_mesures():
+    chemin = os.path.join(Paths.DATA_DIR, "league_params.json")
+    try:
+        with open(chemin, encoding="utf-8") as f:
+            mesures = json.load(f).get("ligues", {})
+    except (OSError, ValueError):
+        return
+
+    for cle, params in mesures.items():
+        if cle not in SUPPORTED_LEAGUES:
+            continue
+        for champ in ("avg_goals", "home_win_rate", "first_half_share"):
+            if isinstance(params.get(champ), (int, float)):
+                SUPPORTED_LEAGUES[cle][champ] = params[champ]
+        SUPPORTED_LEAGUES[cle]["mesure"] = {
+            "saison": params.get("saison"),
+            "matchs": params.get("matchs"),
+        }
+
+
+_charger_params_mesures()

@@ -99,11 +99,23 @@ class OddsAPICollector:
 
     # Ligues disponibles
     LEAGUE_KEYS = {
+        # Grands championnats
         "premier_league": "soccer_epl",
         "la_liga": "soccer_spain_la_liga",
         "serie_a": "soccer_italy_serie_a",
         "bundesliga": "soccer_germany_bundesliga",
         "ligue1_fr": "soccer_france_ligue_one",
+        # Autres championnats européens
+        "eredivisie": "soccer_netherlands_eredivisie",
+        "primeira_liga": "soccer_portugal_primeira_liga",
+        "belgium_pro": "soccer_belgium_first_div",
+        "super_lig": "soccer_turkey_super_league",
+        "greece_super": "soccer_greece_super_league",
+        "scotland_prem": "soccer_spl",
+        # Deuxièmes divisions (lignes plus molles)
+        "championship": "soccer_efl_champ",
+        "bundesliga2": "soccer_germany_bundesliga2",
+        # Coupes d'Europe
         "champions_league": "soccer_uefa_champs_league",
         "europa_league": "soccer_uefa_europa_league",
     }
