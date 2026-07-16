@@ -147,10 +147,14 @@ class ValueBetConfig:
     # Score de confiance minimum (0-100)
     MIN_CONFIDENCE_SCORE = 55
 
-    # Fourchette de cotes jouables (au-delà de 6, le biais
-    # favori-outsider rend les cotes structurellement surévaluées)
+    # Fourchette de cotes jouables. Plafond abaissé 6.00 → 4.50 :
+    # le backtest 2025/26 (grands championnats, 8500 matchs) montre
+    # que les value bets sur cotes > 4.5 sont un piège — biais
+    # favori-outsider + le modèle qui surestime les outsiders. En
+    # coupant cette tranche : ROI passe de -16.7% à -2.4% et CLV
+    # (l'indicateur avancé) de -7.0% à -3.6%. Réversible.
     MIN_ODDS = 1.30
-    MAX_ODDS = 6.00
+    MAX_ODDS = 4.50
 
     # Seuil de value progressif selon la cote (biais favori-outsider) :
     # multiplicateur appliqué au seuil de base MIN_VALUE_THRESHOLD.
