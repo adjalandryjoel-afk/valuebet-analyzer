@@ -276,92 +276,8 @@
   },
   "manchester city": {
     "team_id": 50,
-    "ts": 1784037540.8523536,
-    "stats": {
-      "avg_goals_scored": 1.73,
-      "avg_goals_conceded": 0.65,
-      "avg_goals_scored_home": 2.57,
-      "avg_goals_conceded_home": 0.99,
-      "avg_goals_scored_away": 1.01,
-      "avg_goals_conceded_away": 0.37,
-      "recent_form_score": 1.5,
-      "recent_results": [
-        {
-          "date": "2025-05-25",
-          "venue": "ext",
-          "adversaire": "Fulham",
-          "score": "2-0",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-05-20",
-          "venue": "dom",
-          "adversaire": "Bournemouth",
-          "score": "3-1",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-05-17",
-          "venue": "ext",
-          "adversaire": "Crystal Palace",
-          "score": "0-1",
-          "resultat": "D"
-        },
-        {
-          "date": "2025-05-10",
-          "venue": "ext",
-          "adversaire": "Southampton",
-          "score": "0-0",
-          "resultat": "N"
-        },
-        {
-          "date": "2025-05-02",
-          "venue": "dom",
-          "adversaire": "Wolves",
-          "score": "1-0",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-04-27",
-          "venue": "ext",
-          "adversaire": "Nottingham Forest",
-          "score": "2-0",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-04-22",
-          "venue": "dom",
-          "adversaire": "Aston Villa",
-          "score": "2-1",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-04-19",
-          "venue": "ext",
-          "adversaire": "Everton",
-          "score": "2-0",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-04-12",
-          "venue": "dom",
-          "adversaire": "Crystal Palace",
-          "score": "5-2",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-04-06",
-          "venue": "ext",
-          "adversaire": "Manchester United",
-          "score": "0-0",
-          "resultat": "N"
-        }
-      ],
-      "matches_played": 15,
-      "last_match_date": "2025-05-25",
-      "stale": true,
-      "age_days": 415
-    }
+    "ts": 1784218021.9574203,
+    "stats": null
   },
   "manchester united": {
     "team_id": 33,
@@ -1255,270 +1171,18 @@
   },
   "ac milan": {
     "team_id": 489,
-    "ts": 1784037961.919277,
-    "stats": {
-      "avg_goals_scored": 1.79,
-      "avg_goals_conceded": 1.12,
-      "avg_goals_scored_home": 1.38,
-      "avg_goals_conceded_home": 1.1,
-      "avg_goals_scored_away": 2.27,
-      "avg_goals_conceded_away": 1.14,
-      "recent_form_score": 1.5,
-      "recent_results": [
-        {
-          "date": "2025-05-24",
-          "venue": "dom",
-          "adversaire": "Monza",
-          "score": "2-0",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-05-18",
-          "venue": "ext",
-          "adversaire": "AS Roma",
-          "score": "1-3",
-          "resultat": "D"
-        },
-        {
-          "date": "2025-05-14",
-          "venue": "dom",
-          "adversaire": "Bologna",
-          "score": "0-1",
-          "resultat": "D"
-        },
-        {
-          "date": "2025-05-09",
-          "venue": "dom",
-          "adversaire": "Bologna",
-          "score": "3-1",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-05-05",
-          "venue": "ext",
-          "adversaire": "Genoa",
-          "score": "2-1",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-04-27",
-          "venue": "ext",
-          "adversaire": "Venezia",
-          "score": "2-0",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-04-23",
-          "venue": "ext",
-          "adversaire": "Inter",
-          "score": "3-0",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-04-20",
-          "venue": "dom",
-          "adversaire": "Atalanta",
-          "score": "0-1",
-          "resultat": "D"
-        },
-        {
-          "date": "2025-04-11",
-          "venue": "ext",
-          "adversaire": "Udinese",
-          "score": "4-0",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-04-05",
-          "venue": "dom",
-          "adversaire": "Fiorentina",
-          "score": "2-2",
-          "resultat": "N"
-        }
-      ],
-      "matches_played": 15,
-      "last_match_date": "2025-05-24",
-      "stale": true,
-      "age_days": 416
-    }
+    "ts": 1784217995.7208204,
+    "stats": null
   },
   "bayern munich": {
     "team_id": 1860,
-    "ts": 1784037974.729022,
-    "stats": {
-      "avg_goals_scored": 2.34,
-      "avg_goals_conceded": 0.94,
-      "avg_goals_scored_home": 2.58,
-      "avg_goals_conceded_home": 1.0,
-      "avg_goals_scored_away": 1.99,
-      "avg_goals_conceded_away": 0.83,
-      "recent_form_score": 1.5,
-      "recent_results": [
-        {
-          "date": "2025-05-11",
-          "venue": "dom",
-          "adversaire": "SGS Essen W",
-          "score": "3-0",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-05-05",
-          "venue": "ext",
-          "adversaire": "Carl Zeiss Jena  W",
-          "score": "1-0",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-05-01",
-          "venue": "dom",
-          "adversaire": "Werder Bremen W",
-          "score": "4-2",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-04-27",
-          "venue": "dom",
-          "adversaire": "SC Freiburg W",
-          "score": "3-1",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-04-12",
-          "venue": "ext",
-          "adversaire": "Eintracht Frankfurt W",
-          "score": "3-0",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-03-30",
-          "venue": "dom",
-          "adversaire": "Bayer Leverkusen W",
-          "score": "2-0",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-03-26",
-          "venue": "ext",
-          "adversaire": "Lyon W",
-          "score": "1-4",
-          "resultat": "D"
-        },
-        {
-          "date": "2025-03-22",
-          "venue": "dom",
-          "adversaire": "1899 Hoffenheim W",
-          "score": "3-2",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-03-18",
-          "venue": "dom",
-          "adversaire": "Lyon W",
-          "score": "0-2",
-          "resultat": "D"
-        },
-        {
-          "date": "2025-03-14",
-          "venue": "dom",
-          "adversaire": "VfL Wolfsburg W",
-          "score": "3-1",
-          "resultat": "V"
-        }
-      ],
-      "matches_played": 15,
-      "last_match_date": "2025-05-11",
-      "stale": true,
-      "age_days": 429
-    }
+    "ts": 1784217963.544607,
+    "stats": null
   },
   "borussia dortmund": {
     "team_id": 165,
-    "ts": 1784037987.7756224,
-    "stats": {
-      "avg_goals_scored": 2.31,
-      "avg_goals_conceded": 1.34,
-      "avg_goals_scored_home": 2.48,
-      "avg_goals_conceded_home": 0.84,
-      "avg_goals_scored_away": 2.16,
-      "avg_goals_conceded_away": 1.77,
-      "recent_form_score": 1.5,
-      "recent_results": [
-        {
-          "date": "2025-05-17",
-          "venue": "dom",
-          "adversaire": "Holstein Kiel",
-          "score": "3-0",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-05-11",
-          "venue": "ext",
-          "adversaire": "Bayer Leverkusen",
-          "score": "4-2",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-05-03",
-          "venue": "dom",
-          "adversaire": "VfL Wolfsburg",
-          "score": "4-0",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-04-26",
-          "venue": "ext",
-          "adversaire": "1899 Hoffenheim",
-          "score": "3-2",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-04-20",
-          "venue": "dom",
-          "adversaire": "Borussia Mönchengladbach",
-          "score": "3-2",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-04-15",
-          "venue": "dom",
-          "adversaire": "Barcelona",
-          "score": "3-1",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-04-12",
-          "venue": "ext",
-          "adversaire": "Bayern München",
-          "score": "2-2",
-          "resultat": "N"
-        },
-        {
-          "date": "2025-04-09",
-          "venue": "ext",
-          "adversaire": "Barcelona",
-          "score": "0-4",
-          "resultat": "D"
-        },
-        {
-          "date": "2025-04-05",
-          "venue": "ext",
-          "adversaire": "SC Freiburg",
-          "score": "4-1",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-03-30",
-          "venue": "dom",
-          "adversaire": "FSV Mainz 05",
-          "score": "3-1",
-          "resultat": "V"
-        }
-      ],
-      "matches_played": 15,
-      "last_match_date": "2025-05-17",
-      "stale": true,
-      "age_days": 423
-    }
+    "ts": 1784217969.787639,
+    "stats": null
   },
   "asec mimosas": {
     "team_id": 4512,
@@ -2521,6 +2185,54 @@
   },
   "h2h::664-673": {
     "ts": 1784139944.5701487,
+    "stats": null
+  },
+  "derry city": {
+    "team_id": 670,
+    "ts": 1784190014.369523,
+    "stats": null
+  },
+  "cska sofia": {
+    "team_id": 853,
+    "ts": 1784190027.0776172,
+    "stats": null
+  },
+  "h2h::670-853": {
+    "ts": 1784190034.3503337,
+    "stats": null
+  },
+  "ferencvarosi tc": {
+    "team_id": 651,
+    "ts": 1784214980.932526,
+    "stats": null
+  },
+  "vojvodina": {
+    "team_id": 702,
+    "ts": 1784214993.946759,
+    "stats": null
+  },
+  "h2h::651-702": {
+    "ts": 1784215000.7010088,
+    "stats": null
+  },
+  "inter milan": {
+    "team_id": 7533,
+    "ts": 1784217989.1871042,
+    "stats": null
+  },
+  "liverpool fc": {
+    "team_id": 40,
+    "ts": 1784218015.3831685,
+    "stats": null
+  },
+  "ajax": {
+    "team_id": 194,
+    "ts": 1784218194.192217,
+    "stats": null
+  },
+  "feyenoord": {
+    "team_id": 209,
+    "ts": 1784218206.9502692,
     "stats": null
   }
 }

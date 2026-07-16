@@ -582,9 +582,10 @@ def analyze_matches_ui(matches, bankroll, min_value, min_confidence,
         home_name = match_info["home"]["official_name"]
         away_name = match_info["away"]["official_name"]
 
-        # 2. Collecter les données
+        # 2. Collecter les données (competition = indice de ligue)
         all_odds = {**cotes, **extras}
-        context = modules["data_collector"].collect_match_data(match_info, all_odds)
+        context = modules["data_collector"].collect_match_data(
+            match_info, all_odds, competition=competition)
         context.competition = competition
 
         # 3. Estimer les ratings Elo
@@ -1100,11 +1101,37 @@ def display_results(analyses, bankroll):
 
                 # Infos additionnelles
                 st.space("small")
+
+                # Probabilité de l'issue la plus probable (1X2) —
+                # bien plus parlante que le score exact
+                probs_1x2 = analysis.model_probs.get("1X2", {})
+                p_issue = max(probs_1x2.values()) if probs_1x2 else 0
+
+                # Probabilité du score exact modal (souvent ~10-13 % :
+                # un score exact reste très incertain par nature)
+                poisson = getattr(analysis, "_poisson", None)
+                p_score = 0
+                if poisson is not None:
+                    p_score = dict(getattr(poisson, "top_scores", [])).get(
+                        analysis.predicted_score, 0)
+
                 st.markdown(
-                    f":material/scoreboard: Score prédit : **{analysis.predicted_score}** · "
-                    f":material/emoji_events: **{analysis.most_likely_result}** · "
-                    f":material/percent: Marge Betclic : **{analysis.bookmaker_margin:.1f}%** · "
-                    f":material/verified: Confiance : **{analysis.analysis_confidence:.0f}/100**"
+                    f":material/emoji_events: Issue la plus probable : "
+                    f"**{analysis.most_likely_result}** "
+                    f"({p_issue*100:.0f}%) · "
+                    f":material/scoreboard: Score le plus fréquent : "
+                    f"**{analysis.predicted_score}** "
+                    f"({p_score*100:.0f}%) · "
+                    f":material/percent: Marge Betclic : "
+                    f"**{analysis.bookmaker_margin:.1f}%**"
+                )
+                st.caption(
+                    f":material/verified: Fiabilité de l'analyse : "
+                    f"{analysis.analysis_confidence:.0f}/100 — mesure "
+                    f"l'accord entre les modèles et la qualité des "
+                    f"données, PAS la certitude du score. Un score "
+                    f"exact reste rarement au-dessus de 15 % : c'est "
+                    f"l'issue (1/N/2) et les value bets qui comptent."
                 )
 
                 sources = getattr(analysis, "_data_sources", None)

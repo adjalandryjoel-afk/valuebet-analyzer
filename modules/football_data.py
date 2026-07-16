@@ -348,6 +348,84 @@ class FootballData:
 
         return None  # ambigu → on refuse
 
+    # ─── DÉTECTION DE LIGUE ──────────────────────────
+
+    # Termes de la compétition (OCR / saisie) → clé de ligue. C'est
+    # le signal le plus fiable : Betclic affiche le championnat sur
+    # chaque capture. Recherché en minuscules sans accents.
+    COMPETITION_HINTS = {
+        "ligue 1": "ligue1_fr", "ligue1": "ligue1_fr",
+        "ligue 2": "ligue2_fr",
+        "premier league": "premier_league", "angleterre": "premier_league",
+        "championship": "championship",
+        "liga": "la_liga", "la liga": "la_liga", "espagne": "la_liga",
+        "segunda": "la_liga2",
+        "serie a": "serie_a", "italie": "serie_a",
+        "serie b": "serie_b",
+        "bundesliga 2": "bundesliga2", "2 bundesliga": "bundesliga2",
+        "bundesliga": "bundesliga", "allemagne": "bundesliga",
+        "eredivisie": "eredivisie", "pays bas": "eredivisie",
+        "pro league": "belgium_pro", "belgique": "belgium_pro",
+        "jupiler": "belgium_pro",
+        "primeira": "primeira_liga", "portugal": "primeira_liga",
+        "liga portugal": "primeira_liga",
+        "super lig": "super_lig", "turquie": "super_lig",
+        "super league grece": "greece_super", "grece": "greece_super",
+        "premiership": "scotland_prem", "ecosse": "scotland_prem",
+    }
+
+    def league_from_competition(self, competition: str) -> Optional[str]:
+        """Clé de ligue déduite du libellé de compétition (OCR)."""
+        if not competition:
+            return None
+        texte = self._normalize(competition)
+        # Priorité aux libellés les plus longs (« ligue 2 » avant
+        # « ligue », « bundesliga 2 » avant « bundesliga »)
+        for hint in sorted(self.COMPETITION_HINTS, key=len, reverse=True):
+            if hint in texte:
+                return self.COMPETITION_HINTS[hint]
+        return None
+
+    # Grands championnats d'abord : la recherche s'arrête au premier
+    # où les DEUX équipes sont trouvées, donc on teste les ligues les
+    # plus probables en premier (et on évite de tout télécharger).
+    _ORDRE_RECHERCHE = [
+        "premier_league", "la_liga", "serie_a", "bundesliga",
+        "ligue1_fr", "eredivisie", "primeira_liga", "belgium_pro",
+        "super_lig", "championship", "scotland_prem", "greece_super",
+        "bundesliga2", "serie_b", "la_liga2", "ligue2_fr",
+    ]
+
+    def detect_league(self, home: str, away: str,
+                      competition: str = "") -> Optional[str]:
+        """
+        Ligue d'un match, sans dépendre d'une base d'équipes locale.
+
+        1. Libellé de compétition (fiable, gratuit, instantané)
+        2. Sinon : la ligue où les DEUX équipes existent réellement
+           dans football-data (les listes sont complètes).
+        Retourne None si aucune ne contient les deux équipes.
+        """
+
+        # 1. Indice de compétition
+        cle = self.league_from_competition(competition)
+        if cle and cle in self.DIVISIONS:
+            # Confirmé seulement si les deux équipes y figurent ;
+            # sinon on garde l'indice quand même (l'utilisateur a pu
+            # saisir des noms que football-data écrit différemment).
+            if (self.match_team(cle, home) and self.match_team(cle, away)):
+                return cle
+            indice = cle
+        else:
+            indice = None
+
+        # 2. Recherche : la ligue contenant les deux équipes
+        for lg in self._ORDRE_RECHERCHE:
+            if self.match_team(lg, home) and self.match_team(lg, away):
+                return lg
+
+        return indice  # l'indice de compétition, à défaut de confirmation
+
     # ─── PARAMÈTRES DE LIGUE ─────────────────────────
 
     def league_params(self, league: str) -> Optional[Dict]:

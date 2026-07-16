@@ -164,7 +164,8 @@ class DataCollector:
 
     # ─── CONSTRUCTION DU CONTEXTE ───────────────────
 
-    def collect_match_data(self, match_info: Dict, odds: Dict) -> MatchContext:
+    def collect_match_data(self, match_info: Dict, odds: Dict,
+                           competition: str = "") -> MatchContext:
         """
         Construit le MatchContext depuis le résultat du TeamMatcher
         et les cotes extraites.
@@ -173,6 +174,21 @@ class DataCollector:
         home_name = match_info["home"]["official_name"]
         away_name = match_info["away"]["official_name"]
         league = match_info.get("league", "unknown")
+
+        # La base d'équipes locale est minuscule (45 équipes) : dès
+        # qu'une équipe en est absente, la ligue reste « unknown » et
+        # H2H/forme/paramètres tombent. football-data connaît TOUTES
+        # les équipes des 16 championnats → il détecte la ligue,
+        # depuis le libellé de compétition ou les noms d'équipes.
+        if league == "unknown":
+            try:
+                from modules.football_data import get_football_data
+                detectee = get_football_data().detect_league(
+                    home_name, away_name, competition)
+                if detectee:
+                    league = detectee
+            except Exception:
+                pass
 
         league_info = SUPPORTED_LEAGUES.get(league, {})
         league_avg = league_info.get(
