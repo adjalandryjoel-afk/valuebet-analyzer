@@ -207,16 +207,18 @@ class DataCollector:
             league_avg_sot=league_info.get("avg_sot", 0.0),
         )
 
-        # Stats des équipes :
-        # API-Football > historique > estimation par les cotes
+        # Stats des équipes, par ordre de fiabilité :
+        # football-data (réel) > API-Football > historique > cotes
         context.home_stats = (
-            self._stats_from_api(home_name)
+            self._stats_from_football_data(home_name, league)
+            or self._stats_from_api(home_name)
             or self._stats_from_historical(home_name)
             or self._estimate_stats_from_odds(home_name, odds, league_avg,
                                               is_home=True)
         )
         context.away_stats = (
-            self._stats_from_api(away_name)
+            self._stats_from_football_data(away_name, league)
+            or self._stats_from_api(away_name)
             or self._stats_from_historical(away_name)
             or self._estimate_stats_from_odds(away_name, odds, league_avg,
                                               is_home=False)
@@ -252,14 +254,11 @@ class DataCollector:
             completeness += 15
         if odds.get("btts_oui") and odds.get("btts_non"):
             completeness += 10
-        if context.home_stats.data_source == "api":
-            completeness += 20
-        elif context.home_stats.data_source == "historical":
-            completeness += 15
-        if context.away_stats.data_source == "api":
-            completeness += 20
-        elif context.away_stats.data_source == "historical":
-            completeness += 15
+        for stats in (context.home_stats, context.away_stats):
+            if stats.data_source in ("reel", "api"):
+                completeness += 20
+            elif stats.data_source == "historical":
+                completeness += 15
         if match_info.get("both_matched"):
             completeness += 10
 
@@ -268,6 +267,57 @@ class DataCollector:
         return context
 
     # ─── STATS DEPUIS API-FOOTBALL ──────────────────
+
+    def _stats_from_football_data(self, team_name: str,
+                                  league: str) -> Optional[TeamStats]:
+        """
+        Stats RÉELLES d'une équipe (football-data.co.uk) : buts
+        marqués/encaissés à domicile et à l'extérieur, plus les tirs
+        cadrés. Source la plus fiable, gratuite et sans clé, pour les
+        16 championnats européens. None hors couverture.
+
+        Totalement indépendantes des cotes : c'est ce qui permet au
+        modèle de détecter de la vraie value sur Over/Under et BTTS.
+        """
+
+        if league == "unknown":
+            return None
+
+        try:
+            from modules.football_data import get_football_data
+            prof = get_football_data().team_profile(league, team_name)
+        except Exception:
+            return None
+
+        if not prof or prof.get("buts_pour") is None:
+            return None
+
+        stats = TeamStats(team_name=team_name, data_source="reel")
+        stats.matches_played = int(prof.get("matchs", 0) or 0)
+
+        def val(cle, defaut):
+            v = prof.get(cle)
+            return float(v) if v is not None else defaut
+
+        stats.avg_goals_scored = val("buts_pour", 1.30)
+        stats.avg_goals_conceded = val("buts_contre", 1.30)
+        stats.avg_goals_scored_home = val("buts_pour_dom",
+                                          stats.avg_goals_scored)
+        stats.avg_goals_conceded_home = val("buts_contre_dom",
+                                            stats.avg_goals_conceded)
+        stats.avg_goals_scored_away = val("buts_pour_ext",
+                                          stats.avg_goals_scored)
+        stats.avg_goals_conceded_away = val("buts_contre_ext",
+                                            stats.avg_goals_conceded)
+
+        # Tirs cadrés réels (déjà normalisés par match)
+        sp, sc = prof.get("sot_pour"), prof.get("sot_contre")
+        if sp and sc:
+            stats.avg_sot_for = float(sp)
+            stats.avg_sot_against = float(sc)
+            stats.sot_available = True
+
+        return stats
 
     def _stats_from_api(self, team_name: str) -> Optional[TeamStats]:
         """
