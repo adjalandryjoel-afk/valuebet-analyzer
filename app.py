@@ -293,6 +293,61 @@ def render_sidebar_settings():
 
 
 # ══════════════════════════════════════════════════════
+#  CHAMP DE NOTES GUIDÉ (blessures, compos, enjeu...)
+# ══════════════════════════════════════════════════════
+
+def guided_match_notes(key: str) -> str:
+    """
+    Champ « Actus des matchs » guidé, partagé par les deux pages
+    d'analyse. Aucune API ne connaît la compo officielle mieux que
+    l'utilisateur qui la lit ~1h avant le coup d'envoi : ce champ est
+    donc sa meilleure arme. Le guide lui dit exactement quoi noter,
+    l'agent contexte (LLM anti-hallucination) le structure ensuite.
+
+    Retourne le texte saisi (chaîne éventuellement vide).
+    """
+
+    notes = st.text_area(
+        "Actus des matchs (fortement recommandé)",
+        placeholder="Ex : « Domicile sans son buteur (blessé) et son "
+                    "meneur (suspendu). Extérieur a joué les "
+                    "prolongations il y a 3 jours et a déjà assuré le "
+                    "maintien. »",
+        key=f"notes_{key}",
+        help="C'est TON avantage sur le bookmaker : l'app connaît les "
+             "chiffres, pas les news du jour. L'agent n'utilise QUE ce "
+             "que tu écris — il n'invente rien.",
+    )
+
+    with st.expander(":material/lightbulb: Quoi noter pour une "
+                     "analyse solide ?", icon=None):
+        st.markdown(
+            "Écris librement, en français, ce que tu sais du jour du "
+            "match. Les facteurs qui pèsent vraiment :\n\n"
+            "- :material/personal_injury: **Blessés / absents** — un "
+            "buteur ou un gardien titulaire qui manque change tout. "
+            "*« PSG sans son avant-centre. »*\n"
+            "- :material/gavel: **Suspensions** — cartons, expulsions. "
+            "*« Le capitaine adverse est suspendu. »*\n"
+            "- :material/swap_horiz: **Rotation / turnover** — équipe "
+            "remaniée avant un match plus important. *« Match de coupe, "
+            "l'entraîneur va faire tourner. »*\n"
+            "- :material/emoji_events: **Enjeu** — maintien, titre, "
+            "qualification, ou au contraire rien à jouer. *« Finale de "
+            "coupe pour l'un, saison finie pour l'autre. »*\n"
+            "- :material/bedtime: **Fatigue / calendrier** — match "
+            "récent, prolongations, long déplacement. *« A joué 120 min "
+            "il y a 3 jours. »*\n"
+            "- :material/thunderstorm: **Météo extrême / terrain** — "
+            "pluie, vent, pelouse dégradée (favorise le jeu fermé).\n\n"
+            "Précise **quelle équipe** est concernée (domicile ou "
+            "extérieur). Plus c'est concret, mieux l'agent ajuste."
+        )
+
+    return notes
+
+
+# ══════════════════════════════════════════════════════
 #  PAGE : UPLOAD DE CAPTURES D'ÉCRAN
 # ══════════════════════════════════════════════════════
 
@@ -327,16 +382,7 @@ def page_upload_screenshots(bankroll, min_value, min_confidence,
         if len(uploaded_files) > 5:
             st.caption(f"... et {len(uploaded_files) - 5} autre(s)")
 
-        user_notes = st.text_area(
-            "Actus des matchs (optionnel)",
-            placeholder="Blessés, suspensions, enjeu, turnover... "
-                        "Ex : « Le buteur titulaire est suspendu. Match "
-                        "décisif pour le maintien. L'adversaire a joué "
-                        "les prolongations il y a 3 jours. »",
-            help="L'agent contexte structure ces informations et ajuste "
-                 "le modèle en conséquence. Il n'utilise QUE ce que tu "
-                 "écris ici — rien n'est inventé."
-        )
+        user_notes = guided_match_notes("upload")
 
         # Bouton d'analyse
         if st.button("Lancer l'analyse", type="primary",
@@ -534,12 +580,7 @@ def page_manual_entry(bankroll, min_value, min_confidence,
 
     # Bouton d'analyse
     if all_matches:
-        user_notes = st.text_area(
-            "Actus des matchs (optionnel)",
-            placeholder="Blessés, suspensions, enjeu, turnover...",
-            help="L'agent contexte structure ces informations et ajuste "
-                 "le modèle. Il n'utilise QUE ce que tu écris ici."
-        )
+        user_notes = guided_match_notes("manual")
 
         if st.button("Analyser tous les matchs", type="primary",
                      icon=":material/rocket_launch:", width="stretch"):
