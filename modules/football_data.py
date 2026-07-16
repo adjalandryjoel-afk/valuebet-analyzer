@@ -383,6 +383,17 @@ class FootballData:
                     / (mt.FTHG + mt.FTAG).sum())
             params["first_half_share"] = round(float(part), 3)
 
+        # Tirs cadrés moyens PAR ÉQUIPE et par match : c'est la
+        # référence qui permet de normaliser attaque × défense,
+        # exactement comme avg_goals le fait pour les buts.
+        sot = sdf.dropna(subset=["HST", "AST"])
+        if len(sot) >= self.MIN_MATCHS:
+            params["avg_sot"] = round(
+                float((sot.HST + sot.AST).mean() / 2), 3)
+            params["sot_par_but"] = round(
+                float((sot.HST + sot.AST).sum()
+                      / max((sot.FTHG + sot.FTAG).sum(), 1)), 3)
+
         return params
 
     # ─── PROFIL D'UNE ÉQUIPE ─────────────────────────

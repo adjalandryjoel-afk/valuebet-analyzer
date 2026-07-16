@@ -7,112 +7,144 @@
    "home_win_rate": 0.426,
    "matchs": 380,
    "saison": "2526",
-   "first_half_share": 0.433
+   "first_half_share": 0.433,
+   "avg_sot": 4.187,
+   "sot_par_but": 3.045
   },
   "championship": {
    "avg_goals": 2.605,
    "home_win_rate": 0.417,
    "matchs": 552,
    "saison": "2526",
-   "first_half_share": 0.464
+   "first_half_share": 0.464,
+   "avg_sot": 4.072,
+   "sot_par_but": 3.127
   },
   "scotland_prem": {
    "avg_goals": 2.781,
    "home_win_rate": 0.447,
    "matchs": 228,
    "saison": "2526",
-   "first_half_share": 0.451
+   "first_half_share": 0.451,
+   "avg_sot": 4.327,
+   "sot_par_but": 3.112
   },
   "bundesliga": {
    "avg_goals": 3.235,
    "home_win_rate": 0.438,
    "matchs": 306,
    "saison": "2526",
-   "first_half_share": 0.446
+   "first_half_share": 0.446,
+   "avg_sot": 4.771,
+   "sot_par_but": 2.949
   },
   "bundesliga2": {
    "avg_goals": 2.931,
    "home_win_rate": 0.461,
    "matchs": 306,
    "saison": "2526",
-   "first_half_share": 0.446
+   "first_half_share": 0.446,
+   "avg_sot": 4.521,
+   "sot_par_but": 3.085
   },
   "serie_a": {
    "avg_goals": 2.426,
    "home_win_rate": 0.389,
    "matchs": 380,
    "saison": "2526",
-   "first_half_share": 0.43
+   "first_half_share": 0.43,
+   "avg_sot": 4.03,
+   "sot_par_but": 3.322
   },
   "serie_b": {
    "avg_goals": 2.561,
    "home_win_rate": 0.45,
    "matchs": 380,
    "saison": "2526",
-   "first_half_share": 0.446
+   "first_half_share": 0.446,
+   "avg_sot": 4.218,
+   "sot_par_but": 3.295
   },
   "la_liga": {
    "avg_goals": 2.695,
    "home_win_rate": 0.489,
    "matchs": 380,
    "saison": "2526",
-   "first_half_share": 0.427
+   "first_half_share": 0.427,
+   "avg_sot": 4.336,
+   "sot_par_but": 3.218
   },
   "la_liga2": {
    "avg_goals": 2.632,
    "home_win_rate": 0.448,
    "matchs": 462,
    "saison": "2526",
-   "first_half_share": 0.447
+   "first_half_share": 0.447,
+   "avg_sot": 4.33,
+   "sot_par_but": 3.29
   },
   "ligue1_fr": {
    "avg_goals": 2.82,
    "home_win_rate": 0.461,
    "matchs": 306,
    "saison": "2526",
-   "first_half_share": 0.432
+   "first_half_share": 0.432,
+   "avg_sot": 4.319,
+   "sot_par_but": 3.063
   },
   "ligue2_fr": {
    "avg_goals": 2.541,
    "home_win_rate": 0.377,
    "matchs": 305,
    "saison": "2526",
-   "first_half_share": 0.466
+   "first_half_share": 0.466,
+   "avg_sot": 3.93,
+   "sot_par_but": 3.093
   },
   "eredivisie": {
    "avg_goals": 3.176,
    "home_win_rate": 0.444,
    "matchs": 306,
    "saison": "2526",
-   "first_half_share": 0.455
+   "first_half_share": 0.455,
+   "avg_sot": 5.196,
+   "sot_par_but": 3.272
   },
   "belgium_pro": {
    "avg_goals": 2.675,
    "home_win_rate": 0.405,
    "matchs": 311,
    "saison": "2526",
-   "first_half_share": 0.453
+   "first_half_share": 0.453,
+   "avg_sot": 4.461,
+   "sot_par_but": 3.335
   },
   "primeira_liga": {
    "avg_goals": 2.683,
    "home_win_rate": 0.412,
    "matchs": 306,
    "saison": "2526",
-   "first_half_share": 0.447
+   "first_half_share": 0.447,
+   "avg_sot": 4.118,
+   "sot_par_but": 3.069
   },
   "super_lig": {
    "avg_goals": 2.654,
    "home_win_rate": 0.422,
    "matchs": 306,
    "saison": "2526",
-   "first_half_share": 0.432
+   "first_half_share": 0.432,
+   "avg_sot": 4.265,
+   "sot_par_but": 3.214
   },
   "greece_super": {
    "avg_goals": 2.568,
    "home_win_rate": 0.411,
    "matchs": 236,
    "saison": "2526",
-   "first_half_share": 0.465
+   "first_half_share": 0.465,
+   "avg_sot": 3.987,
+   "sot_par_but": 3.106
   }
  }
 }

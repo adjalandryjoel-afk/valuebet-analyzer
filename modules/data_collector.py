@@ -45,6 +45,14 @@ class TeamStats:
     xg_conceded: float = 0.0
     xg_available: bool = False
 
+    # Tirs cadrés réels (football-data.co.uk). Les buts ne suffisent
+    # pas à les déduire : le ratio tirs/but varie fortement d'une
+    # ligue à l'autre (2.95 en Bundesliga, 3.32 en Serie A — les
+    # championnats qui marquent peu tirent quand même beaucoup).
+    avg_sot_for: float = 0.0
+    avg_sot_against: float = 0.0
+    sot_available: bool = False
+
     # Forme récente (points par match sur les 5 derniers, 0..3)
     recent_form_score: float = 1.50
 
@@ -76,6 +84,10 @@ class MatchContext:
 
     # Part des buts en 1ère mi-temps (propre à la ligue)
     first_half_share: float = PoissonConfig.FIRST_HALF_SHARE
+
+    # Tirs cadrés moyens par équipe et par match dans la ligue
+    # (référence pour normaliser attaque × défense)
+    league_avg_sot: float = 0.0
 
     # Qualité des données disponibles (0-100)
     data_completeness: float = 0.0
@@ -118,6 +130,38 @@ class DataCollector:
                 return {}
         return {}
 
+    # ─── TIRS CADRÉS RÉELS ──────────────────────────
+
+    @staticmethod
+    def _enrichir_tirs(context: MatchContext, league: str):
+        """
+        Remplit les moyennes réelles de tirs cadrés des deux équipes
+        (football-data.co.uk). Silencieux si la ligue n'est pas
+        couverte ou le réseau indisponible : le modèle retombe alors
+        sur l'approximation par les buts.
+        """
+
+        try:
+            from modules.football_data import get_football_data
+            fd = get_football_data()
+        except Exception:
+            return
+
+        for stats in (context.home_stats, context.away_stats):
+            if stats is None:
+                continue
+            try:
+                profil = fd.team_profile(league, stats.team_name)
+            except Exception:
+                profil = None
+            if not profil:
+                continue
+            pour, contre = profil.get("sot_pour"), profil.get("sot_contre")
+            if pour and contre:
+                stats.avg_sot_for = float(pour)
+                stats.avg_sot_against = float(contre)
+                stats.sot_available = True
+
     # ─── CONSTRUCTION DU CONTEXTE ───────────────────
 
     def collect_match_data(self, match_info: Dict, odds: Dict) -> MatchContext:
@@ -144,6 +188,7 @@ class DataCollector:
             first_half_share=league_info.get(
                 "first_half_share", PoissonConfig.FIRST_HALF_SHARE
             ),
+            league_avg_sot=league_info.get("avg_sot", 0.0),
         )
 
         # Stats des équipes :
@@ -160,6 +205,11 @@ class DataCollector:
             or self._estimate_stats_from_odds(away_name, odds, league_avg,
                                               is_home=False)
         )
+
+        # Enrichissement tirs cadrés RÉELS (football-data.co.uk) :
+        # le modèle cesse de les déduire des buts, une approximation
+        # dont l'erreur se lisait à tort comme de la value.
+        self._enrichir_tirs(context, league)
 
         # Enrichissement xG (soccerdata/Understat) — 5 grands
         # championnats uniquement (get_xg_profile filtre lui-même

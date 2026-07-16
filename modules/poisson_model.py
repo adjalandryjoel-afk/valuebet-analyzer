@@ -119,6 +119,7 @@ class PoissonPredictor:
         self._fill_probabilities(
             pred,
             first_half_share=getattr(context, "first_half_share", None),
+            context=context,
         )
 
         # Confiance selon la qualité des données
@@ -332,7 +333,8 @@ class PoissonPredictor:
         return p1, px, p2
 
     def _fill_probabilities(self, pred: PoissonPrediction,
-                            first_half_share: float = None):
+                            first_half_share: float = None,
+                            context=None):
         """Remplit toutes les probabilités depuis la matrice des scores."""
 
         max_g = PoissonConfig.MAX_GOALS
@@ -419,11 +421,57 @@ class PoissonPredictor:
         pred.h2_team_away = self._over_probs(
             lam_a * (1 - share), half_lines)
 
-        # ── Tirs cadrés attendus (approximation depuis les buts) ──
-        pred.sot_lambda_home = round(lam_h * PoissonConfig.SOT_PER_GOAL, 2)
-        pred.sot_lambda_away = round(lam_a * PoissonConfig.SOT_PER_GOAL, 2)
+        # ── Tirs cadrés attendus ──
+        # Les tirs cadrés ne se déduisent PAS des buts : le ratio
+        # tirs/but varie de 2.95 (Bundesliga) à 3.32 (Serie A) —
+        # les championnats qui marquent peu tirent quand même. Quand
+        # les vraies moyennes sont disponibles, on croise attaque et
+        # défense comme pour les buts ; sinon seulement, repli sur
+        # l'approximation.
+        sot = self._sot_lambdas(context)
+        if sot:
+            pred.sot_lambda_home, pred.sot_lambda_away = sot
+        else:
+            pred.sot_lambda_home = round(
+                lam_h * PoissonConfig.SOT_PER_GOAL, 2)
+            pred.sot_lambda_away = round(
+                lam_a * PoissonConfig.SOT_PER_GOAL, 2)
         pred.sot_lambda_total = round(
             pred.sot_lambda_home + pred.sot_lambda_away, 2)
+
+    @staticmethod
+    def _sot_lambdas(context) -> Optional[Tuple[float, float]]:
+        """
+        Tirs cadrés attendus de chaque équipe, depuis les moyennes
+        RÉELLES : attaque de l'une × défense de l'autre, normalisées
+        par la moyenne de la ligue.
+
+            λ = tirs_cadrés_pour(A) × tirs_cadrés_encaissés(B)
+                / moyenne_ligue
+
+        None si les données réelles manquent (ligue non couverte,
+        équipe inconnue, réseau indisponible).
+        """
+
+        if context is None:
+            return None
+
+        home = getattr(context, "home_stats", None)
+        away = getattr(context, "away_stats", None)
+        ligue = float(getattr(context, "league_avg_sot", 0) or 0)
+
+        if (home is None or away is None or ligue <= 0
+                or not getattr(home, "sot_available", False)
+                or not getattr(away, "sot_available", False)):
+            return None
+
+        lam_h = home.avg_sot_for * away.avg_sot_against / ligue
+        lam_a = away.avg_sot_for * home.avg_sot_against / ligue
+
+        # Bornes de sécurité : une équipe reste dans le plausible
+        lam_h = min(max(lam_h, 1.0), 12.0)
+        lam_a = min(max(lam_a, 1.0), 12.0)
+        return round(lam_h, 2), round(lam_a, 2)
 
     @classmethod
     def fit_lambda_from_over(cls, p_over: float, line: str,
