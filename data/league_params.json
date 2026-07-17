@@ -4,6 +4,8 @@
  "ligues": {
   "premier_league": {
    "avg_goals": 2.75,
+   "avg_goals_home": 1.526,
+   "avg_goals_away": 1.224,
    "home_win_rate": 0.426,
    "matchs": 380,
    "saison": "2526",
@@ -13,6 +15,8 @@
   },
   "championship": {
    "avg_goals": 2.605,
+   "avg_goals_home": 1.4,
+   "avg_goals_away": 1.205,
    "home_win_rate": 0.417,
    "matchs": 552,
    "saison": "2526",
@@ -22,6 +26,8 @@
   },
   "scotland_prem": {
    "avg_goals": 2.781,
+   "avg_goals_home": 1.588,
+   "avg_goals_away": 1.193,
    "home_win_rate": 0.447,
    "matchs": 228,
    "saison": "2526",
@@ -31,6 +37,8 @@
   },
   "bundesliga": {
    "avg_goals": 3.235,
+   "avg_goals_home": 1.778,
+   "avg_goals_away": 1.458,
    "home_win_rate": 0.438,
    "matchs": 306,
    "saison": "2526",
@@ -40,6 +48,8 @@
   },
   "bundesliga2": {
    "avg_goals": 2.931,
+   "avg_goals_home": 1.631,
+   "avg_goals_away": 1.301,
    "home_win_rate": 0.461,
    "matchs": 306,
    "saison": "2526",
@@ -49,6 +59,8 @@
   },
   "serie_a": {
    "avg_goals": 2.426,
+   "avg_goals_home": 1.276,
+   "avg_goals_away": 1.15,
    "home_win_rate": 0.389,
    "matchs": 380,
    "saison": "2526",
@@ -58,6 +70,8 @@
   },
   "serie_b": {
    "avg_goals": 2.561,
+   "avg_goals_home": 1.487,
+   "avg_goals_away": 1.074,
    "home_win_rate": 0.45,
    "matchs": 380,
    "saison": "2526",
@@ -67,6 +81,8 @@
   },
   "la_liga": {
    "avg_goals": 2.695,
+   "avg_goals_home": 1.574,
+   "avg_goals_away": 1.121,
    "home_win_rate": 0.489,
    "matchs": 380,
    "saison": "2526",
@@ -76,6 +92,8 @@
   },
   "la_liga2": {
    "avg_goals": 2.632,
+   "avg_goals_home": 1.452,
+   "avg_goals_away": 1.18,
    "home_win_rate": 0.448,
    "matchs": 462,
    "saison": "2526",
@@ -85,6 +103,8 @@
   },
   "ligue1_fr": {
    "avg_goals": 2.82,
+   "avg_goals_home": 1.582,
+   "avg_goals_away": 1.239,
    "home_win_rate": 0.461,
    "matchs": 306,
    "saison": "2526",
@@ -94,6 +114,8 @@
   },
   "ligue2_fr": {
    "avg_goals": 2.541,
+   "avg_goals_home": 1.318,
+   "avg_goals_away": 1.223,
    "home_win_rate": 0.377,
    "matchs": 305,
    "saison": "2526",
@@ -103,6 +125,8 @@
   },
   "eredivisie": {
    "avg_goals": 3.176,
+   "avg_goals_home": 1.801,
+   "avg_goals_away": 1.376,
    "home_win_rate": 0.444,
    "matchs": 306,
    "saison": "2526",
@@ -112,6 +136,8 @@
   },
   "belgium_pro": {
    "avg_goals": 2.675,
+   "avg_goals_home": 1.434,
+   "avg_goals_away": 1.241,
    "home_win_rate": 0.405,
    "matchs": 311,
    "saison": "2526",
@@ -121,6 +147,8 @@
   },
   "primeira_liga": {
    "avg_goals": 2.683,
+   "avg_goals_home": 1.497,
+   "avg_goals_away": 1.186,
    "home_win_rate": 0.412,
    "matchs": 306,
    "saison": "2526",
@@ -130,6 +158,8 @@
   },
   "super_lig": {
    "avg_goals": 2.654,
+   "avg_goals_home": 1.444,
+   "avg_goals_away": 1.209,
    "home_win_rate": 0.422,
    "matchs": 306,
    "saison": "2526",
@@ -139,6 +169,8 @@
   },
   "greece_super": {
    "avg_goals": 2.568,
+   "avg_goals_home": 1.424,
+   "avg_goals_away": 1.144,
    "home_win_rate": 0.411,
    "matchs": 236,
    "saison": "2526",
@@ -148,78 +180,104 @@
   },
   "swe_allsvenskan": {
    "avg_goals": 3.196,
+   "avg_goals_home": 1.794,
+   "avg_goals_away": 1.402,
    "home_win_rate": 0.402,
    "matchs": 97,
    "saison": "2026"
   },
   "nor_eliteserien": {
    "avg_goals": 2.938,
+   "avg_goals_home": 1.804,
+   "avg_goals_away": 1.134,
    "home_win_rate": 0.536,
    "matchs": 97,
    "saison": "2026"
   },
   "fin_veikkaus": {
    "avg_goals": 2.7,
+   "avg_goals_home": 1.589,
+   "avg_goals_away": 1.111,
    "home_win_rate": 0.5,
    "matchs": 90,
    "saison": "2026"
   },
   "den_superliga": {
    "avg_goals": 3.099,
+   "avg_goals_home": 1.661,
+   "avg_goals_away": 1.438,
    "home_win_rate": 0.417,
    "matchs": 192,
    "saison": "2025/2026"
   },
   "rus_premier": {
    "avg_goals": 2.538,
+   "avg_goals_home": 1.45,
+   "avg_goals_away": 1.087,
    "home_win_rate": 0.454,
    "matchs": 240,
    "saison": "2025/2026"
   },
   "rou_superliga": {
    "avg_goals": 2.542,
+   "avg_goals_home": 1.445,
+   "avg_goals_away": 1.097,
    "home_win_rate": 0.442,
    "matchs": 321,
    "saison": "2025/2026"
   },
   "aut_bundesliga": {
    "avg_goals": 2.698,
+   "avg_goals_home": 1.422,
+   "avg_goals_away": 1.276,
    "home_win_rate": 0.422,
    "matchs": 192,
    "saison": "2025/2026"
   },
   "pol_ekstraklasa": {
    "avg_goals": 2.735,
+   "avg_goals_home": 1.575,
+   "avg_goals_away": 1.16,
    "home_win_rate": 0.451,
    "matchs": 306,
    "saison": "2025/2026"
   },
   "irl_premier": {
    "avg_goals": 2.793,
+   "avg_goals_home": 1.529,
+   "avg_goals_away": 1.264,
    "home_win_rate": 0.405,
    "matchs": 121,
    "saison": "2026"
   },
   "usa_mls": {
    "avg_goals": 3.303,
+   "avg_goals_home": 1.936,
+   "avg_goals_away": 1.367,
    "home_win_rate": 0.482,
    "matchs": 218,
    "saison": "2026"
   },
   "bra_serie_a": {
    "avg_goals": 2.661,
+   "avg_goals_home": 1.554,
+   "avg_goals_away": 1.107,
    "home_win_rate": 0.492,
    "matchs": 177,
    "saison": "2026"
   },
   "arg_liga": {
    "avg_goals": 2.055,
+   "avg_goals_home": 1.169,
+   "avg_goals_away": 0.886,
    "home_win_rate": 0.409,
    "matchs": 254,
    "saison": "2026"
   },
   "mex_liga": {
    "avg_goals": 2.905,
+   "avg_goals_home": 1.693,
+   "avg_goals_away": 1.211,
    "home_win_rate": 0.47,
    "matchs": 336,
    "saison": "2025/2026"

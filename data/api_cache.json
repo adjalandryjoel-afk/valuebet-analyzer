@@ -1018,96 +1018,12 @@
   },
   "asec mimosas": {
     "team_id": 4512,
-    "ts": 1784038001.1345384,
-    "stats": {
-      "avg_goals_scored": 1.81,
-      "avg_goals_conceded": 0.69,
-      "avg_goals_scored_home": 1.74,
-      "avg_goals_conceded_home": 0.57,
-      "avg_goals_scored_away": 1.87,
-      "avg_goals_conceded_away": 0.79,
-      "recent_form_score": 1.5,
-      "recent_results": [
-        {
-          "date": "2025-05-18",
-          "venue": "ext",
-          "adversaire": "SOA",
-          "score": "2-1",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-05-11",
-          "venue": "dom",
-          "adversaire": "Bouaké",
-          "score": "2-0",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-05-03",
-          "venue": "ext",
-          "adversaire": "Denguélé",
-          "score": "4-2",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-04-20",
-          "venue": "ext",
-          "adversaire": "Lys Sassandra",
-          "score": "2-2",
-          "resultat": "N"
-        },
-        {
-          "date": "2025-04-14",
-          "venue": "dom",
-          "adversaire": "SOL",
-          "score": "3-1",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-04-09",
-          "venue": "ext",
-          "adversaire": "Renaissance Berkane",
-          "score": "0-1",
-          "resultat": "D"
-        },
-        {
-          "date": "2025-04-02",
-          "venue": "dom",
-          "adversaire": "Renaissance Berkane",
-          "score": "0-1",
-          "resultat": "D"
-        },
-        {
-          "date": "2025-03-28",
-          "venue": "ext",
-          "adversaire": "ISCA",
-          "score": "1-0",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-03-23",
-          "venue": "dom",
-          "adversaire": "San-Pédro",
-          "score": "3-0",
-          "resultat": "V"
-        },
-        {
-          "date": "2025-03-12",
-          "venue": "ext",
-          "adversaire": "Stade d'Abidjan",
-          "score": "0-0",
-          "resultat": "N"
-        }
-      ],
-      "matches_played": 15,
-      "last_match_date": "2025-05-18",
-      "stale": true,
-      "age_days": 422
-    }
+    "ts": 1784279419.7774746,
+    "stats": null
   },
   "africa sports": {
     "team_id": 4514,
-    "ts": 1784038014.142363,
+    "ts": 1784279431.3179994,
     "stats": null
   },
   "h2h::81-85": {
@@ -2121,5 +2037,198 @@
     "team_id": 10,
     "ts": 1784226214.9717984,
     "stats": null
+  },
+  "vitoria": {
+    "team_id": 136,
+    "ts": 1784239436.6198106,
+    "stats": null
+  },
+  "vasco da gama": {
+    "team_id": 133,
+    "ts": 1784239448.8430872,
+    "stats": null
+  },
+  "la galaxy": {
+    "team_id": 5422,
+    "ts": 1784239519.8230758,
+    "stats": null
+  },
+  "orense sc": {
+    "team_id": 1992,
+    "ts": 1784241302.8883114,
+    "stats": null
+  },
+  "club sport emelec": {
+    "team_id": 1148,
+    "ts": 1784241328.8397963,
+    "stats": null
+  },
+  "h2h::1148-1992": {
+    "ts": 1784241336.4069622,
+    "stats": {
+      "matches": [
+        {
+          "date": "2026-03-15",
+          "home": "Emelec",
+          "away": "Orense SC",
+          "score": "2-1"
+        },
+        {
+          "date": "2025-09-28",
+          "home": "Orense SC",
+          "away": "Emelec",
+          "score": "0-0"
+        },
+        {
+          "date": "2025-06-01",
+          "home": "Emelec",
+          "away": "Orense SC",
+          "score": "1-0"
+        },
+        {
+          "date": "2024-09-01",
+          "home": "Emelec",
+          "away": "Orense SC",
+          "score": "2-1"
+        },
+        {
+          "date": "2024-03-26",
+          "home": "Orense SC",
+          "away": "Emelec",
+          "score": "1-1"
+        },
+        {
+          "date": "2023-08-13",
+          "home": "Emelec",
+          "away": "Orense SC",
+          "score": "0-0"
+        },
+        {
+          "date": "2023-03-06",
+          "home": "Orense SC",
+          "away": "Emelec",
+          "score": "2-1"
+        },
+        {
+          "date": "2022-10-09",
+          "home": "Emelec",
+          "away": "Orense SC",
+          "score": "0-0"
+        },
+        {
+          "date": "2022-05-15",
+          "home": "Orense SC",
+          "away": "Emelec",
+          "score": "2-0"
+        },
+        {
+          "date": "2021-10-16",
+          "home": "Emelec",
+          "away": "Orense SC",
+          "score": "1-0"
+        }
+      ],
+      "team1_wins": 4,
+      "draws": 4,
+      "team2_wins": 2,
+      "avg_goals": 1.5,
+      "btts_rate": 0.4,
+      "team1_avg_scored": 0.8,
+      "team2_avg_scored": 0.7,
+      "sample": 10
+    }
+  },
+  "bouake fc": {
+    "team_id": 4516,
+    "ts": 1784279530.2433796,
+    "stats": null
+  },
+  "brighton hove albion": {
+    "team_id": 51,
+    "ts": 1784280884.3874657,
+    "stats": null
+  },
+  "sturm graz": {
+    "team_id": 637,
+    "ts": 1784281622.4324653,
+    "stats": null
+  },
+  "atlas": {
+    "team_id": 2283,
+    "ts": 1784282175.339521,
+    "stats": null
+  },
+  "zeleznicar pancevo": {
+    "team_id": 12360,
+    "ts": 1784283590.8376033,
+    "stats": null
+  },
+  "radnicki nis": {
+    "team_id": 2254,
+    "ts": 1784283603.8393433,
+    "stats": null
+  },
+  "h2h::2254-12360": {
+    "ts": 1784283610.6482522,
+    "stats": {
+      "matches": [
+        {
+          "date": "2025-12-20",
+          "home": "Radnicki NIS",
+          "away": "Železničar Pančevo",
+          "score": "1-0"
+        },
+        {
+          "date": "2025-08-17",
+          "home": "Železničar Pančevo",
+          "away": "Radnicki NIS",
+          "score": "3-0"
+        },
+        {
+          "date": "2025-04-28",
+          "home": "Železničar Pančevo",
+          "away": "Radnicki NIS",
+          "score": "1-2"
+        },
+        {
+          "date": "2025-02-02",
+          "home": "Železničar Pančevo",
+          "away": "Radnicki NIS",
+          "score": "0-0"
+        },
+        {
+          "date": "2024-08-24",
+          "home": "Radnicki NIS",
+          "away": "Železničar Pančevo",
+          "score": "2-1"
+        },
+        {
+          "date": "2024-04-27",
+          "home": "Železničar Pančevo",
+          "away": "Radnicki NIS",
+          "score": "1-1"
+        },
+        {
+          "date": "2024-03-09",
+          "home": "Železničar Pančevo",
+          "away": "Radnicki NIS",
+          "score": "3-2"
+        },
+        {
+          "date": "2023-12-21",
+          "home": "Radnicki NIS",
+          "away": "Železničar Pančevo",
+          "score": "1-1"
+        }
+      ],
+      "team1_wins": 3,
+      "draws": 3,
+      "team2_wins": 2,
+      "avg_goals": 2.38,
+      "btts_rate": 0.62,
+      "team1_avg_scored": 1.12,
+      "team2_avg_scored": 1.25,
+      "sample": 8
+    }
   }
 }

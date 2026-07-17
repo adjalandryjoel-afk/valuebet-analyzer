@@ -451,7 +451,8 @@ def _charger_params_mesures():
     for cle, params in mesures.items():
         if cle not in SUPPORTED_LEAGUES:
             continue
-        for champ in ("avg_goals", "home_win_rate", "first_half_share",
+        for champ in ("avg_goals", "avg_goals_home", "avg_goals_away",
+                      "home_win_rate", "first_half_share",
                       "avg_sot", "sot_par_but"):
             if isinstance(params.get(champ), (int, float)):
                 SUPPORTED_LEAGUES[cle][champ] = params[champ]

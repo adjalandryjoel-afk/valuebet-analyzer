@@ -69,6 +69,10 @@ class PoissonPrediction:
     sot_lambda_home: float = 0.0
     sot_lambda_away: float = 0.0
     sot_lambda_total: float = 0.0
+    # λ tirs issu des moyennes RÉELLES de tirs cadrés (True) ou d'une
+    # simple approximation buts × SOT_PER_GOAL (False). Sans donnée
+    # réelle, le modèle n'a rien de propre à opposer au marché.
+    sot_from_real_data: bool = False
 
     # Double chance
     prob_1x: float = 0.0
@@ -172,6 +176,15 @@ class PoissonPredictor:
         home = context.home_stats
         away = context.away_stats
         league_avg = context.league_avg_goals / 2  # buts moyens par équipe
+        # Dénominateurs PAR VENUE : normaliser un split domicile
+        # (buts marqués à domicile) par la moyenne TOUTES VENUES
+        # réinjecte l'avantage du terrain — double comptage. On utilise
+        # la moyenne domicile pour λ_home, la moyenne extérieur pour
+        # λ_away. Repli sur league_avg × avantage si non mesurées.
+        lg_home = (getattr(context, "league_avg_goals_home", 0.0)
+                   or league_avg * PoissonConfig.HOME_ADVANTAGE)
+        lg_away = (getattr(context, "league_avg_goals_away", 0.0)
+                   or league_avg * (2 - PoissonConfig.HOME_ADVANTAGE))
 
         def side_profile(stats, is_home):
             """(attaque, défense, estimé?, avantage domicile déjà inclus?)"""
@@ -190,9 +203,13 @@ class PoissonPredictor:
                     xg_a, xg_d = stats.xg_for_away, stats.xg_against_away
                     g_a, g_d = (stats.avg_goals_scored_away,
                                 stats.avg_goals_conceded_away)
-                # Si les splits de buts manquent, xG seul
-                if not (g_a and g_d):
-                    g_a, g_d = xg_a, xg_d
+                # Un split à 0 est une donnée RÉELLE (0 encaissé à
+                # domicile), pas une donnée absente : ne jamais jeter
+                # l'autre split, valide, à cause de lui. Champ par champ.
+                if not g_a:
+                    g_a = xg_a
+                if not g_d:
+                    g_d = xg_d
                 att = b * xg_a + (1 - b) * g_a
                 deff = b * xg_d + (1 - b) * g_d
                 return att, deff, stats.data_source == "estimated", True
@@ -217,16 +234,22 @@ class PoissonPredictor:
         h_att, h_def, h_est, h_ha = side_profile(home, is_home=True)
         a_att, a_def, a_est, a_ha = side_profile(away, is_home=False)
 
-        def combine(attack, opp_defense, att_est, def_est):
+        def combine(attack, opp_defense, att_est, def_est, denom):
             """Deux estimations de la même quantité (buts de ce côté)."""
             if att_est or def_est:
                 # Au moins une est déjà spécifique au matchup → moyenne
                 return (attack + opp_defense) / 2
             # Deux moyennes vs adversaires moyens → multiplicative
-            return attack * opp_defense / max(league_avg, 0.5)
+            return attack * opp_defense / max(denom, 0.5)
 
-        lam_home = combine(h_att, a_def, h_est, a_est)
-        lam_away = combine(a_att, h_def, a_est, h_est)
+        # Numérateurs = splits PAR VENUE (h_ha et a_ha vrais) →
+        # dénominateur de la MÊME venue, sinon l'avantage domicile est
+        # recompté. Sinon (xG toutes venues, avantage appliqué après) →
+        # moyenne globale.
+        lam_home = combine(h_att, a_def, h_est, a_est,
+                           lg_home if (h_ha and a_ha) else league_avg)
+        lam_away = combine(a_att, h_def, a_est, h_est,
+                           lg_away if (h_ha and a_ha) else league_avg)
 
         # Avantage domicile : uniquement si pas déjà dans les splits
         if not h_ha:
@@ -451,6 +474,7 @@ class PoissonPredictor:
         # défense comme pour les buts ; sinon seulement, repli sur
         # l'approximation.
         sot = self._sot_lambdas(context)
+        pred.sot_from_real_data = sot is not None
         if sot:
             pred.sot_lambda_home, pred.sot_lambda_away = sot
         else:

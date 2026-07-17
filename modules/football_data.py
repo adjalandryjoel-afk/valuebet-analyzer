@@ -404,7 +404,8 @@ class FootballData:
             return []
         return sorted(set(df.HomeTeam) | set(df.AwayTeam))
 
-    def match_team(self, league: str, name: str) -> Optional[str]:
+    def match_team(self, league: str, name: str,
+                   strict: bool = False) -> Optional[str]:
         """
         Nom football-data correspondant à un nom Betclic
         (« Paris Saint-Germain » → « Paris SG »).
@@ -412,6 +413,13 @@ class FootballData:
         Retourne None si le nom est ambigu : dans une app qui engage
         de l'argent, analyser la mauvaise équipe est bien pire que
         n'afficher aucune donnée.
+
+        strict=True : pour DEVINER la ligue d'un match (detect_league),
+        on n'accepte que exact / alias / score ≥ FUZZY_SUR. La règle de
+        « netteté » (marge sur le 2e) mesure la distinction DANS une
+        ligue, pas l'APPARTENANCE : pour une équipe absente, le meilleur
+        résident aléatoire devance presque toujours le 2e → faux positif
+        (« Santos » apparié « Nantes »). En mode strict on refuse ce cas.
         """
 
         equipes = self.teams(league)
@@ -439,8 +447,11 @@ class FootballData:
         meilleur, score = scores[0][0], scores[0][1]
         second = scores[1][1] if len(scores) > 1 else 0
 
-        if score >= FUZZY_SUR or (score >= FUZZY_MIN
-                                  and score - second >= FUZZY_MARGE):
+        if score >= FUZZY_SUR:
+            return index[meilleur]
+        if strict:
+            return None  # inférence de ligue : exact / alias / ≥85 only
+        if score >= FUZZY_MIN and score - second >= FUZZY_MARGE:
             return index[meilleur]
 
         return None  # ambigu → on refuse
@@ -480,7 +491,8 @@ class FootballData:
         "ekstraklasa": "pol_ekstraklasa", "pologne": "pol_ekstraklasa",
         "irlande": "irl_premier",
         "mls": "usa_mls",
-        "serie a bresil": "bra_serie_a", "bresil": "bra_serie_a",
+        "brasileirao": "bra_serie_a", "serie a bresil": "bra_serie_a",
+        "serie a brazil": "bra_serie_a", "bresil": "bra_serie_a",
         "liga profesional": "arg_liga", "argentine": "arg_liga",
         "liga mx": "mex_liga", "mexique": "mex_liga",
     }
@@ -523,21 +535,25 @@ class FootballData:
         Retourne None si aucune ne contient les deux équipes.
         """
 
-        # 1. Indice de compétition
+        # 1. Indice de compétition — le signal le PLUS fiable
+        #    (Betclic nomme le championnat). Il prime sur le scan.
         cle = self.league_from_competition(competition)
         if cle and (cle in self.DIVISIONS or cle in self.EXTRA_LEAGUES):
-            # Confirmé seulement si les deux équipes y figurent ;
-            # sinon on garde l'indice quand même (l'utilisateur a pu
-            # saisir des noms que football-data écrit différemment).
+            # Confirmé si les deux équipes y figurent ; sinon on garde
+            # l'indice quand même (noms écrits différemment).
             if (self.match_team(cle, home) and self.match_team(cle, away)):
                 return cle
             indice = cle
         else:
             indice = None
 
-        # 2. Recherche : la ligue contenant les deux équipes
+        # 2. Recherche STRICTE : la ligue où les DEUX équipes existent
+        #    vraiment (exact/alias/≥85). En mode non strict, la règle de
+        #    marge fait apparier une équipe absente au meilleur résident
+        #    → mauvaise ligue ET mauvaises équipes en silence.
         for lg in self._ORDRE_RECHERCHE:
-            if self.match_team(lg, home) and self.match_team(lg, away):
+            if (self.match_team(lg, home, strict=True)
+                    and self.match_team(lg, away, strict=True)):
                 return lg
 
         return indice  # l'indice de compétition, à défaut de confirmation
@@ -566,6 +582,11 @@ class FootballData:
         buts = (sdf.FTHG + sdf.FTAG)
         params = {
             "avg_goals": round(float(buts.mean()), 3),
+            # Buts moyens de l'équipe À DOMICILE et de l'équipe À
+            # L'EXTÉRIEUR : dénominateurs par venue pour normaliser
+            # les splits sans réinjecter l'avantage du terrain.
+            "avg_goals_home": round(float(sdf.FTHG.mean()), 3),
+            "avg_goals_away": round(float(sdf.FTAG.mean()), 3),
             "home_win_rate": round(float((sdf.FTR == "H").mean()), 3),
             "matchs": int(len(sdf)),
             "saison": str(saison),

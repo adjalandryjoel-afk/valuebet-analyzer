@@ -330,7 +330,15 @@ class ValueBetDetector:
                            + (1 - PoissonConfig.MARKET_WEIGHT) * lam_proxy
                            if lam_proxy > 0 else lam_marche)
             else:
-                lam_sot = lam_proxy  # aucune ligne complète : repli
+                # Aucune ligne complète (ou toutes recalées par
+                # margin_ok) : pas d'ancrage marché. Si le λ proxy est
+                # la SEULE source (buts × SOT_PER_GOAL, aucune donnée de
+                # tirs réelle), le modèle n'a rien de propre à opposer
+                # au book — l'écart n'est que le bruit de l'approximation
+                # → value fantôme. On ne parie pas (invariant argent).
+                if not getattr(poisson_pred, "sot_from_real_data", False):
+                    continue
+                lam_sot = lam_proxy
 
             if lam_sot <= 0:
                 continue

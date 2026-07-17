@@ -914,10 +914,12 @@ def analyze_matches_ui(matches, bankroll, min_value, min_confidence,
             analysis._xg_signal = {
                 "home": {"available": hs.xg_available,
                          "for": hs.xg_scored, "against": hs.xg_conceded,
-                         "overperf": hs.xg_overperf},
+                         "overperf": hs.xg_overperf,
+                         "overperf_known": hs.xg_overperf_valid},
                 "away": {"available": as_.xg_available,
                          "for": as_.xg_scored, "against": as_.xg_conceded,
-                         "overperf": as_.xg_overperf},
+                         "overperf": as_.xg_overperf,
+                         "overperf_known": as_.xg_overperf_valid},
             }
 
         # 8. Persister dans l'historique (base SQLite) — sauf en mode
@@ -1083,7 +1085,10 @@ def _render_intel_section(analysis):
                 if not d.get("available"):
                     continue
                 op = d.get("overperf", 0) or 0
-                if op >= 0.30:
+                if not d.get("overperf_known"):
+                    signal = (":gray-badge[sur/sous-performance "
+                              "indisponible]")
+                elif op >= 0.30:
                     signal = (f":red-badge[surperforme de {op:+.2f} "
                               "but/match — régression probable]")
                 elif op <= -0.30:

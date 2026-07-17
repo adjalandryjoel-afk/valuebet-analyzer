@@ -53,8 +53,10 @@ class TeamStats:
     xg_available: bool = False
     # Sur/sous-performance : buts réels marqués − xG. > 0 = l'équipe
     # a « surperformé » (chanceuse/finition clinique → régression
-    # possible) ; < 0 = malchanceuse (rebond possible).
+    # possible) ; < 0 = malchanceuse (rebond possible). Valide
+    # seulement si mesuré sur la même fenêtre et des buts réels.
     xg_overperf: float = 0.0
+    xg_overperf_valid: bool = False
 
     # Tirs cadrés réels (football-data.co.uk). Les buts ne suffisent
     # pas à les déduire : le ratio tirs/but varie fortement d'une
@@ -92,6 +94,12 @@ class MatchContext:
 
     # Moyenne de buts de la ligue
     league_avg_goals: float = PoissonConfig.DEFAULT_LEAGUE_AVG_GOALS
+
+    # Buts moyens de l'équipe à domicile / à l'extérieur (par venue) :
+    # dénominateurs corrects pour normaliser les splits sans recompter
+    # l'avantage du terrain. 0.0 → repli sur league_avg × avantage.
+    league_avg_goals_home: float = 0.0
+    league_avg_goals_away: float = 0.0
 
     # Part des buts en 1ère mi-temps (propre à la ligue)
     first_half_share: float = PoissonConfig.FIRST_HALF_SHARE
@@ -216,6 +224,8 @@ class DataCollector:
                 "first_half_share", PoissonConfig.FIRST_HALF_SHARE
             ),
             league_avg_sot=league_info.get("avg_sot", 0.0),
+            league_avg_goals_home=league_info.get("avg_goals_home", 0.0),
+            league_avg_goals_away=league_info.get("avg_goals_away", 0.0),
         )
 
         # Stats des équipes, par ordre de fiabilité :
@@ -264,10 +274,25 @@ class DataCollector:
                     stats.xg_against_away = (xg.get("xga_away")
                                              or xg["xga_avg"])
                     stats.xg_available = True
-                    # Sur/sous-performance = buts réels − xG marqués
-                    if stats.avg_goals_scored:
-                        stats.xg_overperf = round(
-                            stats.avg_goals_scored - xg["xg_for_avg"], 2)
+                    # Sur/sous-performance = buts réels − xG marqués,
+                    # sur LA MÊME fenêtre de matchs (sinon on mesure la
+                    # taille de la fenêtre — buts sur ~38 matchs jusqu'à
+                    # 3 saisons vs xG sur 1 saison — et non la chance).
+                    # Seulement si les buts sont RÉELLEMENT mesurés
+                    # ("estimated" = dérivé des cotes → signal circulaire).
+                    n_xg = int(xg.get("matches") or 0)
+                    if stats.data_source != "estimated" and n_xg >= 5:
+                        try:
+                            from modules.football_data import (
+                                get_football_data)
+                            prof = get_football_data().team_profile(
+                                league, stats.team_name, n_matchs=n_xg)
+                        except Exception:
+                            prof = None
+                        if prof and prof.get("buts_pour") is not None:
+                            stats.xg_overperf = round(
+                                prof["buts_pour"] - xg["xg_for_avg"], 2)
+                            stats.xg_overperf_valid = True
                     xg_bonus += 10.0
 
         # Score de complétude
