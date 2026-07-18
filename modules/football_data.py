@@ -35,6 +35,7 @@ Les paramètres de ligue, eux, sont figés dans data/league_params.json
 import io
 import json
 import os
+import re
 import time
 import unicodedata
 from datetime import datetime
@@ -466,8 +467,10 @@ class FootballData:
         "ligue 2": "ligue2_fr",
         "premier league": "premier_league", "angleterre": "premier_league",
         "championship": "championship",
-        "liga": "la_liga", "la liga": "la_liga", "espagne": "la_liga",
-        "segunda": "la_liga2",
+        "la liga": "la_liga", "laliga": "la_liga",
+        "laliga ea sports": "la_liga", "espagne": "la_liga",
+        "segunda": "la_liga2", "laliga2": "la_liga2",
+        "laliga hypermotion": "la_liga2", "la liga 2": "la_liga2",
         "serie a": "serie_a", "italie": "serie_a",
         "serie b": "serie_b",
         "bundesliga 2": "bundesliga2", "2 bundesliga": "bundesliga2",
@@ -502,6 +505,13 @@ class FootballData:
         if not competition:
             return None
         texte = self._normalize(competition)
+        # La ponctuation (« 2. bundesliga ») et les chiffres collés
+        # (clé interne « bundesliga2 ») cassaient les indices
+        # « bundesliga 2 » / « 2 bundesliga » → 2e division routée vers
+        # la 1re. On sépare ponctuation et frontières lettre↔chiffre.
+        texte = re.sub(r"[^\w\s]", " ", texte)
+        texte = re.sub(r"(?<=[a-z])(?=\d)|(?<=\d)(?=[a-z])", " ", texte)
+        texte = " ".join(texte.replace("_", " ").split())
         # Priorité aux libellés les plus longs (« ligue 2 » avant
         # « ligue », « bundesliga 2 » avant « bundesliga »)
         for hint in sorted(self.COMPETITION_HINTS, key=len, reverse=True):

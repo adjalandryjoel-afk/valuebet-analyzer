@@ -200,14 +200,21 @@ class DataCollector:
         # les équipes des 16 championnats → il détecte la ligue,
         # depuis le libellé de compétition ou les noms d'équipes.
         if league == "unknown":
-            try:
-                from modules.football_data import get_football_data
-                detectee = get_football_data().detect_league(
-                    home_name, away_name, competition)
-                if detectee:
-                    league = detectee
-            except Exception:
-                pass
+            # Le scanner du jour passe déjà une CLÉ de ligue interne
+            # (« bundesliga2 », « la_liga2 »...) : l'utiliser telle
+            # quelle court-circuite la détection par chaîne, qui
+            # confondrait « bundesliga2 » avec « bundesliga ».
+            if competition in SUPPORTED_LEAGUES:
+                league = competition
+            else:
+                try:
+                    from modules.football_data import get_football_data
+                    detectee = get_football_data().detect_league(
+                        home_name, away_name, competition)
+                    if detectee:
+                        league = detectee
+                except Exception:
+                    pass
 
         league_info = SUPPORTED_LEAGUES.get(league, {})
         league_avg = league_info.get(

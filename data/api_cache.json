@@ -2230,5 +2230,30 @@
       "team2_avg_scored": 1.25,
       "sample": 8
     }
+  },
+  "aaa": {
+    "team_id": 7685,
+    "ts": 1784332420.5714273,
+    "stats": null
+  },
+  "bbb": {
+    "team_id": 24212,
+    "ts": 1784332440.0567343,
+    "stats": null
+  },
+  "zzz united": {
+    "team_id": 8241,
+    "ts": 1784332677.2602782,
+    "stats": null
+  },
+  "yyy city": {
+    "team_id": 50,
+    "ts": 1784332696.8649707,
+    "stats": null
+  },
+  "test b": {
+    "team_id": 2592,
+    "ts": 1784360491.0249007,
+    "stats": null
   }
 }
