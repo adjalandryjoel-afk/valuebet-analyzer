@@ -471,6 +471,11 @@ class FootballData:
         "laliga ea sports": "la_liga", "espagne": "la_liga",
         "segunda": "la_liga2", "laliga2": "la_liga2",
         "laliga hypermotion": "la_liga2", "la liga 2": "la_liga2",
+        # « LaLiga2 » normalisé + séparé lettre/chiffre devient
+        # « laliga 2 » (avec espace) : le hint « laliga2 » (sans
+        # espace) ne peut alors plus jamais matcher. Idem le nom
+        # commercial « LaLiga SmartBank ».
+        "laliga 2": "la_liga2", "smartbank": "la_liga2",
         "serie a": "serie_a", "italie": "serie_a",
         "serie b": "serie_b",
         "bundesliga 2": "bundesliga2", "2 bundesliga": "bundesliga2",
@@ -489,8 +494,14 @@ class FootballData:
         "veikkausliiga": "fin_veikkaus", "finlande": "fin_veikkaus",
         "superligaen": "den_superliga", "danemark": "den_superliga",
         "premier liga russie": "rus_premier", "russie": "rus_premier",
+        "premier league russie": "rus_premier",
         "superliga roumanie": "rou_superliga", "roumanie": "rou_superliga",
         "bundesliga autriche": "aut_bundesliga", "autriche": "aut_bundesliga",
+        # Betclic écrit parfois « Pays - Compétition » (pays d'abord) :
+        # « Autriche - Bundesliga » contient alors « bundesliga » (10
+        # car., Allemagne) qui bat « autriche » (8 car.) dans le tri
+        # par longueur décroissante. Un hint combiné plus long tranche.
+        "autriche bundesliga": "aut_bundesliga",
         "ekstraklasa": "pol_ekstraklasa", "pologne": "pol_ekstraklasa",
         "irlande": "irl_premier",
         "mls": "usa_mls",

@@ -1337,7 +1337,7 @@
   },
   "france": {
     "team_id": 2,
-    "ts": 1784155958.4366481,
+    "ts": 1784361986.1720617,
     "stats": null
   },
   "cove rangers": {
@@ -2015,7 +2015,7 @@
   },
   "anderlecht": {
     "team_id": 554,
-    "ts": 1784219330.6814108,
+    "ts": 1784820174.6767292,
     "stats": null
   },
   "club brugge": {
@@ -2035,7 +2035,7 @@
   },
   "england": {
     "team_id": 10,
-    "ts": 1784226214.9717984,
+    "ts": 1784361992.5097806,
     "stats": null
   },
   "vitoria": {
@@ -2050,7 +2050,7 @@
   },
   "la galaxy": {
     "team_id": 5422,
-    "ts": 1784239519.8230758,
+    "ts": 1784715552.451183,
     "stats": null
   },
   "orense sc": {
@@ -2254,6 +2254,84 @@
   "test b": {
     "team_id": 2592,
     "ts": 1784360491.0249007,
+    "stats": null
+  },
+  "queretaro": {
+    "team_id": 2290,
+    "ts": 1784362005.4784782,
+    "stats": null
+  },
+  "rosenborg bk": {
+    "team_id": 331,
+    "ts": 1784376632.3885806,
+    "stats": null
+  },
+  "vfb stuttgart": {
+    "team_id": 172
+  },
+  "h2h::172-331": {
+    "ts": 1784376645.3666077,
+    "stats": null
+  },
+  "chicago fire": {
+    "team_id": 1607,
+    "ts": 1784715536.057159,
+    "stats": null
+  },
+  "cruzeiro": {
+    "team_id": 135,
+    "ts": 1784715565.31744,
+    "stats": null
+  },
+  "hammarby": {
+    "team_id": 363,
+    "ts": 1784820168.1852312,
+    "stats": null
+  },
+  "h2h::363-554": {
+    "ts": 1784820181.2159684,
+    "stats": null
+  },
+  "dynamo kiev": {
+    "team_id": 1088,
+    "ts": 1784820407.2938828,
+    "stats": null
+  },
+  "paok": {
+    "team_id": 619,
+    "ts": 1784820420.40895,
+    "stats": null
+  },
+  "h2h::619-1088": {
+    "ts": 1784820426.8465865,
+    "stats": null
+  },
+  "sheriff tiraspol": {
+    "team_id": 568,
+    "ts": 1784821225.608158,
+    "stats": null
+  },
+  "maccabi tel aviv": {
+    "team_id": 604,
+    "ts": 1784821238.3917277,
+    "stats": null
+  },
+  "h2h::568-604": {
+    "ts": 1784821244.7917554,
+    "stats": null
+  },
+  "besiktas": {
+    "team_id": 549,
+    "ts": 1784821362.0771015,
+    "stats": null
+  },
+  "fc midtjylland": {
+    "team_id": 397,
+    "ts": 1784821374.5667303,
+    "stats": null
+  },
+  "h2h::397-549": {
+    "ts": 1784821381.134437,
     "stats": null
   }
 }
