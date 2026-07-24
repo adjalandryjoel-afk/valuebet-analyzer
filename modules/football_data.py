@@ -463,6 +463,15 @@ class FootballData:
     # le signal le plus fiable : Betclic affiche le championnat sur
     # chaque capture. Recherché en minuscules sans accents.
     COMPETITION_HINTS = {
+        # Betclic CÔTE D'IVOIRE : « Ligue 1 » seul est ambigu avec la
+        # France. ligue1_ci n'est ni dans DIVISIONS ni dans
+        # EXTRA_LEAGUES (pas de CSV football-data pour ce championnat)
+        # → detect_league() rejette cet indice et retombe sur
+        # « unknown » (défauts génériques), jamais sur ligue1_fr.
+        # Plus long que « ligue 1 »/« ligue1 » : prioritaire au tri.
+        "cote d ivoire ligue 1": "ligue1_ci",
+        "ligue 1 cote d ivoire": "ligue1_ci",
+        "civ ligue 1": "ligue1_ci", "cote d ivoire": "ligue1_ci",
         "ligue 1": "ligue1_fr", "ligue1": "ligue1_fr",
         "ligue 2": "ligue2_fr",
         "premier league": "premier_league", "angleterre": "premier_league",

@@ -415,6 +415,7 @@ def _scan_du_jour(scanner, ligues_choisies, fenetre, noms,
 
     lignes = []      # value bets trouvés
     n_matchs = 0
+    au_moins_un_succes = False  # au moins un scan a vraiment lu l'API
     barre = st.progress(0, text="Scan en cours...")
 
     for idx, lg in enumerate(ligues_choisies):
@@ -424,7 +425,11 @@ def _scan_du_jour(scanner, ligues_choisies, fenetre, noms,
         if not sport_key:
             continue
 
-        for m in scanner.scan_league(sport_key, days_ahead=fenetre):
+        resultats = scanner.scan_league(sport_key, days_ahead=fenetre)
+        if scanner.last_ok:
+            au_moins_un_succes = True
+
+        for m in resultats:
             n_matchs += 1
             home, away = m["equipe_domicile"], m["equipe_exterieur"]
             all_odds = {**m["cotes"], **m["marches_supplementaires"]}
@@ -475,6 +480,14 @@ def _scan_du_jour(scanner, ligues_choisies, fenetre, noms,
     )
 
     if not lignes:
+        if not au_moins_un_succes:
+            st.error(
+                "Le scan a échoué — vérifie ta clé ODDS_API_KEY, ton "
+                "quota restant, ou ta connexion. Aucune cote n'a pu "
+                "être lue, ce résultat ne veut donc rien dire.",
+                icon=":material/error:",
+            )
+            return
         st.success(
             "Aucune value détectée sur ces championnats — les cotes "
             "sont bien calibrées. Reviens plus près des coups d'envoi "

@@ -39,6 +39,13 @@ class DailyScanner:
     def __init__(self):
         self.api_key = APIKeys.ODDS_API_KEY
         self.quota_restant: Optional[str] = None
+        # True seulement si le DERNIER scan_league() a réellement
+        # obtenu une réponse HTTP 200 exploitable. Sans ce distingo,
+        # une clé absente/invalide, un quota épuisé (429) ou une panne
+        # réseau renvoient tous [] — indiscernable de « ligue en
+        # saison mais sans value » côté appelant (app.py affichait à
+        # tort « cotes bien calibrées » en cas de panne totale).
+        self.last_ok: bool = True
 
     # ─── LIGUES EN SAISON (gratuit) ──────────────────
 
@@ -107,6 +114,7 @@ class DailyScanner:
         ligue, moyennées sur les bookmakers. Une seule requête
         (~2 crédits). Format prêt pour analyze_matches_ui.
         """
+        self.last_ok = False
         if not self.api_key:
             return []
         try:
@@ -125,6 +133,7 @@ class DailyScanner:
             data = r.json()
         except (requests.RequestException, ValueError):
             return []
+        self.last_ok = True
 
         now = datetime.now(timezone.utc)
         league = _SPORT_TO_LEAGUE.get(sport_key, "")

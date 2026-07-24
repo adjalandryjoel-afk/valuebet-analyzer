@@ -2333,5 +2333,15 @@
   "h2h::397-549": {
     "ts": 1784821381.134437,
     "stats": null
+  },
+  "random team a": {
+    "team_id": 11579,
+    "ts": 1784934816.2320814,
+    "stats": null
+  },
+  "random team b": {
+    "team_id": 11579,
+    "ts": 1784934842.2347996,
+    "stats": null
   }
 }

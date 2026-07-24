@@ -17,6 +17,7 @@ from typing import Dict, List, Optional
 from dataclasses import dataclass, field
 
 from config import ValueBetConfig, KellyConfig
+from modules.odds_utils import margin_ok
 
 
 # ══════════════════════════════════════════════════════
@@ -177,21 +178,41 @@ class ValueBetDetector:
             + abs(poisson_pred.prob_away - elo_pred.prob_away_win)
         ) / 2
 
+        # Une paire over/under (ou oui/non) QUOTÉE DES DEUX CÔTÉS avec
+        # une marge aberrante (négative ou énorme) signale une cote
+        # mal lue par l'OCR : ni l'une ni l'autre ne doit être évaluée
+        # (déjà appliqué au 1X2 via odds_1x2_suspect, et aux tirs
+        # cadrés via margin_ok — généralisé ici à tous les marchés à
+        # deux issues). Une seule cote quotée (l'autre absente/0) n'est
+        # pas concernée : rien à comparer, elle passe telle quelle.
+        def _paire_ok(o_a, o_b):
+            if o_a > 1 and o_b > 1:
+                return margin_ok([o_a, o_b])
+            return True
+
         # ── Scanner chaque marché ──
         # (marché, sélection, cote, prob modèle, pénalité de confiance)
         candidates = [
             ("1X2", "1", o1, p1, 0),
             ("1X2", "X", ox, px, 0),
             ("1X2", "2", o2, p2, 0),
-            ("Over/Under 2.5", "Over 2.5",
-             float(odds.get("over_2_5", 0) or 0), poisson_pred.prob_over25, 0),
-            ("Over/Under 2.5", "Under 2.5",
-             float(odds.get("under_2_5", 0) or 0), poisson_pred.prob_under25, 0),
-            ("BTTS", "Oui",
-             float(odds.get("btts_oui", 0) or 0), poisson_pred.prob_btts_yes, 0),
-            ("BTTS", "Non",
-             float(odds.get("btts_non", 0) or 0), poisson_pred.prob_btts_no, 0),
         ]
+
+        o_over25 = float(odds.get("over_2_5", 0) or 0)
+        o_under25 = float(odds.get("under_2_5", 0) or 0)
+        if _paire_ok(o_over25, o_under25):
+            candidates.append(("Over/Under 2.5", "Over 2.5",
+                               o_over25, poisson_pred.prob_over25, 0))
+            candidates.append(("Over/Under 2.5", "Under 2.5",
+                               o_under25, poisson_pred.prob_under25, 0))
+
+        o_btts_oui = float(odds.get("btts_oui", 0) or 0)
+        o_btts_non = float(odds.get("btts_non", 0) or 0)
+        if _paire_ok(o_btts_oui, o_btts_non):
+            candidates.append(("BTTS", "Oui",
+                               o_btts_oui, poisson_pred.prob_btts_yes, 0))
+            candidates.append(("BTTS", "Non",
+                               o_btts_non, poisson_pred.prob_btts_no, 0))
 
         # ── Totaux de buts par équipe ──
         team_sides = (
@@ -204,12 +225,14 @@ class ValueBetDetector:
                 line_txt = line.replace("_", ".")
                 analysis.model_probs[probs_key][f"over_{line}"] = round(p_over, 4)
                 analysis.model_probs[probs_key][f"under_{line}"] = round(1 - p_over, 4)
-                candidates.append((
-                    f"Buts {team}", f"Over {line_txt}",
-                    float(odds.get(f"{side}_over_{line}", 0) or 0), p_over, 0))
-                candidates.append((
-                    f"Buts {team}", f"Under {line_txt}",
-                    float(odds.get(f"{side}_under_{line}", 0) or 0), 1 - p_over, 0))
+                o_over = float(odds.get(f"{side}_over_{line}", 0) or 0)
+                o_under = float(odds.get(f"{side}_under_{line}", 0) or 0)
+                if _paire_ok(o_over, o_under):
+                    candidates.append((
+                        f"Buts {team}", f"Over {line_txt}", o_over, p_over, 0))
+                    candidates.append((
+                        f"Buts {team}", f"Under {line_txt}",
+                        o_under, 1 - p_over, 0))
 
         # ── Buts par mi-temps (répartition 45/55 → légère pénalité) ──
         halves = (
@@ -222,12 +245,14 @@ class ValueBetDetector:
                 line_txt = line.replace("_", ".")
                 analysis.model_probs[probs_key][f"over_{line}"] = round(p_over, 4)
                 analysis.model_probs[probs_key][f"under_{line}"] = round(1 - p_over, 4)
-                candidates.append((
-                    f"Buts {label}", f"Over {line_txt}",
-                    float(odds.get(f"{prefix}_over_{line}", 0) or 0), p_over, 5))
-                candidates.append((
-                    f"Buts {label}", f"Under {line_txt}",
-                    float(odds.get(f"{prefix}_under_{line}", 0) or 0), 1 - p_over, 5))
+                o_over = float(odds.get(f"{prefix}_over_{line}", 0) or 0)
+                o_under = float(odds.get(f"{prefix}_under_{line}", 0) or 0)
+                if _paire_ok(o_over, o_under):
+                    candidates.append((
+                        f"Buts {label}", f"Over {line_txt}", o_over, p_over, 5))
+                    candidates.append((
+                        f"Buts {label}", f"Under {line_txt}",
+                        o_under, 1 - p_over, 5))
 
         # ── Buts par équipe ET par mi-temps (λ équipe × part MT
         #    → pénalité intermédiaire) ──
@@ -249,14 +274,14 @@ class ValueBetDetector:
                     f"over_{line}"] = round(p_over, 4)
                 analysis.model_probs[probs_key][
                     f"under_{line}"] = round(1 - p_over, 4)
-                candidates.append((
-                    market_label, f"Over {line_txt}",
-                    float(odds.get(f"{prefix}_over_{line}", 0) or 0),
-                    p_over, 8))
-                candidates.append((
-                    market_label, f"Under {line_txt}",
-                    float(odds.get(f"{prefix}_under_{line}", 0) or 0),
-                    1 - p_over, 8))
+                o_over = float(odds.get(f"{prefix}_over_{line}", 0) or 0)
+                o_under = float(odds.get(f"{prefix}_under_{line}", 0) or 0)
+                if _paire_ok(o_over, o_under):
+                    candidates.append((
+                        market_label, f"Over {line_txt}", o_over, p_over, 8))
+                    candidates.append((
+                        market_label, f"Under {line_txt}",
+                        o_under, 1 - p_over, 8))
 
         # ── Tirs cadrés (équipe ou match) ──
         # Le modèle n'a AUCUNE donnée propre sur les tirs : il ne sait
@@ -268,7 +293,7 @@ class ValueBetDetector:
         # l'approximation et le marché se lit à tort comme de la
         # value et produit des paris fantômes sur chaque match.
         from modules.poisson_model import PoissonPredictor
-        from modules.odds_utils import novig_probs, margin_ok
+        from modules.odds_utils import novig_probs
         from config import PoissonConfig
 
         analysis.model_probs["SOT_HOME"] = {}
@@ -304,6 +329,12 @@ class ValueBetDetector:
             # 2) λ implicite du marché, moyenné sur les lignes
             #    complètes (over ET under cotés → marge retirable)
             lams_marche = []
+            # Lignes dont la paire over/under a passé margin_ok :
+            # rejetées ici, elles doivent AUSSI être rejetées comme
+            # candidats de pari (étape 3) — être écartées de l'ancrage
+            # sans être écartées du pari revient à parier quand même
+            # sur une cote jugée corrompue.
+            lignes_saines = set()
             for line, paire in lignes.items():
                 if "over" not in paire or "under" not in paire:
                     continue
@@ -316,6 +347,7 @@ class ValueBetDetector:
                 if not margin_ok([paire["over"], paire["under"]],
                                  max_margin=0.20):
                     continue
+                lignes_saines.add(line)
                 probs = novig_probs([paire["over"], paire["under"]])
                 if not probs:
                     continue
@@ -346,8 +378,13 @@ class ValueBetDetector:
             cible = {"home": home_team, "away": away_team,
                      "total": "du match"}[side]
 
-            # 3) Probabilités et candidats
+            # 3) Probabilités et candidats. Une ligne à paire complète
+            #    mais recalée par margin_ok (étape 2) ne devient pas un
+            #    pari juste parce qu'elle a échappé à l'ancrage.
             for line, paire in lignes.items():
+                if ("over" in paire and "under" in paire
+                        and line not in lignes_saines):
+                    continue
                 p_over = PoissonPredictor.poisson_over(lam_sot, line)
                 line_txt = line.replace("_", ".")
                 for direction, cote in paire.items():
