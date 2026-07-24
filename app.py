@@ -434,11 +434,21 @@ def _scan_du_jour(scanner, ligues_choisies, fenetre, noms,
                                             competition=m["competition"])
                 poisson = modules["poisson"].predict(ctx)
                 c = m["cotes"]
-                modules["elo"].estimate_rating_from_odds(
-                    ctx.home_team, c["1"], c["2"], is_home=True)
-                modules["elo"].estimate_rating_from_odds(
-                    ctx.away_team, c["2"], c["1"], is_home=False)
-                elo_pred = modules["elo"].predict(ctx.home_team, ctx.away_team)
+                # persist=False : le scan « découverte » ne doit RIEN
+                # écrire dans les ratings Elo partagés (mis en cache
+                # et sauvegardés sur disque au prochain règlement) —
+                # sinon des matchs jamais joués polluent durablement
+                # les vraies analyses.
+                est_h = modules["elo"].estimate_rating_from_odds(
+                    ctx.home_team, c["1"], c["2"], is_home=True,
+                    persist=False)
+                est_a = modules["elo"].estimate_rating_from_odds(
+                    ctx.away_team, c["2"], c["1"], is_home=False,
+                    persist=False)
+                elo_pred = modules["elo"].predict(
+                    ctx.home_team, ctx.away_team,
+                    ratings_override={ctx.home_team: est_h,
+                                      ctx.away_team: est_a})
                 analysis = detector.analyze_match(
                     ctx.home_team, ctx.away_team, all_odds, poisson,
                     elo_pred, m["competition"],
@@ -2121,11 +2131,15 @@ def page_backtesting():
             "marchés 1MT/2MT."
         )
 
+        from modules.odds_collector import OddsAPICollector
+        _cout_max = len(OddsAPICollector.LEAGUE_KEYS) * 2
         if st.button("Récupérer les scores automatiquement",
                      icon=":material/cloud_download:",
-                     help="Scores des 3 derniers jours via The Odds API "
-                          "(~14 crédits). Les ligues non couvertes "
-                          "restent en saisie manuelle."):
+                     help=f"Scores des 3 derniers jours via The Odds API "
+                          f"(jusqu'à ~{_cout_max} crédits, moins en "
+                          f"pratique grâce au filtre hors-saison "
+                          f"gratuit). Les ligues non couvertes "
+                          f"restent en saisie manuelle."):
             with st.spinner("Récupération des scores..."):
                 fetcher = ScoreFetcher()
                 events = fetcher.fetch_completed()

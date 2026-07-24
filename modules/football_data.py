@@ -495,18 +495,23 @@ class FootballData:
         "superligaen": "den_superliga", "danemark": "den_superliga",
         "premier liga russie": "rus_premier", "russie": "rus_premier",
         "premier league russie": "rus_premier",
+        "russie premier league": "rus_premier",  # ordre pays d'abord
         "superliga roumanie": "rou_superliga", "roumanie": "rou_superliga",
         "bundesliga autriche": "aut_bundesliga", "autriche": "aut_bundesliga",
         # Betclic écrit parfois « Pays - Compétition » (pays d'abord) :
         # « Autriche - Bundesliga » contient alors « bundesliga » (10
         # car., Allemagne) qui bat « autriche » (8 car.) dans le tri
         # par longueur décroissante. Un hint combiné plus long tranche.
+        # Même piège pour Brésil/Russie (« Serie A » et « Premier
+        # League » sont aussi des grands championnats européens) :
+        # les DEUX ordres doivent être couverts explicitement.
         "autriche bundesliga": "aut_bundesliga",
         "ekstraklasa": "pol_ekstraklasa", "pologne": "pol_ekstraklasa",
         "irlande": "irl_premier",
         "mls": "usa_mls",
         "brasileirao": "bra_serie_a", "serie a bresil": "bra_serie_a",
         "serie a brazil": "bra_serie_a", "bresil": "bra_serie_a",
+        "bresil serie a": "bra_serie_a",  # ordre pays d'abord
         "liga profesional": "arg_liga", "argentine": "arg_liga",
         "liga mx": "mex_liga", "mexique": "mex_liga",
     }
@@ -592,11 +597,21 @@ class FootballData:
         if df is None:
             return None
 
-        # Saison complète la plus récente (assez de matchs)
+        # Saison complète la plus récente. MIN_MATCHS garantit qu'une
+        # saison a COMMENCÉ, pas qu'elle est TERMINÉE : pour les ligues
+        # calendaires (Scandinavie, USA, Brésil, Argentine...), la
+        # saison en cours dépasse ce seuil en cours de route et serait
+        # traitée à tort comme « complète » (moyennes biaisées sur une
+        # poignée de journées). On exige aussi que le dernier match
+        # remonte à plus de 45 jours (saison finie ou à l'arrêt).
         for saison in reversed(sorted(df.saison.unique())):
             sdf = df[df.saison == saison]
-            if len(sdf) >= self.MIN_MATCHS:
-                break
+            if len(sdf) < self.MIN_MATCHS:
+                continue
+            derniere = sdf["date_dt"].max()
+            if pd.notna(derniere) and (pd.Timestamp.now() - derniere).days < 45:
+                continue  # saison probablement encore en cours
+            break
         else:
             return None
 

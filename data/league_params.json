@@ -179,28 +179,28 @@
    "sot_par_but": 3.106
   },
   "swe_allsvenskan": {
-   "avg_goals": 3.196,
-   "avg_goals_home": 1.794,
-   "avg_goals_away": 1.402,
-   "home_win_rate": 0.402,
-   "matchs": 97,
-   "saison": "2026"
+   "avg_goals": 2.846,
+   "avg_goals_home": 1.475,
+   "avg_goals_away": 1.371,
+   "home_win_rate": 0.4,
+   "matchs": 240,
+   "saison": "2025"
   },
   "nor_eliteserien": {
-   "avg_goals": 2.938,
-   "avg_goals_home": 1.804,
-   "avg_goals_away": 1.134,
-   "home_win_rate": 0.536,
-   "matchs": 97,
-   "saison": "2026"
+   "avg_goals": 3.188,
+   "avg_goals_home": 1.808,
+   "avg_goals_away": 1.379,
+   "home_win_rate": 0.487,
+   "matchs": 240,
+   "saison": "2025"
   },
   "fin_veikkaus": {
-   "avg_goals": 2.7,
-   "avg_goals_home": 1.589,
-   "avg_goals_away": 1.111,
-   "home_win_rate": 0.5,
-   "matchs": 90,
-   "saison": "2026"
+   "avg_goals": 3.294,
+   "avg_goals_home": 1.661,
+   "avg_goals_away": 1.633,
+   "home_win_rate": 0.407,
+   "matchs": 177,
+   "saison": "2025"
   },
   "den_superliga": {
    "avg_goals": 3.099,
@@ -243,36 +243,36 @@
    "saison": "2025/2026"
   },
   "irl_premier": {
-   "avg_goals": 2.793,
-   "avg_goals_home": 1.529,
-   "avg_goals_away": 1.264,
-   "home_win_rate": 0.405,
-   "matchs": 121,
-   "saison": "2026"
+   "avg_goals": 2.428,
+   "avg_goals_home": 1.378,
+   "avg_goals_away": 1.05,
+   "home_win_rate": 0.428,
+   "matchs": 180,
+   "saison": "2025"
   },
   "usa_mls": {
-   "avg_goals": 3.303,
-   "avg_goals_home": 1.936,
-   "avg_goals_away": 1.367,
-   "home_win_rate": 0.482,
-   "matchs": 218,
-   "saison": "2026"
+   "avg_goals": 3.017,
+   "avg_goals_home": 1.657,
+   "avg_goals_away": 1.359,
+   "home_win_rate": 0.443,
+   "matchs": 540,
+   "saison": "2025"
   },
   "bra_serie_a": {
-   "avg_goals": 2.661,
-   "avg_goals_home": 1.554,
-   "avg_goals_away": 1.107,
-   "home_win_rate": 0.492,
-   "matchs": 177,
-   "saison": "2026"
+   "avg_goals": 2.524,
+   "avg_goals_home": 1.526,
+   "avg_goals_away": 0.997,
+   "home_win_rate": 0.503,
+   "matchs": 380,
+   "saison": "2025"
   },
   "arg_liga": {
-   "avg_goals": 2.055,
-   "avg_goals_home": 1.169,
-   "avg_goals_away": 0.886,
-   "home_win_rate": 0.409,
-   "matchs": 254,
-   "saison": "2026"
+   "avg_goals": 1.947,
+   "avg_goals_home": 1.1,
+   "avg_goals_away": 0.847,
+   "home_win_rate": 0.408,
+   "matchs": 510,
+   "saison": "2025"
   },
   "mex_liga": {
    "avg_goals": 2.905,

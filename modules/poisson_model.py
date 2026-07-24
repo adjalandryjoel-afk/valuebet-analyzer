@@ -203,13 +203,14 @@ class PoissonPredictor:
                     xg_a, xg_d = stats.xg_for_away, stats.xg_against_away
                     g_a, g_d = (stats.avg_goals_scored_away,
                                 stats.avg_goals_conceded_away)
-                # Un split à 0 est une donnée RÉELLE (0 encaissé à
-                # domicile), pas une donnée absente : ne jamais jeter
-                # l'autre split, valide, à cause de lui. Champ par champ.
-                if not g_a:
-                    g_a = xg_a
-                if not g_d:
-                    g_d = xg_d
+                # TeamStats.avg_goals_scored_home/_away etc. sont
+                # TOUJOURS des floats réels (jamais None) : soit une
+                # mesure réelle, soit le repli sur la moyenne globale
+                # de l'équipe (_stats_from_football_data). Un split
+                # mesuré à 0.0 (ex. 0 but encaissé à domicile) est une
+                # vraie donnée, pas une absence — un test `if not g_a`
+                # l'écraserait à tort par le xG. Toujours mélanger tel
+                # quel, comme le veut l'intention ci-dessus.
                 att = b * xg_a + (1 - b) * g_a
                 deff = b * xg_d + (1 - b) * g_d
                 return att, deff, stats.data_source == "estimated", True

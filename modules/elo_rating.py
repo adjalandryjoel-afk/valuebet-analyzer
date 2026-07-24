@@ -105,13 +105,22 @@ class EloRatingSystem:
 
     def estimate_rating_from_odds(self, team: str, odds_for: float,
                                    odds_against: float,
-                                   is_home: bool = True) -> float:
+                                   is_home: bool = True,
+                                   persist: bool = True) -> float:
         """
         Estime le rating d'une équipe depuis les cotes du marché.
 
         p(victoire) no-vig → différence Elo implicite → rating
         centré sur 1500, corrigé de l'avantage domicile.
         Si l'équipe a déjà un rating, on fait une moyenne pondérée.
+
+        persist=False : calcule l'estimation SANS l'écrire dans
+        self.ratings (le dict partagé, mis en cache et sauvegardé sur
+        disque). Indispensable pour un scan « découverte » (matchs du
+        jour non joués) : sans ça, une exploration polluerait
+        durablement les ratings utilisés par les vraies analyses, et
+        la pollution serait écrite sur disque au prochain règlement
+        d'un match totalement différent.
         """
 
         if odds_for <= 1 or odds_against <= 1:
@@ -141,14 +150,24 @@ class EloRatingSystem:
         else:
             new_rating = estimated
 
-        self.ratings[team] = round(new_rating, 1)
-        return self.ratings[team]
+        new_rating = round(new_rating, 1)
+        if persist:
+            self.ratings[team] = new_rating
+        return new_rating
 
     # ─── PRÉDICTION ─────────────────────────────────
 
-    def predict(self, home_team: str, away_team: str) -> EloPrediction:
+    def predict(self, home_team: str, away_team: str,
+               ratings_override: Optional[Dict[str, float]] = None
+               ) -> EloPrediction:
         """
         Prédit les probabilités 1X2 depuis les ratings.
+
+        ratings_override : ratings à utiliser à la place de
+        self.ratings (ex. estimations calculées avec persist=False,
+        pour un scan « découverte » qui ne doit rien écrire dans le
+        dict partagé). Ignoré si ClubElo couvre les deux équipes —
+        même priorité que le chemin normal.
 
         Modèle de nul : la probabilité de nul est maximale quand
         les équipes sont proches et diminue avec l'écart de niveau.
@@ -171,8 +190,14 @@ class EloRatingSystem:
                 elo_source = "clubelo"
 
         if home_rating is None or away_rating is None:
-            home_rating = self.get_rating(home_team)
-            away_rating = self.get_rating(away_team)
+            if ratings_override is not None:
+                home_rating = ratings_override.get(
+                    home_team, self.get_rating(home_team))
+                away_rating = ratings_override.get(
+                    away_team, self.get_rating(away_team))
+            else:
+                home_rating = self.get_rating(home_team)
+                away_rating = self.get_rating(away_team)
 
         # Espérance avec avantage domicile
         diff = (home_rating + EloConfig.HOME_ADVANTAGE_ELO) - away_rating
