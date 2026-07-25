@@ -472,7 +472,14 @@ class FootballData:
         "cote d ivoire ligue 1": "ligue1_ci",
         "ligue 1 cote d ivoire": "ligue1_ci",
         "civ ligue 1": "ligue1_ci", "cote d ivoire": "ligue1_ci",
-        "ligue 1": "ligue1_fr", "ligue1": "ligue1_fr",
+        # PAS de hint bare "ligue 1"/"ligue1" -> ligue1_fr : l'app EST
+        # l'édition Betclic Côte d'Ivoire, son propre championnat local
+        # s'affiche très probablement "Ligue 1" SANS qualificatif —
+        # exactement la chaîne qu'un hint bare capturerait à tort vers
+        # la France. Un vrai match de Ligue 1 française n'a pas besoin
+        # de ce hint : PSG/Marseille/etc. existent réellement dans
+        # ligue1_fr et sont résolus par le scan strict (étape 2).
+        "ligue 1 france": "ligue1_fr", "france ligue 1": "ligue1_fr",
         "ligue 2": "ligue2_fr",
         "premier league": "premier_league", "angleterre": "premier_league",
         "championship": "championship",
@@ -574,9 +581,17 @@ class FootballData:
         #    (Betclic nomme le championnat). Il prime sur le scan.
         cle = self.league_from_competition(competition)
         if cle and (cle in self.DIVISIONS or cle in self.EXTRA_LEAGUES):
-            # Confirmé si les deux équipes y figurent ; sinon on garde
-            # l'indice quand même (noms écrits différemment).
-            if (self.match_team(cle, home) and self.match_team(cle, away)):
+            # Confirmé si les deux équipes y figurent VRAIMENT
+            # (strict=True, même règle que le scan ci-dessous) ; sinon
+            # on garde l'indice quand même (noms écrits différemment).
+            # Sans strict=True ici, un libellé de compétition erroné
+            # ("Premier League" saisi pour un match de Championship)
+            # se faisait confirmer par la règle floue de netteté, qui
+            # apparie n'importe quelle équipe absente au résident le
+            # plus proche — exactement le piège que strict=True existe
+            # pour éviter.
+            if (self.match_team(cle, home, strict=True)
+                    and self.match_team(cle, away, strict=True)):
                 return cle
             indice = cle
         else:

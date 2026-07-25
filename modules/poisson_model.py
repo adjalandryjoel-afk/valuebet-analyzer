@@ -188,7 +188,18 @@ class PoissonPredictor:
 
         def side_profile(stats, is_home):
             """(attaque, défense, estimé?, avantage domicile déjà inclus?)"""
-            if stats and stats.xg_available and stats.xg_for_home > 0:
+            # data_source == "estimated" : les buts viennent des cotes
+            # 1X2 de CE match précis (déjà spécifiques à l'adversaire
+            # réel). Le xG, lui, est une moyenne saisonnière TOUTES
+            # VENUES/ADVERSAIRES CONFONDUES — le mélanger diluerait le
+            # signal le plus frais (le marché) avec un signal générique
+            # et périmé, précisément quand football-data n'a pas pu
+            # identifier l'équipe (sinon la source serait "reel"). Même
+            # principe que le flag att_est/def_est plus bas : ne jamais
+            # mélanger multiplicativement une estimation déjà
+            # spécifique au match avec une moyenne générique.
+            if (stats and stats.data_source != "estimated"
+                    and stats.xg_available and stats.xg_for_home > 0):
                 # xG (splits domicile/extérieur) MÉLANGÉ aux buts réels.
                 # Le xG est plus prédictif (moins de bruit), mais les
                 # buts capturent la finition réelle : le mélange est
@@ -214,7 +225,7 @@ class PoissonPredictor:
                 att = b * xg_a + (1 - b) * g_a
                 deff = b * xg_d + (1 - b) * g_d
                 return att, deff, stats.data_source == "estimated", True
-            if stats and stats.xg_available:
+            if stats and stats.data_source != "estimated" and stats.xg_available:
                 # xG sans split : moyenne toutes venues → avantage
                 # domicile à appliquer ensuite
                 return stats.xg_scored, stats.xg_conceded, \
