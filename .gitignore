@@ -9,6 +9,9 @@ __pycache__/
 
 # Données générées localement
 data/valuebet.db*
+# Sauvegardes de la base avant purge : contiennent l'historique de
+# paris (données personnelles) — jamais dans le dépôt public
+data/backups/
 data/elo_ratings.json
 data/results_log.json
 data/historical_data.json

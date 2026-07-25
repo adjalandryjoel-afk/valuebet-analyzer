@@ -187,6 +187,29 @@ class CloudStore:
                          params={"select": "match_key",
                                  "limit": "1"}) is not None
 
+    # ─── PURGE TOTALE (remise à zéro demandée) ───────
+
+    def purge_all(self) -> bool:
+        """
+        Vide ENTIÈREMENT le miroir cloud (paris puis matchs).
+
+        Contrairement à mark_superseded (pierre tombale, qui conserve
+        la ligne), c'est une suppression définitive : à n'utiliser que
+        sur demande explicite de remise à zéro de l'historique. Les
+        paris d'abord, pour ne jamais laisser de pari orphelin si la
+        seconde requête échoue.
+
+        PostgREST refuse un DELETE sans filtre : « not.is.null » sur
+        la clé primaire (jamais nulle) sélectionne toutes les lignes.
+        """
+        ok_bets = self._req(
+            "DELETE", "bets_cloud",
+            params={"bet_key": "not.is.null"}) is not None
+        ok_matches = self._req(
+            "DELETE", "matches_cloud",
+            params={"match_key": "not.is.null"}) is not None
+        return ok_bets and ok_matches
+
 
 # ─── SINGLETON ───────────────────────────────────────
 

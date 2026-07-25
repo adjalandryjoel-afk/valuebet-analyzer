@@ -670,6 +670,54 @@ class DatabaseManager:
 
         self._cloud_push_match(match_id)
 
+    # ─── PURGE TOTALE DE L'HISTORIQUE ────────────────
+
+    def purge_history(self, purge_cloud: bool = True) -> Dict:
+        """
+        Efface TOUT l'historique d'analyses : matchs, paris et pierres
+        tombales, en local ET (par défaut) dans le miroir cloud.
+
+        Le cloud DOIT être purgé en même temps : sinon
+        hydrate_from_cloud() au prochain démarrage restaurerait
+        intégralement ce qui vient d'être supprimé en local. C'est
+        pourquoi purge_cloud=False n'est à utiliser que si le miroir
+        est délibérément conservé (sauvegarde volontaire).
+
+        Irréversible : l'appelant est responsable de la sauvegarde.
+
+        Returns:
+            {"matchs": n, "paris": n, "tombstones": n, "cloud": bool|None}
+        """
+
+        with self._get_connection() as conn:
+            n_matchs = conn.execute(
+                "SELECT COUNT(*) FROM matches").fetchone()[0]
+            n_paris = conn.execute(
+                "SELECT COUNT(*) FROM value_bets").fetchone()[0]
+            try:
+                n_tomb = conn.execute(
+                    "SELECT COUNT(*) FROM cloud_tombstones").fetchone()[0]
+            except sqlite3.Error:
+                n_tomb = 0
+
+            # Paris d'abord (clé étrangère vers matches)
+            conn.execute("DELETE FROM value_bets")
+            conn.execute("DELETE FROM matches")
+            try:
+                conn.execute("DELETE FROM cloud_tombstones")
+            except sqlite3.Error:
+                pass
+
+        cloud_ok = None
+        if purge_cloud and self.cloud:
+            try:
+                cloud_ok = self.cloud.purge_all()
+            except Exception:
+                cloud_ok = False
+
+        return {"matchs": n_matchs, "paris": n_paris,
+                "tombstones": n_tomb, "cloud": cloud_ok}
+
     # ─── REQUÊTES DE CONSULTATION ────────────────────
 
     def supersede_pending_bets(self, home_team: str, away_team: str):
