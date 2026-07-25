@@ -731,7 +731,8 @@ class DatabaseManager:
 
         with self._get_connection() as conn:
             rows = conn.execute("""
-                SELECT vb.*, m.home_team, m.away_team, m.match_date
+                SELECT vb.*, m.home_team, m.away_team, m.match_date,
+                       m.competition
                 FROM value_bets vb
                 JOIN matches m ON vb.match_id = m.id
                 WHERE vb.result IS NULL

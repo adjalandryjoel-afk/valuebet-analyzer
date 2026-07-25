@@ -405,6 +405,40 @@ class FootballData:
             return []
         return sorted(set(df.HomeTeam) | set(df.AwayTeam))
 
+    def _teams_saison_courante(self, league: str) -> set:
+        """
+        Équipes de la ligue lors de la DERNIÈRE saison connue —
+        contrairement à teams()/frame(), qui couvrent les N_SEASONS=3
+        dernières. Un club relégué ou promu existe dans les DEUX
+        divisions voisines sur une fenêtre de 3 saisons (ex. Bochum a
+        joué en Bundesliga ET en 2. Bundesliga) ; seule la saison la
+        plus récente dit où il joue VRAIMENT cette année.
+        """
+        df = self.frame(league)
+        if df is None or df.empty:
+            return set()
+        derniere = df["saison"].iloc[-1]  # frame() trié par date_dt croissant
+        sdf = df[df["saison"] == derniere]
+        return set(sdf.HomeTeam) | set(sdf.AwayTeam)
+
+    def _confirme_cette_saison(self, league: str, home: str,
+                               away: str) -> bool:
+        """
+        Les deux équipes sont-elles VRAIMENT dans cette ligue CETTE
+        saison ? match_team(strict=True) seul ne suffit pas : il
+        accepte un club présent n'importe où dans les 3 dernières
+        saisons, donc confirme à tort l'ancienne division d'un club
+        relégué/promu. Utilisé uniquement pour deviner la ligue
+        (detect_league) — team_profile/team_form/h2h veulent au
+        contraire l'historique multi-saisons complet, inchangé.
+        """
+        saison = self._teams_saison_courante(league)
+        if not saison:
+            return False
+        h = self.match_team(league, home, strict=True)
+        a = self.match_team(league, away, strict=True)
+        return bool(h and a and h in saison and a in saison)
+
     def match_team(self, league: str, name: str,
                    strict: bool = False) -> Optional[str]:
         """
@@ -598,29 +632,28 @@ class FootballData:
         #    (Betclic nomme le championnat). Il prime sur le scan.
         cle = self.league_from_competition(competition)
         if cle and (cle in self.DIVISIONS or cle in self.EXTRA_LEAGUES):
-            # Confirmé si les deux équipes y figurent VRAIMENT
-            # (strict=True, même règle que le scan ci-dessous) ; sinon
-            # on garde l'indice quand même (noms écrits différemment).
-            # Sans strict=True ici, un libellé de compétition erroné
-            # ("Premier League" saisi pour un match de Championship)
-            # se faisait confirmer par la règle floue de netteté, qui
-            # apparie n'importe quelle équipe absente au résident le
-            # plus proche — exactement le piège que strict=True existe
-            # pour éviter.
-            if (self.match_team(cle, home, strict=True)
-                    and self.match_team(cle, away, strict=True)):
+            # Confirmé si les deux équipes y jouent VRAIMENT CETTE
+            # SAISON (_confirme_cette_saison) ; sinon on garde l'indice
+            # quand même (noms écrits différemment). strict=True seul
+            # ne suffit pas : un club relégué (Bochum, Levante,
+            # Cremonese...) reste "présent" dans l'élite sur les 3
+            # dernières saisons couvertes par match_team, et se
+            # faisait confirmer à tort dans l'ancienne division.
+            if self._confirme_cette_saison(cle, home, away):
                 return cle
             indice = cle
         else:
             indice = None
 
-        # 2. Recherche STRICTE : la ligue où les DEUX équipes existent
-        #    vraiment (exact/alias/≥85). En mode non strict, la règle de
-        #    marge fait apparier une équipe absente au meilleur résident
-        #    → mauvaise ligue ET mauvaises équipes en silence.
+        # 2. Recherche STRICTE (saison courante) : la ligue où les
+        #    DEUX équipes jouent vraiment CETTE saison. En mode non
+        #    strict, la règle de marge fait apparier une équipe
+        #    absente au meilleur résident → mauvaise ligue ET
+        #    mauvaises équipes en silence ; en mode strict seul (sans
+        #    filtre de saison), un club relégué/promu confirme à tort
+        #    son ancienne division puisqu'il y a joué il y a peu.
         for lg in self._ORDRE_RECHERCHE:
-            if (self.match_team(lg, home, strict=True)
-                    and self.match_team(lg, away, strict=True)):
+            if self._confirme_cette_saison(lg, home, away):
                 return lg
 
         return indice  # l'indice de compétition, à défaut de confirmation

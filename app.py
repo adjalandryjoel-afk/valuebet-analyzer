@@ -2246,6 +2246,23 @@ def page_backtesting():
                          icon=":material/schedule:"):
                 with st.spinner("Interrogation de The Odds API..."):
                     tracker = ClvTracker(db=db)
+                    # Restreindre aux ligues des paris en attente (même
+                    # principe que le robot planifié, clv_autocapture.py) :
+                    # sans ça, un seul match introuvable (ex. Ligue 1 CI,
+                    # non couverte par The Odds API) fait scanner les 26
+                    # championnats à 2 crédits chacun — jusqu'à 52 crédits
+                    # gaspillés pour un seul clic sans le moindre résultat.
+                    from modules.football_data import get_football_data
+                    from modules.odds_collector import OddsAPICollector
+                    fd_hint = get_football_data()
+                    ligues_dues = {}
+                    for bet in pending:
+                        cle = fd_hint.league_from_competition(
+                            bet.get("competition") or "")
+                        sport_key = OddsAPICollector.LEAGUE_KEYS.get(cle)
+                        if cle and sport_key:
+                            ligues_dues[cle] = sport_key
+                    tracker.LEAGUE_KEYS = ligues_dues
                     res = tracker.capture_closing_odds(pending)
                 st.success(
                     f"{res['captures']} CLV capturé(s), "

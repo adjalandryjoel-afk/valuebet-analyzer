@@ -273,9 +273,13 @@ class DataCollector:
 
         # Enrichissement xG (soccerdata/Understat) — 5 grands
         # championnats uniquement (get_xg_profile filtre lui-même
-        # les autres ligues et retourne None sans requête)
+        # les autres ligues et retourne None sans requête).
+        # persist=False (scan découverte) : XgProvider appelle le
+        # réseau et écrit son cache disque comme _stats_from_api —
+        # même garde-fou, pour la même raison (invariant « ne rien
+        # persister » du mode découverte).
         xg_bonus = 0.0
-        if self.xg_provider is not None:
+        if self.xg_provider is not None and persist:
             for stats in (context.home_stats, context.away_stats):
                 try:
                     xg = self.xg_provider.get_xg_profile(
