@@ -16,8 +16,8 @@ import re
 from typing import Dict, List, Optional
 from dataclasses import dataclass, field
 
-from config import ValueBetConfig, KellyConfig
-from modules.odds_utils import margin_ok
+from config import ValueBetConfig, KellyConfig, PoissonConfig
+from modules.odds_utils import margin_ok, novig_probs
 
 
 # ══════════════════════════════════════════════════════
@@ -190,6 +190,30 @@ class ValueBetDetector:
                 return margin_ok([o_a, o_b])
             return True
 
+        def _blend_vers_marche(p_modele, o_over, o_under):
+            """
+            Rapproche p_modele de la probabilité implicite du marché
+            (poids MARKET_WEIGHT, même principe que l'ancrage des tirs
+            cadrés) quand la paire est quotée et saine.
+
+            Pour les marchés de mi-temps, le modèle ne connaît pas la
+            vraie répartition 1MT/2MT de CETTE équipe : il applique une
+            moyenne de LIGUE (ex. 45 %), alors que le bookmaker, lui,
+            price le vrai profil. Sans ce rapprochement, l'écart pur
+            entre moyenne générique et profil réel se lit à tort comme
+            de la value — un pari fantôme sur un marché où le modèle
+            n'a aucune donnée propre à l'équipe (même invariant que le
+            garde-fou déjà appliqué aux tirs cadrés).
+            """
+            if not (o_over > 1 and o_under > 1
+                    and margin_ok([o_over, o_under])):
+                return p_modele
+            probs = novig_probs([o_over, o_under])
+            if not probs:
+                return p_modele
+            w = PoissonConfig.MARKET_WEIGHT
+            return w * probs[0] + (1 - w) * p_modele
+
         # ── Scanner chaque marché ──
         # (marché, sélection, cote, prob modèle, pénalité de confiance)
         candidates = [
@@ -248,11 +272,16 @@ class ValueBetDetector:
                 o_over = float(odds.get(f"{prefix}_over_{line}", 0) or 0)
                 o_under = float(odds.get(f"{prefix}_under_{line}", 0) or 0)
                 if _paire_ok(o_over, o_under):
+                    # p_over vient d'un split MOYEN DE LIGUE, pas d'un
+                    # profil propre à l'équipe : rapproché du marché
+                    # avant de servir à détecter la value, sinon l'écart
+                    # pur moyenne-vs-réalité se lit à tort comme un edge.
+                    p_ancre = _blend_vers_marche(p_over, o_over, o_under)
                     candidates.append((
-                        f"Buts {label}", f"Over {line_txt}", o_over, p_over, 5))
+                        f"Buts {label}", f"Over {line_txt}", o_over, p_ancre, 5))
                     candidates.append((
                         f"Buts {label}", f"Under {line_txt}",
-                        o_under, 1 - p_over, 5))
+                        o_under, 1 - p_ancre, 5))
 
         # ── Buts par équipe ET par mi-temps (λ équipe × part MT
         #    → pénalité intermédiaire) ──
@@ -277,11 +306,14 @@ class ValueBetDetector:
                 o_over = float(odds.get(f"{prefix}_over_{line}", 0) or 0)
                 o_under = float(odds.get(f"{prefix}_under_{line}", 0) or 0)
                 if _paire_ok(o_over, o_under):
+                    # Même raison qu'au-dessus : p_over = λ équipe ×
+                    # part de ligue, pas un vrai profil équipe×mi-temps.
+                    p_ancre = _blend_vers_marche(p_over, o_over, o_under)
                     candidates.append((
-                        market_label, f"Over {line_txt}", o_over, p_over, 8))
+                        market_label, f"Over {line_txt}", o_over, p_ancre, 8))
                     candidates.append((
                         market_label, f"Under {line_txt}",
-                        o_under, 1 - p_over, 8))
+                        o_under, 1 - p_ancre, 8))
 
         # ── Tirs cadrés (équipe ou match) ──
         # Le modèle n'a AUCUNE donnée propre sur les tirs : il ne sait
@@ -293,8 +325,6 @@ class ValueBetDetector:
         # l'approximation et le marché se lit à tort comme de la
         # value et produit des paris fantômes sur chaque match.
         from modules.poisson_model import PoissonPredictor
-        from modules.odds_utils import novig_probs
-        from config import PoissonConfig
 
         analysis.model_probs["SOT_HOME"] = {}
         analysis.model_probs["SOT_AWAY"] = {}

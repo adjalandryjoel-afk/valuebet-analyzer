@@ -485,7 +485,12 @@ class FootballData:
         "championship": "championship",
         "la liga": "la_liga", "laliga": "la_liga",
         "laliga ea sports": "la_liga", "espagne": "la_liga",
-        "segunda": "la_liga2", "laliga2": "la_liga2",
+        # PAS de hint bare "segunda" -> la_liga2 : « Segunda División »
+        # est un terme générique partagé par le Chili, la Bolivie, le
+        # Pérou (non couverts) — un mot entier, donc insensible au fix
+        # de frontière de mot ci-dessous. Les libellés Espagne-
+        # spécifiques restent couverts (laliga2, laliga hypermotion...).
+        "laliga2": "la_liga2",
         "laliga hypermotion": "la_liga2", "la liga 2": "la_liga2",
         # « LaLiga2 » normalisé + séparé lettre/chiffre devient
         # « laliga 2 » (avec espace) : le hint « laliga2 » (sans
@@ -523,7 +528,10 @@ class FootballData:
         # les DEUX ordres doivent être couverts explicitement.
         "autriche bundesliga": "aut_bundesliga",
         "ekstraklasa": "pol_ekstraklasa", "pologne": "pol_ekstraklasa",
-        "irlande": "irl_premier",
+        # PAS de hint bare "irlande" -> irl_premier : « Irlande du
+        # Nord » (autre association, non couverte) contient le mot
+        # entier "irlande" — un match Ireland genuinement présent
+        # tombera via le scan strict (irl_premier y figure).
         "mls": "usa_mls",
         "brasileirao": "bra_serie_a", "serie a bresil": "bra_serie_a",
         "serie a brazil": "bra_serie_a", "bresil": "bra_serie_a",
@@ -545,9 +553,18 @@ class FootballData:
         texte = re.sub(r"(?<=[a-z])(?=\d)|(?<=\d)(?=[a-z])", " ", texte)
         texte = " ".join(texte.replace("_", " ").split())
         # Priorité aux libellés les plus longs (« ligue 2 » avant
-        # « ligue », « bundesliga 2 » avant « bundesliga »)
+        # « ligue », « bundesliga 2 » avant « bundesliga »).
+        # Correspondance sur des MOTS ENTIERS, pas une sous-chaîne :
+        # sans le padding par espaces, "super lig" (Turquie) matchait
+        # à l'intérieur de "super liga" (Serbie), "segunda" à
+        # l'intérieur de "segunda division" (Chili/Bolivie/Pérou...),
+        # "irlande" à l'intérieur de "irlande du nord" (une autre
+        # association) — un championnat non couvert se faisait passer
+        # à tort pour un championnat couvert, sans jamais pouvoir être
+        # confirmé par le scan d'équipes (pays absent des sources).
+        texte_pad = f" {texte} "
         for hint in sorted(self.COMPETITION_HINTS, key=len, reverse=True):
-            if hint in texte:
+            if f" {hint} " in texte_pad:
                 return self.COMPETITION_HINTS[hint]
         return None
 

@@ -436,7 +436,8 @@ def _scan_du_jour(scanner, ligues_choisies, fenetre, noms,
             try:
                 info = tm.identify_match(home, away)
                 ctx = dc.collect_match_data(info, all_odds,
-                                            competition=m["competition"])
+                                            competition=m["competition"],
+                                            persist=False)
                 poisson = modules["poisson"].predict(ctx)
                 c = m["cotes"]
                 # persist=False : le scan « découverte » ne doit RIEN
@@ -2503,8 +2504,8 @@ def page_home():
     st.space("medium")
     st.caption(
         ":material/health_and_safety: Les mises proposées sont volontairement "
-        "prudentes (quart de Kelly, plafond 5% du bankroll). Ne mise jamais "
-        "plus que ce que tu peux te permettre de perdre."
+        f"prudentes (quart de Kelly, plafond {KellyConfig.MAX_STAKE_PERCENTAGE:.0f}% "
+        "du bankroll). Ne mise jamais plus que ce que tu peux te permettre de perdre."
     )
 
 

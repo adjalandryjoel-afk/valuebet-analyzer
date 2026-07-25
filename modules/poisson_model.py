@@ -198,8 +198,11 @@ class PoissonPredictor:
             # principe que le flag att_est/def_est plus bas : ne jamais
             # mélanger multiplicativement une estimation déjà
             # spécifique au match avec une moyenne générique.
+            split_real = (stats.xg_home_split_real if is_home
+                         else stats.xg_away_split_real) if stats else False
             if (stats and stats.data_source != "estimated"
-                    and stats.xg_available and stats.xg_for_home > 0):
+                    and stats.xg_available and stats.xg_for_home > 0
+                    and split_real):
                 # xG (splits domicile/extérieur) MÉLANGÉ aux buts réels.
                 # Le xG est plus prédictif (moins de bruit), mais les
                 # buts capturent la finition réelle : le mélange est

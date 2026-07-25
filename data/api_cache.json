@@ -2251,11 +2251,6 @@
     "ts": 1784332696.8649707,
     "stats": null
   },
-  "test b": {
-    "team_id": 2592,
-    "ts": 1784360491.0249007,
-    "stats": null
-  },
   "queretaro": {
     "team_id": 2290,
     "ts": 1784362005.4784782,
@@ -2332,21 +2327,6 @@
   },
   "h2h::397-549": {
     "ts": 1784821381.134437,
-    "stats": null
-  },
-  "random team a": {
-    "team_id": 11579,
-    "ts": 1784934816.2320814,
-    "stats": null
-  },
-  "random team b": {
-    "team_id": 11579,
-    "ts": 1784934842.2347996,
-    "stats": null
-  },
-  "isc abobo": {
-    "team_id": 2810,
-    "ts": 1784936543.3707547,
     "stats": null
   }
 }

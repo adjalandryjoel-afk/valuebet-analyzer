@@ -51,6 +51,11 @@ class TeamStats:
     xg_for_away: float = 0.0
     xg_against_away: float = 0.0
     xg_available: bool = False
+    # True seulement si xg_for_home/away vient d'un VRAI split
+    # domicile/extérieur (pas d'un repli sur la moyenne globale) —
+    # conditionne si l'avantage du terrain est déjà inclus.
+    xg_home_split_real: bool = False
+    xg_away_split_real: bool = False
     # Sur/sous-performance : buts réels marqués − xG. > 0 = l'équipe
     # a « surperformé » (chanceuse/finition clinique → régression
     # possible) ; < 0 = malchanceuse (rebond possible). Valide
@@ -184,10 +189,18 @@ class DataCollector:
     # ─── CONSTRUCTION DU CONTEXTE ───────────────────
 
     def collect_match_data(self, match_info: Dict, odds: Dict,
-                           competition: str = "") -> MatchContext:
+                           competition: str = "",
+                           persist: bool = True) -> MatchContext:
         """
         Construit le MatchContext depuis le résultat du TeamMatcher
         et les cotes extraites.
+
+        persist=False : mode découverte (scan du jour) — n'interroge
+        jamais API-Football en repli. Sans ce garde-fou, un simple
+        repérage jamais validé par l'utilisateur pouvait déclencher un
+        vrai appel réseau vers une API tierce à quota limité et écrire
+        le résultat sur disque (data/api_cache.json), en silence et
+        sans rapport avec le coût annoncé (« ~2 crédits Odds API »).
         """
 
         home_name = match_info["home"]["official_name"]
@@ -237,16 +250,17 @@ class DataCollector:
 
         # Stats des équipes, par ordre de fiabilité :
         # football-data (réel) > API-Football > historique > cotes
+        # (API-Football sautée en mode découverte, cf. docstring)
         context.home_stats = (
             self._stats_from_football_data(home_name, league)
-            or self._stats_from_api(home_name)
+            or (self._stats_from_api(home_name) if persist else None)
             or self._stats_from_historical(home_name)
             or self._estimate_stats_from_odds(home_name, odds, league_avg,
                                               is_home=True)
         )
         context.away_stats = (
             self._stats_from_football_data(away_name, league)
-            or self._stats_from_api(away_name)
+            or (self._stats_from_api(away_name) if persist else None)
             or self._stats_from_historical(away_name)
             or self._estimate_stats_from_odds(away_name, odds, league_avg,
                                               is_home=False)
@@ -273,7 +287,16 @@ class DataCollector:
                     stats.xg_scored = xg["xg_for_avg"]
                     stats.xg_conceded = xg["xga_avg"]
                     # Splits domicile/extérieur (None → repli sur la
-                    # moyenne toutes venues)
+                    # moyenne toutes venues, ex. équipe promue sans
+                    # historique domicile/extérieur cette saison).
+                    # Le flag *_split_real distingue les deux cas :
+                    # sans lui, side_profile() croit à tort disposer
+                    # d'un vrai split domicile/extérieur (donc que
+                    # l'avantage du terrain est déjà inclus) alors que
+                    # c'est la même moyenne globale des deux côtés —
+                    # et saute l'application de l'avantage domicile.
+                    stats.xg_home_split_real = xg.get("xg_for_home") is not None
+                    stats.xg_away_split_real = xg.get("xg_for_away") is not None
                     stats.xg_for_home = xg.get("xg_for_home") or xg["xg_for_avg"]
                     stats.xg_against_home = (xg.get("xga_home")
                                              or xg["xga_avg"])
