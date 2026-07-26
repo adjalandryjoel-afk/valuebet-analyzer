@@ -487,9 +487,32 @@ class FootballData:
         if strict:
             return None  # inférence de ligue : exact / alias / ≥85 only
         if score >= FUZZY_MIN and score - second >= FUZZY_MARGE:
-            return index[meilleur]
+            # ANCRAGE LEXICAL : la règle de marge seule ne prouve rien
+            # sur l'APPARTENANCE — pour une équipe totalement absente
+            # de la ligue, le meilleur résident devance presque
+            # toujours le 2e, et l'on servait alors ses statistiques
+            # sous le nom demandé, étiquetées « données réelles »
+            # (« Helsingborg » → Elfsborg, « Torreense » → Moreirense,
+            # « Crusaders » → Rangers). On exige donc au moins un MOT
+            # réellement commun aux deux noms.
+            if self._mot_commun(cible, meilleur):
+                return index[meilleur]
+            return None  # ressemblance de hasard, aucun mot partagé
 
         return None  # ambigu → on refuse
+
+    @staticmethod
+    def _mot_commun(cible: str, candidat: str) -> bool:
+        """
+        Au moins un mot significatif (≥ 4 lettres) commun aux deux
+        noms, à l'orthographe près. « Olympique Marseille »/
+        « Marseille » ou « Manchester United FC »/« Man United »
+        passent ; « Helsingborg »/« Elfsborg » non.
+        """
+        toks_c = [t for t in cible.split() if len(t) >= 4]
+        toks_m = [t for t in candidat.split() if len(t) >= 4]
+        return any(fuzz.ratio(a, b) >= 85
+                   for a in toks_c for b in toks_m)
 
     # ─── DÉTECTION DE LIGUE ──────────────────────────
 
@@ -572,10 +595,53 @@ class FootballData:
         "bresil serie a": "bra_serie_a",  # ordre pays d'abord
         "liga profesional": "arg_liga", "argentine": "arg_liga",
         "liga mx": "mex_liga", "mexique": "mex_liga",
+        # Compétitions suivies par The Odds API mais sans source
+        # football-data (pas de forme/H2H) : ces indices ne servent
+        # qu'à CIBLER les requêtes de cotes/scores sur la bonne
+        # compétition. Sans eux, les boutons « scores » et « CLV »
+        # ne savaient pas quoi interroger et balayaient les 26
+        # championnats (52 crédits par clic).
+        "ligue des champions": "champions_league",
+        "champions league": "champions_league",
+        "ligue europa": "europa_league", "europa league": "europa_league",
+        "coupe du monde": "world_cup", "world cup": "world_cup",
+        "superettan": "swe_superettan",
+    }
+
+    # Indices purement GÉOGRAPHIQUES ou trop génériques : ils
+    # désignent un pays (ou un nom de championnat porté par
+    # plusieurs pays), pas une compétition précise. Or chaque pays a
+    # des 2es divisions et des coupes NON couvertes par nos sources
+    # (Superettan, Liga Portugal 2, Copa del Rey, Eerste Divisie,
+    # 2. Liga, 1. Division, I liga, OBOS-ligaen, Primera Nacional,
+    # Copa do Brasil...), et « Premier League »/« Premiership »/
+    # « Serie B » existent aussi en Ukraine, Égypte, Irlande du Nord,
+    # Brésil... Utilisés seuls, ces indices faisaient analyser ces
+    # compétitions avec les paramètres et l'effectif de l'élite du
+    # pays voisin. Ils ne valent donc QUE s'ils sont CONFIRMÉS par
+    # les deux équipes de la saison en cours.
+    HINTS_AMBIGUS = {
+        "cote d ivoire", "angleterre", "espagne", "italie",
+        "allemagne", "pays bas", "belgique", "portugal", "turquie",
+        "grece", "ecosse", "suede", "norvege", "finlande",
+        "danemark", "russie", "roumanie", "autriche", "pologne",
+        "bresil", "argentine", "mexique", "france", "irlande",
+        "premier league", "premiership", "serie a", "serie b",
+        "championship", "liga portugal", "primeira", "segunda",
     }
 
     def league_from_competition(self, competition: str) -> Optional[str]:
         """Clé de ligue déduite du libellé de compétition (OCR)."""
+        return (self._hint_competition(competition) or (None, None))[0]
+
+    def _hint_competition(self, competition: str):
+        """
+        (clé de ligue, hint ayant matché) ou None.
+
+        detect_league a besoin de savoir QUEL indice a matché pour
+        refuser les indices ambigus (pays seul, nom de championnat
+        partagé) quand les équipes ne les confirment pas.
+        """
         if not competition:
             return None
         texte = self._normalize(competition)
@@ -599,7 +665,7 @@ class FootballData:
         texte_pad = f" {texte} "
         for hint in sorted(self.COMPETITION_HINTS, key=len, reverse=True):
             if f" {hint} " in texte_pad:
-                return self.COMPETITION_HINTS[hint]
+                return self.COMPETITION_HINTS[hint], hint
         return None
 
     # Grands championnats d'abord : la recherche s'arrête au premier
@@ -630,7 +696,7 @@ class FootballData:
 
         # 1. Indice de compétition — le signal le PLUS fiable
         #    (Betclic nomme le championnat). Il prime sur le scan.
-        cle = self.league_from_competition(competition)
+        cle, hint = self._hint_competition(competition) or (None, None)
         if cle and (cle in self.DIVISIONS or cle in self.EXTRA_LEAGUES):
             # Confirmé si les deux équipes y jouent VRAIMENT CETTE
             # SAISON (_confirme_cette_saison) ; sinon on garde l'indice
@@ -641,7 +707,15 @@ class FootballData:
             # faisait confirmer à tort dans l'ancienne division.
             if self._confirme_cette_saison(cle, home, away):
                 return cle
-            indice = cle
+            # Non confirmé : on ne garde l'indice comme repli que s'il
+            # nomme une compétition PRÉCISE (« Allsvenskan »,
+            # « Brasileirao »...). Un indice AMBIGU — pays seul, ou
+            # nom de championnat porté par plusieurs pays — désigne
+            # tout aussi bien une 2e division ou une coupe non
+            # couverte : le retenir ferait analyser « Suède -
+            # Superettan » avec les paramètres de l'Allsvenskan.
+            # Mieux vaut « inconnu » (stats estimées, honnêtes).
+            indice = None if hint in self.HINTS_AMBIGUS else cle
         else:
             indice = None
 

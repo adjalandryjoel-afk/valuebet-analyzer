@@ -2146,17 +2146,36 @@ def page_backtesting():
         )
 
         from modules.odds_collector import OddsAPICollector
-        _cout_max = len(OddsAPICollector.LEAGUE_KEYS) * 2
+        from modules.football_data import get_football_data
+
+        # Ne cibler QUE les championnats des matchs en attente : sans
+        # ça, chaque clic balaie les 26 championnats suivis (jusqu'à
+        # 52 crédits sur 500/mois) même pour un seul match — et pour
+        # rien si sa ligue n'est pas couverte par The Odds API.
+        _fd_hint = get_football_data()
+        _cles_dues, _sans_ligue = set(), 0
+        for _m in attente:
+            _comp = (_m.get("competition") or "").strip()
+            _cle = (_comp if _comp in OddsAPICollector.LEAGUE_KEYS
+                    else _fd_hint.league_from_competition(_comp))
+            _sk = OddsAPICollector.LEAGUE_KEYS.get(_cle)
+            if _sk:
+                _cles_dues.add(_sk)
+            else:
+                _sans_ligue += 1
+
+        _cout = len(_cles_dues) * 2
         if st.button("Récupérer les scores automatiquement",
                      icon=":material/cloud_download:",
+                     disabled=not _cles_dues,
                      help=f"Scores des 3 derniers jours via The Odds API "
-                          f"(jusqu'à ~{_cout_max} crédits, moins en "
-                          f"pratique grâce au filtre hors-saison "
-                          f"gratuit). Les ligues non couvertes "
-                          f"restent en saisie manuelle."):
+                          f"(~{_cout} crédits : seuls les championnats de "
+                          f"tes matchs en attente sont interrogés). Les "
+                          f"ligues non couvertes restent en saisie "
+                          f"manuelle."):
             with st.spinner("Récupération des scores..."):
                 fetcher = ScoreFetcher()
-                events = fetcher.fetch_completed()
+                events = fetcher.fetch_completed(sport_keys=_cles_dues)
                 trouves = 0
                 for m in attente:
                     score = fetcher.find_score(
@@ -2184,6 +2203,14 @@ def page_backtesting():
                     "manuelle ci-dessous.",
                     icon=":material/info:",
                 )
+
+        if _sans_ligue:
+            st.caption(
+                f":material/info: {_sans_ligue} match(s) en attente sans "
+                f"championnat reconnu : la récupération automatique ne "
+                f"peut pas les cibler (renseigne le champ « Compétition » "
+                f"à l'analyse, ou saisis le score à la main ci-dessous)."
+            )
 
         for m in attente:
             with st.container(border=True):
@@ -2257,19 +2284,44 @@ def page_backtesting():
                     fd_hint = get_football_data()
                     ligues_dues = {}
                     for bet in pending:
-                        cle = fd_hint.league_from_competition(
-                            bet.get("competition") or "")
+                        comp = (bet.get("competition") or "").strip()
+                        # Le scan du jour stocke DÉJÀ la clé interne
+                        cle = (comp
+                               if comp in OddsAPICollector.LEAGUE_KEYS
+                               else fd_hint.league_from_competition(comp))
                         sport_key = OddsAPICollector.LEAGUE_KEYS.get(cle)
                         if cle and sport_key:
                             ligues_dues[cle] = sport_key
                     tracker.LEAGUE_KEYS = ligues_dues
-                    res = tracker.capture_closing_odds(pending)
-                st.success(
-                    f"{res['captures']} CLV capturé(s), "
-                    f"{res['ignores']} ignoré(s), "
-                    f"quota API restant : {res.get('quota_restant', '?')}",
-                    icon=":material/check_circle:",
-                )
+                    res = (tracker.capture_closing_odds(pending)
+                           if ligues_dues else
+                           {"captures": 0, "ignores": len(pending),
+                            "quota_restant": None})
+                if res["captures"]:
+                    st.success(
+                        f"{res['captures']} CLV capturé(s), "
+                        f"{res['ignores']} ignoré(s), quota API restant : "
+                        f"{res.get('quota_restant', '?')}",
+                        icon=":material/check_circle:",
+                    )
+                elif not ligues_dues:
+                    # Aucune ligne interrogeable : ne pas dépenser de
+                    # crédits, et surtout ne pas afficher un succès.
+                    st.warning(
+                        "Aucun pari en attente n'a de championnat reconnu "
+                        "par The Odds API — rien n'a été interrogé (0 "
+                        "crédit). Renseigne le champ « Compétition » lors "
+                        "de l'analyse pour activer la capture du CLV.",
+                        icon=":material/info:",
+                    )
+                else:
+                    st.warning(
+                        f"Aucune cote de clôture capturée "
+                        f"({res['ignores']} ignoré(s)) : matchs introuvables "
+                        f"sur The Odds API (déjà joués ?). Quota restant : "
+                        f"{res.get('quota_restant', '?')}",
+                        icon=":material/info:",
+                    )
         with col_info:
             st.caption(
                 ":material/info: À lancer **15-30 min avant le coup "

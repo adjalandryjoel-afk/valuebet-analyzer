@@ -23,6 +23,11 @@ from modules.odds_collector import OddsAPICollector
 
 FUZZY_MIN = 65
 
+# Avance minimale de l'appariement DIRECT sur l'appariement CROISÉ
+# (domicile↔extérieur inversés) pour accepter un score. Protège du
+# match retour d'un derby entre clubs homonymes.
+ORIENTATION_MARGE = 10
+
 
 class ScoreFetcher:
     """Récupère les scores finaux récents via The Odds API."""
@@ -49,18 +54,29 @@ class ScoreFetcher:
         except (requests.RequestException, ValueError, KeyError):
             return None
 
-    def fetch_completed(self, days_from: int = 3) -> List[Dict]:
+    def fetch_completed(self, days_from: int = 3,
+                        sport_keys: Optional[set] = None) -> List[Dict]:
         """
-        Scores des matchs TERMINÉS des `days_from` derniers jours,
-        pour les championnats suivis actuellement en saison
+        Scores des matchs TERMINÉS des `days_from` derniers jours
         (2 crédits par championnat interrogé).
+
+        sport_keys : championnats à interroger. À FOURNIR — sans lui,
+        les 26 championnats suivis sont balayés, soit jusqu'à 52
+        crédits par clic sur un quota mensuel de 500, même quand un
+        seul match est en attente. Un ensemble vide ne dépense rien.
         """
 
         if not self.api_key:
             return []
 
+        if sport_keys is not None:
+            suivies = set(sport_keys)
+            if not suivies:
+                return []  # rien à interroger → zéro crédit
+        else:
+            suivies = set(OddsAPICollector.LEAGUE_KEYS.values())
+
         events: List[Dict] = []
-        suivies = set(OddsAPICollector.LEAGUE_KEYS.values())
 
         en_cours = self._ligues_en_cours()
         if en_cours is not None:
@@ -106,18 +122,38 @@ class ScoreFetcher:
         """
         Associe un match analysé à un score par correspondance
         floue des DEUX noms d'équipes (≥ 65 chacun).
+
+        Garde d'ORIENTATION : la correspondance directe doit aussi
+        battre nettement la correspondance CROISÉE (domicile↔extérieur
+        inversés). Sans elle, un derby entre clubs de nom proche
+        (« Sheffield United » / « Sheffield Wednesday », ratio croisé
+        74) laissait le match RETOUR régler le pari — score inversé,
+        pari gagnant compté perdant, et l'Elo apprenait le résultat à
+        l'envers. Le seuil reste RELATIF : un seuil absolu plus haut
+        casserait les abréviations légitimes (« Man Utd » /
+        « Manchester United » ne vaut que 58).
         """
+
+        def r(a: str, b: str) -> float:
+            return fuzz.token_sort_ratio(a.lower(), b.lower())
 
         best, best_score = None, 0
         for ev in events:
-            s_home = fuzz.token_sort_ratio(
-                home_team.lower(), ev["home"].lower())
-            s_away = fuzz.token_sort_ratio(
-                away_team.lower(), ev["away"].lower())
-            if s_home >= FUZZY_MIN and s_away >= FUZZY_MIN:
-                score = s_home + s_away
-                if score > best_score:
-                    best, best_score = ev, score
+            s_home = r(home_team, ev["home"])
+            s_away = r(away_team, ev["away"])
+
+            direct = min(s_home, s_away)
+            croise = min(r(home_team, ev["away"]),
+                         r(away_team, ev["home"]))
+
+            # Sens ambigu (le croisé est aussi bon, voire meilleur) :
+            # on REFUSE plutôt que de risquer un score inversé.
+            if direct < FUZZY_MIN or direct < croise + ORIENTATION_MARGE:
+                continue
+
+            score = s_home + s_away
+            if score > best_score:
+                best, best_score = ev, score
 
         if best:
             return best["fthg"], best["ftag"]

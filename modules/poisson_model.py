@@ -266,10 +266,17 @@ class PoissonPredictor:
         lam_away = combine(a_att, h_def, a_est, h_est,
                            lg_away if (h_ha and a_ha) else league_avg)
 
-        # Avantage domicile : uniquement si pas déjà dans les splits
-        if not h_ha:
+        # Avantage domicile : réappliqué UNIQUEMENT si AUCUN des deux
+        # profils du produit n'est déjà spécifique à la venue. Chaque
+        # λ croise l'attaque d'une équipe et la défense de l'AUTRE :
+        # il suffit donc qu'un seul des deux porte déjà le facteur
+        # domicile/extérieur pour que l'avantage soit compté. Le
+        # tester côté par côté (h_ha / a_ha séparément) le comptait
+        # deux fois dès que les deux équipes n'avaient pas le même
+        # type de données — cas courant en début de saison, quand une
+        # seule des deux a des splits xG (jusqu'à 10 % d'écart sur λ).
+        if not h_ha and not a_ha:
             lam_home *= PoissonConfig.HOME_ADVANTAGE
-        if not a_ha:
             lam_away *= (2 - PoissonConfig.HOME_ADVANTAGE)
 
         return lam_home, lam_away
@@ -319,7 +326,15 @@ class PoissonPredictor:
 
         for total_goals in total_candidates:
             total_goals = max(1.0, min(5.5, total_goals))
-            for share in [x / 100 for x in range(25, 76)]:
+            # Répartition balayée de 5 % à 95 % : bornée à 25-75 %,
+            # la grille SATURE dès que le favori est coté sous ~1.35
+            # et le fit ne reproduit plus les cotes (jusqu'à 17 points
+            # d'écart sur p1). Le λ de l'outsider était alors surestimé
+            # de plus de 50 %, ce qui fabriquait de la value fantôme —
+            # et donc des mises au plafond Kelly — sur les matchs les
+            # plus déséquilibrés, même face à un marché parfaitement
+            # juste.
+            for share in [x / 100 for x in range(5, 96)]:
                 lh = total_goals * share
                 la = total_goals * (1 - share)
                 p1, px, p2 = self._quick_1x2(lh, la)
