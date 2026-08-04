@@ -123,8 +123,22 @@ class ValueBetDetector:
         match_label = f"{home_team} vs {away_team}"
 
         # ── Blend des probabilités 1X2 (Poisson + Elo) ──
-        wp = ValueBetConfig.POISSON_WEIGHT
-        we = ValueBetConfig.ELO_WEIGHT
+        # L'Elo n'est mélangé QUE s'il apporte une information
+        # INDÉPENDANTE, c'est-à-dire quand il vient de ClubElo.
+        #
+        # Quand ClubElo ne couvre pas les deux équipes (ligues
+        # mineures, Ligue 1 CI...), l'app retombe sur un Elo ESTIMÉ
+        # DEPUIS LES COTES — or le λ Poisson est déjà ancré à 90 % sur
+        # ces mêmes cotes. Le mélanger revient à recompter deux fois
+        # la même information en y ajoutant du bruit : mesuré sur
+        # 8500 matchs, le log-loss se dégrade de façon monotone avec
+        # le poids Elo (0.97156 sans Elo → 0.97683 à 40 %, alors que
+        # le marché seul fait 0.97107). Dans ce cas on garde le
+        # Poisson seul.
+        elo_independant = (
+            getattr(elo_pred, "elo_source", "estimé") == "clubelo")
+        we = ValueBetConfig.ELO_WEIGHT if elo_independant else 0.0
+        wp = 1.0 - we
 
         p1 = wp * poisson_pred.prob_home + we * elo_pred.prob_home_win
         px = wp * poisson_pred.prob_draw + we * elo_pred.prob_draw

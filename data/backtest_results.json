@@ -1,5 +1,5 @@
 {
-  "genere_le": "2026-07-29T15:36:42+00:00",
+  "genere_le": "2026-08-04T09:00:43+00:00",
   "source": "football-data.co.uk (B365 ouverture, Pinnacle clôture)",
   "saisons_train": [
     "2122",
@@ -21,22 +21,23 @@
   "n_matchs_test": 3449,
   "poids_marche": {
     "courbe_logloss_train": {
-      "0.5": 0.9914,
-      "0.6": 0.98503,
-      "0.7": 0.97998,
-      "0.8": 0.97608,
-      "0.9": 0.97335
+      "0.5": 0.99276,
+      "0.6": 0.98599,
+      "0.7": 0.98046,
+      "0.8": 0.97618,
+      "0.9": 0.97205,
+      "1.0": 0.97131
     },
-    "meilleur": 0.9,
+    "meilleur": 1.0,
     "valeur_app": 0.9
   },
   "brier": {
-    "modele": 0.57251,
+    "modele": 0.57203,
     "marche_b365": 0.57228,
     "marche_cloture": 0.57099
   },
   "logloss": {
-    "modele": 0.96297,
+    "modele": 0.96189,
     "marche_b365": 0.96288,
     "marche_cloture": 0.96078
   },
@@ -45,62 +46,62 @@
     "home_win": [
       {
         "decile": "0.0-0.1",
-        "n": 53,
-        "p_pred_moyenne": 0.073,
-        "freq_observee": 0.0377
+        "n": 52,
+        "p_pred_moyenne": 0.0781,
+        "freq_observee": 0.0192
       },
       {
         "decile": "0.1-0.2",
-        "n": 316,
-        "p_pred_moyenne": 0.1581,
-        "freq_observee": 0.1266
+        "n": 344,
+        "p_pred_moyenne": 0.1609,
+        "freq_observee": 0.1308
       },
       {
         "decile": "0.2-0.3",
-        "n": 477,
-        "p_pred_moyenne": 0.2531,
-        "freq_observee": 0.2285
+        "n": 433,
+        "p_pred_moyenne": 0.2554,
+        "freq_observee": 0.2425
       },
       {
         "decile": "0.3-0.4",
-        "n": 660,
-        "p_pred_moyenne": 0.353,
-        "freq_observee": 0.3379
+        "n": 673,
+        "p_pred_moyenne": 0.3518,
+        "freq_observee": 0.3314
       },
       {
         "decile": "0.4-0.5",
-        "n": 668,
-        "p_pred_moyenne": 0.4464,
-        "freq_observee": 0.4461
+        "n": 675,
+        "p_pred_moyenne": 0.4482,
+        "freq_observee": 0.443
       },
       {
         "decile": "0.5-0.6",
-        "n": 551,
-        "p_pred_moyenne": 0.5478,
-        "freq_observee": 0.5281
+        "n": 550,
+        "p_pred_moyenne": 0.5486,
+        "freq_observee": 0.5291
       },
       {
         "decile": "0.6-0.7",
-        "n": 386,
-        "p_pred_moyenne": 0.6481,
-        "freq_observee": 0.658
+        "n": 366,
+        "p_pred_moyenne": 0.6488,
+        "freq_observee": 0.6475
       },
       {
         "decile": "0.7-0.8",
-        "n": 241,
-        "p_pred_moyenne": 0.7437,
-        "freq_observee": 0.7552
+        "n": 264,
+        "p_pred_moyenne": 0.7442,
+        "freq_observee": 0.75
       },
       {
         "decile": "0.8-0.9",
-        "n": 95,
-        "p_pred_moyenne": 0.836,
-        "freq_observee": 0.8737
+        "n": 89,
+        "p_pred_moyenne": 0.8384,
+        "freq_observee": 0.9213
       },
       {
         "decile": "0.9-1.0",
-        "n": 2,
-        "p_pred_moyenne": 0.9167,
+        "n": 3,
+        "p_pred_moyenne": 0.9089,
         "freq_observee": 1.0
       }
     ],
@@ -119,45 +120,45 @@
       },
       {
         "decile": "0.2-0.3",
-        "n": 0,
-        "p_pred_moyenne": null,
-        "freq_observee": null
+        "n": 22,
+        "p_pred_moyenne": 0.2813,
+        "freq_observee": 0.2727
       },
       {
         "decile": "0.3-0.4",
-        "n": 254,
-        "p_pred_moyenne": 0.3726,
-        "freq_observee": 0.4134
+        "n": 264,
+        "p_pred_moyenne": 0.3629,
+        "freq_observee": 0.4356
       },
       {
         "decile": "0.4-0.5",
-        "n": 786,
-        "p_pred_moyenne": 0.4578,
+        "n": 1124,
+        "p_pred_moyenne": 0.4556,
         "freq_observee": 0.444
       },
       {
         "decile": "0.5-0.6",
-        "n": 1521,
-        "p_pred_moyenne": 0.554,
-        "freq_observee": 0.5339
+        "n": 1180,
+        "p_pred_moyenne": 0.5479,
+        "freq_observee": 0.5593
       },
       {
         "decile": "0.6-0.7",
-        "n": 802,
-        "p_pred_moyenne": 0.6425,
-        "freq_observee": 0.6347
+        "n": 667,
+        "p_pred_moyenne": 0.6388,
+        "freq_observee": 0.6357
       },
       {
         "decile": "0.7-0.8",
-        "n": 86,
-        "p_pred_moyenne": 0.7111,
-        "freq_observee": 0.7558
+        "n": 187,
+        "p_pred_moyenne": 0.7347,
+        "freq_observee": 0.7059
       },
       {
         "decile": "0.8-0.9",
-        "n": 0,
-        "p_pred_moyenne": null,
-        "freq_observee": null
+        "n": 5,
+        "p_pred_moyenne": 0.8281,
+        "freq_observee": 0.8
       },
       {
         "decile": "0.9-1.0",
@@ -168,28 +169,22 @@
     ]
   },
   "strategie": {
-    "n_paris": 13,
-    "mise_totale": 17886.0,
-    "roi_pct": 45.23,
-    "profit": 8091.0,
-    "win_rate": 0.6154,
-    "cote_moyenne": 2.49,
-    "value_moyenne_pct": 7.65,
-    "clv_moyen_pct": -5.16,
-    "clv_positif_pct": 36.4,
-    "n_paris_avec_clv": 11,
+    "n_paris": 1,
+    "mise_totale": 774.0,
+    "roi_pct": -100.0,
+    "profit": -774.0,
+    "win_rate": 0.0,
+    "cote_moyenne": 3.8,
+    "value_moyenne_pct": 8.67,
+    "clv_moyen_pct": -2.43,
+    "clv_positif_pct": 0.0,
+    "n_paris_avec_clv": 1,
     "par_seuil": {
-      "cotes_1.30-2.50_seuil_5pct": {
-        "n_paris": 9,
-        "roi_pct": 16.83,
-        "profit": 2324.0,
-        "win_rate": 0.5556
-      },
       "cotes_2.50-4.00_seuil_8pct": {
-        "n_paris": 4,
-        "roi_pct": 141.54,
-        "profit": 5766.0,
-        "win_rate": 0.75
+        "n_paris": 1,
+        "roi_pct": -100.0,
+        "profit": -774.0,
+        "win_rate": 0.0
       }
     }
   },
@@ -247,5 +242,5 @@
       "n_matchs": 1678
     }
   },
-  "duree_backtest_s": 290.5
+  "duree_backtest_s": 59.4
 }

@@ -40,6 +40,7 @@ sys.path.insert(0, ROOT)
 from config import PoissonConfig, ValueBetConfig, KellyConfig, SUPPORTED_LEAGUES  # noqa: E402
 from modules.data_collector import TeamStats, MatchContext                        # noqa: E402
 from modules.poisson_model import PoissonPredictor                                # noqa: E402
+from modules.elo_rating import EloRatingSystem                                    # noqa: E402
 from modules.odds_utils import novig_probs                                        # noqa: E402
 
 
@@ -146,6 +147,12 @@ def _read_csv(path: str):
     # Lignes sans équipes ou sans score final = inutilisables
     df = df.dropna(subset=["HomeTeam", "AwayTeam", "FTHG", "FTAG"])
     df["Date"] = pd.to_datetime(df["Date"], dayfirst=True, format="mixed")
+
+    # « B365>2.5 » n'est pas un identifiant Python valide : itertuples
+    # le renommerait en position (_11), ce qui casse silencieusement
+    # dès que l'ordre des colonnes change. On renomme explicitement.
+    df = df.rename(columns={"B365>2.5": "B365_OV25",
+                            "B365<2.5": "B365_UN25"})
     return df
 
 
@@ -240,6 +247,20 @@ def prepare_matches(frames):
         league_info = SUPPORTED_LEAGUES[league_key]
         history = {}  # équipe → {"all": [...], "home": [...], "away": [...]}
 
+        # Elo EN MARCHE AVANT, propre à la ligue. Deux précautions
+        # méthodologiques indispensables :
+        #  • clubelo neutralisé — ClubElo ne fournit que les ratings
+        #    D'AUJOURD'HUI ; les injecter dans un backtest 2021-2026
+        #    serait de la triche par anticipation.
+        #  • ratings vidés — sinon les ratings du disque (appris sur
+        #    des matchs postérieurs) contamineraient le passé.
+        # L'Elo simulé est donc celui du chemin de REPLI de l'app
+        # (estimé depuis les cotes puis mis à jour match après match),
+        # pas son chemin ClubElo — limite assumée et documentée.
+        elo = EloRatingSystem()
+        elo.clubelo = None   # None, pas False : predict() teste `is not None`
+        elo.ratings = {}
+
         for season in SEASONS_BACKTEST:
             df = frames.get((season, div))
             if df is None:
@@ -268,13 +289,28 @@ def prepare_matches(frames):
                                and len(a_hist["all"]) >= MIN_HISTORY)
 
                 if usable_odds and enough_hist:
+                    # Cotes Over/Under 2.5 : l'app les passe au
+                    # contexte, ce qui affine nettement le λ total
+                    # ajusté au marché. Les omettre faisait dévier
+                    # λ_marché de 0.103 en moyenne.
+                    odds_ctx = {"1": o1, "X": ox, "2": o2}
+                    o_ov = _f(getattr(row, "B365_OV25", 0))
+                    o_un = _f(getattr(row, "B365_UN25", 0))
+                    if o_ov > 1 and o_un > 1:
+                        odds_ctx["over_2_5"] = o_ov
+                        odds_ctx["under_2_5"] = o_un
+
                     ctx = MatchContext(
                         home_team=ht, away_team=at, league=league_key,
                         home_stats=build_team_stats(ht, h_hist, date),
                         away_stats=build_team_stats(at, a_hist, date),
-                        odds={"1": o1, "X": ox, "2": o2},
+                        odds=odds_ctx,
                         league_avg_goals=lg_avg,
                         first_half_share=league_info["first_half_share"],
+                        league_avg_goals_home=league_info.get(
+                            "avg_goals_home", 0.0),
+                        league_avg_goals_away=league_info.get(
+                            "avg_goals_away", 0.0),
                         data_completeness=70.0,
                     )
                     stats_lams = predictor._lambdas_from_stats(ctx)
@@ -284,6 +320,16 @@ def prepare_matches(frames):
                     market_lams = market_cache[key]
 
                     if market_lams:
+                        # Elo comme l'app : ratings estimés depuis les
+                        # cotes du match, puis prédiction. L'appren-
+                        # tissage du résultat vient APRÈS (plus bas),
+                        # donc aucune information du futur n'entre ici.
+                        elo.estimate_rating_from_odds(
+                            ht, o1, o2, is_home=True)
+                        elo.estimate_rating_from_odds(
+                            at, o2, o1, is_home=False)
+                        ep = elo.predict(ht, at)
+
                         outcome = 0 if fthg > ftag else (1 if fthg == ftag else 2)
                         matches.append({
                             "div": div, "league": league_key,
@@ -296,6 +342,12 @@ def prepare_matches(frames):
                             "psc": (_f(row.PSCH), _f(row.PSCD), _f(row.PSCA)),
                             "stats_lams": stats_lams,
                             "market_lams": market_lams,
+                            "elo_probs": (ep.prob_home_win, ep.prob_draw,
+                                          ep.prob_away_win),
+                            # Toujours « estimé » ici : ClubElo est
+                            # neutralisé (ses ratings sont ceux
+                            # d'aujourd'hui → anticipation).
+                            "elo_source": getattr(ep, "elo_source", "estimé"),
                         })
                     else:
                         n_skip_odds += 1
@@ -303,6 +355,10 @@ def prepare_matches(frames):
                     n_skip_hist += 1
                 else:
                     n_skip_odds += 1
+
+                # Apprentissage APRÈS l'évaluation : l'Elo n'a jamais
+                # vu ce résultat au moment où il a prédit ce match.
+                elo.record_result(ht, at, fthg, ftag)
 
                 # Mise à jour de l'historique APRÈS l'évaluation
                 h_pts = 3 if fthg > ftag else (1 if fthg == ftag else 0)
@@ -330,9 +386,26 @@ def _f(x) -> float:
 #  3. PROBABILITÉS DU MODÈLE (blend manuel = _estimate_lambdas)
 # ══════════════════════════════════════════════════════════════
 
-def model_probs(match, weight):
-    """(p1, px, p2, p_over25) — blend w×marché + (1-w)×stats, bornes,
-    puis matrice Dixon-Coles du vrai modèle (_score_matrix)."""
+def model_probs(match, weight, avec_elo: bool = None):
+    """
+    (p1, px, p2, p_over25) exactement comme l'app.
+
+    Deux étages, comme dans la vraie chaîne :
+      1. λ = w×marché + (1-w)×stats → matrice Dixon-Coles (Poisson)
+      2. BLEND ELO, mais UNIQUEMENT si l'Elo est indépendant
+         (ClubElo), exactement comme value_detector.analyze_match.
+
+    L'Elo simulé ici est celui du chemin de REPLI (estimé depuis les
+    cotes), donc circulaire : l'app ne le mélange plus, et le
+    backtest non plus — d'où avec_elo=False par défaut. Mesuré sur
+    8500 matchs, le mélanger dégradait le log-loss de façon monotone
+    (0.97156 sans Elo → 0.97683 à 40 %).
+
+    avec_elo=True force le mélange, pour quantifier ce que coûterait
+    (ou rapporterait) un Elo à cette pondération.
+    """
+    if avec_elo is None:
+        avec_elo = match.get("elo_source") == "clubelo"
 
     st, mk = match["stats_lams"], match["market_lams"]
     lam_h = weight * mk[0] + (1 - weight) * st[0]
@@ -353,7 +426,19 @@ def model_probs(match, weight):
             if i + j >= 3:
                 over25 += p
     norm = p1 + px + p2
-    return p1 / norm, px / norm, p2 / norm, over25
+    p1, px, p2 = p1 / norm, px / norm, p2 / norm
+
+    elo = match.get("elo_probs")
+    if avec_elo and elo:
+        wp, we = ValueBetConfig.POISSON_WEIGHT, ValueBetConfig.ELO_WEIGHT
+        p1 = wp * p1 + we * elo[0]
+        px = wp * px + we * elo[1]
+        p2 = wp * p2 + we * elo[2]
+        tot = p1 + px + p2
+        if tot > 0:
+            p1, px, p2 = p1 / tot, px / tot, p2 / tot
+
+    return p1, px, p2, over25
 
 
 def log_loss_1x2(prob_rows, outcomes):
