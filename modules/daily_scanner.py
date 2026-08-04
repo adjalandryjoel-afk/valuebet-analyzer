@@ -36,6 +36,34 @@ _SPORT_TO_LEAGUE = {v: k for k, v in OddsAPICollector.LEAGUE_KEYS.items()}
 class DailyScanner:
     """Programme du jour et cotes de base via The Odds API."""
 
+    # Compétitions proposées au scan : EUROPE uniquement.
+    #
+    # Volontairement plus restreint que OddsAPICollector.LEAGUE_KEYS,
+    # qui reste complet pour le RÈGLEMENT des scores et la capture du
+    # CLV — un match déjà analysé doit pouvoir être réglé même si sa
+    # compétition n'est plus proposée au scan.
+    #
+    # Écartés : Brésil, Argentine, Mexique et MLS (données réelles
+    # disponibles, mais hors du périmètre joué) ainsi que la Superettan
+    # suédoise, seule compétition à avoir des cotes SANS aucune source
+    # de données — l'analyser reviendrait à deviner.
+    LEAGUES_SCAN = (
+        # Les 5 grands
+        "premier_league", "la_liga", "serie_a", "bundesliga", "ligue1_fr",
+        # Autres championnats européens
+        "eredivisie", "primeira_liga", "belgium_pro", "super_lig",
+        "greece_super", "scotland_prem",
+        # Scandinavie
+        "swe_allsvenskan", "nor_eliteserien", "fin_veikkaus",
+        "den_superliga",
+        # Europe centrale / de l'Est
+        "aut_bundesliga", "pol_ekstraklasa", "rus_premier",
+        # Deuxièmes divisions (lignes plus molles)
+        "championship", "bundesliga2",
+        # Coupes d'Europe (débloquées par l'abonnement API-Football Pro)
+        "champions_league", "europa_league",
+    )
+
     def __init__(self):
         self.api_key = APIKeys.ODDS_API_KEY
         self.quota_restant: Optional[str] = None
@@ -55,7 +83,10 @@ class DailyScanner:
         saison. /sports est GRATUIT : évite d'interroger une ligue
         à l'arrêt.
         """
-        suivies = OddsAPICollector.LEAGUE_KEYS
+        # Périmètre du scan : Europe uniquement (cf. LEAGUES_SCAN)
+        suivies = {lg: sk
+                   for lg, sk in OddsAPICollector.LEAGUE_KEYS.items()
+                   if lg in self.LEAGUES_SCAN}
         try:
             r = requests.get(f"{BASE_URL}/sports",
                              params={"apiKey": self.api_key}, timeout=20)

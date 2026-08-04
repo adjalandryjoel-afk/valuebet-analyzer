@@ -940,13 +940,15 @@
   },
   "sparta prague": {
     "team_id": 7851,
-    "stats": null
+    "stats": null,
+    "ts": 1785858411.427247
   },
   "olympique lyonnais": {
     "team_id": 7919
   },
   "h2h::7851-7919": {
-    "stats": null
+    "stats": null,
+    "ts": 1785858417.9850338
   },
   "union saint gilloise": {
     "team_id": 19902,
@@ -1146,6 +1148,122 @@
       "last_match_date": "2026-05-24",
       "stale": true,
       "age_days": 72
+    }
+  },
+  "coventry": {
+    "team_id": 1346,
+    "ts": 1785858757.7344985,
+    "stats": {
+      "avg_goals_scored": 2.28,
+      "avg_goals_conceded": 0.67,
+      "avg_goals_scored_home": 2.51,
+      "avg_goals_conceded_home": 1.0,
+      "avg_goals_scored_away": 2.01,
+      "avg_goals_conceded_away": 0.29,
+      "recent_form_score": 1.5,
+      "recent_results": [
+        {
+          "date": "2026-05-02",
+          "venue": "ext",
+          "adversaire": "Watford",
+          "score": "4-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2026-04-26",
+          "venue": "dom",
+          "adversaire": "Wrexham",
+          "score": "3-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2026-04-21",
+          "venue": "dom",
+          "adversaire": "Portsmouth",
+          "score": "5-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2026-04-17",
+          "venue": "ext",
+          "adversaire": "Blackburn",
+          "score": "1-1",
+          "resultat": "N"
+        },
+        {
+          "date": "2026-04-11",
+          "venue": "dom",
+          "adversaire": "Sheffield Wednesday",
+          "score": "0-0",
+          "resultat": "N"
+        },
+        {
+          "date": "2026-04-06",
+          "venue": "ext",
+          "adversaire": "Hull City",
+          "score": "0-0",
+          "resultat": "N"
+        },
+        {
+          "date": "2026-04-03",
+          "venue": "dom",
+          "adversaire": "Derby",
+          "score": "3-2",
+          "resultat": "V"
+        },
+        {
+          "date": "2026-03-21",
+          "venue": "ext",
+          "adversaire": "Swansea",
+          "score": "3-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2026-03-14",
+          "venue": "dom",
+          "adversaire": "Southampton",
+          "score": "1-2",
+          "resultat": "D"
+        },
+        {
+          "date": "2026-03-11",
+          "venue": "dom",
+          "adversaire": "Preston",
+          "score": "3-0",
+          "resultat": "V"
+        }
+      ],
+      "matches_played": 15,
+      "last_match_date": "2026-05-02",
+      "stale": true,
+      "age_days": 94
+    }
+  },
+  "h2h::42-1346": {
+    "ts": 1785858764.2347944,
+    "stats": {
+      "matches": [
+        {
+          "date": "2014-01-24",
+          "home": "Arsenal",
+          "away": "Coventry",
+          "score": "4-0"
+        },
+        {
+          "date": "2012-09-26",
+          "home": "Arsenal",
+          "away": "Coventry",
+          "score": "6-1"
+        }
+      ],
+      "team1_wins": 2,
+      "draws": 0,
+      "team2_wins": 0,
+      "avg_goals": 5.5,
+      "btts_rate": 0.5,
+      "team1_avg_scored": 5.0,
+      "team2_avg_scored": 0.5,
+      "sample": 2
     }
   }
 }

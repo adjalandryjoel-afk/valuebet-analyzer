@@ -112,6 +112,8 @@ class OddsAPICollector:
         "super_lig": "soccer_turkey_super_league",
         "greece_super": "soccer_greece_super_league",
         "scotland_prem": "soccer_spl",
+        "pol_ekstraklasa": "soccer_poland_ekstraklasa",
+        "rus_premier": "soccer_russia_premier_league",
         # Deuxièmes divisions (lignes plus molles)
         "championship": "soccer_efl_champ",
         "bundesliga2": "soccer_germany_bundesliga2",
