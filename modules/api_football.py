@@ -87,11 +87,24 @@ class ApiFootballCollector:
     # Durée de vie des stats en cache (secondes)
     CACHE_TTL = 24 * 3600
 
+    # Durée de vie d'un ÉCHEC en cache. Bien plus courte qu'un succès :
+    # une stat obtenue est une donnée stable, alors qu'une absence de
+    # résultat est souvent circonstancielle (quota, plan limité, panne).
+    # À 24 h comme les succès, les échecs accumulés du plan gratuit
+    # survivaient à la souscription et l'app continuait de dire « pas
+    # de données » sans jamais retenter.
+    NEGATIVE_CACHE_TTL = 2 * 3600
+
     # Durée de vie d'un bilan H2H en cache (secondes)
     H2H_CACHE_TTL = 7 * 24 * 3600
 
     # Nombre de derniers matchs terminés utilisés
     LAST_FIXTURES = 15
+
+    # Minimum de matchs terminés pour qu'une saison soit exploitable.
+    # Doit rester aligné sur le seuil de _compute_stats : accepter une
+    # saison qui n'en a pas assez revient à ne renvoyer aucune stat.
+    MIN_FIXTURES = 5
 
     # Nombre de confrontations directes conservées
     H2H_LAST_MATCHES = 10
@@ -104,6 +117,10 @@ class ApiFootballCollector:
         self.cache_path = os.path.join(Paths.DATA_DIR, "api_cache.json")
         self.cache: Dict = self._load_cache()
         self._request_count = 0
+        # Passe à True au premier 401/403 : l'abonnement est inactif,
+        # inutile de retenter (et de payer la temporisation) à chaque
+        # équipe de chaque match.
+        self._abonnement_inactif = False
 
     # ─── CACHE DISQUE ───────────────────────────────
 
@@ -159,6 +176,16 @@ class ApiFootballCollector:
             print("      ⚠️ API-Football indisponible : clé API absente (.env)")
             return None
 
+        # Abonnement inactif : inutile de réessayer à chaque match.
+        # Sans ce court-circuit, chaque analyse payait 6,5 s de
+        # temporisation PAR ÉQUIPE (limiteur de débit) avant de
+        # recevoir un 403 — soit 13 s perdues par match, et un
+        # avertissement anxiogène à chaque fois. API-Football n'est
+        # plus qu'un repli : football-data.co.uk assure la source
+        # principale (forme, H2H, stats) sans clé ni quota.
+        if self._abonnement_inactif:
+            return None
+
         # Régulateur : le plan gratuit tolère 10 requêtes/minute —
         # espacer les appels évite les 429 (qui gâchent le quota)
         now = time.time()
@@ -186,6 +213,17 @@ class ApiFootballCollector:
             self._last_was_ratelimit = True
             print("      ⚠️ API-Football : limite de débit atteinte "
                   "(10 req/min) — réessayer dans une minute")
+            return None
+
+        if response.status_code in (401, 403):
+            # Clé refusée / abonnement expiré : c'est DÉFINITIF pour
+            # cette session, pas transitoire comme un 429.
+            self._abonnement_inactif = True
+            print("      ℹ️ API-Football désactivée pour cette session "
+                  f"(HTTP {response.status_code} : abonnement RapidAPI "
+                  "inactif). Sans effet sur l'analyse : la forme, les "
+                  "confrontations et les stats viennent de "
+                  "football-data.co.uk.")
             return None
 
         if response.status_code != 200:
@@ -304,15 +342,41 @@ class ApiFootballCollector:
         years = [int(y) for y in re.findall(r"\b(?:19|20)\d{2}\b", text)]
         return max(years) if years else None
 
+    # Au-delà de ce délai, la saison mémorisée est reconsidérée.
+    # Sans cela, une valeur apprise une fois se fige à VIE : le plan
+    # ayant autorisé 2022 à l'époque, l'app est restée bloquée sur
+    # des stats 2022 alors que 2024 était devenue accessible — quatre
+    # saisons de retard, servies comme si elles étaient actuelles.
+    SEASON_REVALIDATION_S = 30 * 24 * 3600
+
     def _remember_season(self, season: int):
         """Mémorise la saison accessible pour économiser les requêtes."""
 
         meta = self.cache.get("_meta")
         meta = meta if isinstance(meta, dict) else {}
-        if meta.get("season") != season:
+        if meta.get("season") != season or not meta.get("season_ts"):
             meta["season"] = season
+            meta["season_ts"] = time.time()
             self.cache["_meta"] = meta
             self._save_cache()
+
+    def _season_de_depart(self) -> int:
+        """
+        Saison par laquelle commencer à interroger l'API.
+
+        On repart de la saison COURANTE si la valeur mémorisée est
+        périmée (ou n'a jamais été datée) : le plan gratuit ouvre de
+        nouvelles saisons avec le temps, et rien ne le signale — sans
+        cette réévaluation, l'app vieillit silencieusement.
+        """
+        meta = self.cache.get("_meta")
+        meta = meta if isinstance(meta, dict) else {}
+        season = meta.get("season")
+        ts = meta.get("season_ts") or 0
+
+        if not season or (time.time() - ts) > self.SEASON_REVALIDATION_S:
+            return self._current_season()
+        return season
 
     def _fetch_last_fixtures(self, team_id: int) -> List[Dict]:
         """
@@ -323,9 +387,7 @@ class ApiFootballCollector:
         on filtre/trie côté client.
         """
 
-        meta = self.cache.get("_meta")
-        meta = meta if isinstance(meta, dict) else {}
-        season = meta.get("season") or self._current_season()
+        season = self._season_de_depart()
 
         for _ in range(4):
             data = self._request("/fixtures", {
@@ -351,7 +413,15 @@ class ApiFootballCollector:
                 if ((fx.get("fixture") or {}).get("status") or {})
                 .get("short") in self.FINISHED_STATUSES
             ]
-            if fixtures:
+
+            # Il faut ASSEZ de matchs, pas juste un. En tout début de
+            # saison (ou pendant l'intersaison), la saison courante
+            # contient 1-2 rencontres — Supercoupe, tour préliminaire —
+            # ce qui suffisait à figer la recherche ici, alors que
+            # _compute_stats en exige 5 : l'équipe repartait sans
+            # aucune statistique, silencieusement estimée depuis les
+            # cotes. On redescend tant qu'on n'a pas de quoi calculer.
+            if len(fixtures) >= self.MIN_FIXTURES:
                 self._remember_season(season)
                 # Les plus récents d'abord, limités à 15
                 fixtures.sort(
@@ -360,7 +430,7 @@ class ApiFootballCollector:
                 )
                 return fixtures[:self.LAST_FIXTURES]
 
-            # Saison vide (intersaison) → essayer la précédente
+            # Saison vide ou à peine commencée → essayer la précédente
             season -= 1
 
         return []
@@ -398,7 +468,7 @@ class ApiFootballCollector:
                 "opponent": (away if is_home else home).get("name") or "",
             })
 
-        if len(usable) < 5:
+        if len(usable) < self.MIN_FIXTURES:
             return None
 
         # Les plus récents en premier (pour la forme)
@@ -563,12 +633,14 @@ class ApiFootballCollector:
         entry = entry if isinstance(entry, dict) else {}
 
         # 1. Résultat frais en cache (y compris un échec) → zéro requête
-        # (en lecture seule, un cache même périmé fait foi)
-        if "stats" in entry and (
-            READONLY
-            or (time.time() - entry.get("ts", 0)) < self.CACHE_TTL
-        ):
-            return entry["stats"]
+        # (en lecture seule, un cache même périmé fait foi).
+        # Un échec expire beaucoup plus vite qu'un succès : voir
+        # NEGATIVE_CACHE_TTL.
+        if "stats" in entry:
+            ttl = (self.CACHE_TTL if entry.get("stats")
+                   else self.NEGATIVE_CACHE_TTL)
+            if READONLY or (time.time() - entry.get("ts", 0)) < ttl:
+                return entry["stats"]
 
         # 2. team_id : cache (conservé à vie) ou recherche API
         team_id = self._resolve_team_id(team_name)

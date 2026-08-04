@@ -18,6 +18,11 @@ from typing import Dict, Optional
 from dataclasses import dataclass, field
 
 from config import Paths, PoissonConfig, SUPPORTED_LEAGUES
+
+# Compétitions à élimination directe : elles ont leurs propres
+# paramètres (buts, avantage du terrain) et ne doivent JAMAIS hériter
+# de ceux du championnat national d'une des deux équipes.
+COUPES = {"champions_league", "europa_league", "world_cup"}
 from modules.api_football import get_api_collector
 from modules.odds_utils import novig_probs, margin_ok
 
@@ -206,6 +211,22 @@ class DataCollector:
         home_name = match_info["home"]["official_name"]
         away_name = match_info["away"]["official_name"]
         league = match_info.get("league", "unknown")
+
+        # Une COUPE nommée dans le libellé prime sur le championnat
+        # national déduit des équipes. Sans cela, un Roma - Ajax de
+        # Ligue Europa héritait des paramètres de Serie A (via la base
+        # locale, qui rattache Roma à son championnat) : mauvaise
+        # moyenne de buts, mauvais avantage du terrain. Les coupes
+        # d'Europe ont leurs propres paramètres dans SUPPORTED_LEAGUES.
+        if competition:
+            try:
+                from modules.football_data import get_football_data
+                cle_comp = get_football_data().league_from_competition(
+                    competition)
+                if cle_comp in COUPES:
+                    league = cle_comp
+            except Exception:
+                pass
 
         # La base d'équipes locale est minuscule (45 équipes) : dès
         # qu'une équipe en est absente, la ligue reste « unknown » et
