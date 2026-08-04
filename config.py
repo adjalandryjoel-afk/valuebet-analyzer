@@ -153,12 +153,19 @@ class ValueBetConfig:
     # Score de confiance minimum (0-100)
     MIN_CONFIDENCE_SCORE = 55
 
-    # Fourchette de cotes jouables. Plafond abaissé 6.00 → 4.50 :
-    # le backtest 2025/26 (grands championnats, 8500 matchs) montre
-    # que les value bets sur cotes > 4.5 sont un piège — biais
-    # favori-outsider + le modèle qui surestime les outsiders. En
-    # coupant cette tranche : ROI passe de -16.7% à -2.4% et CLV
-    # (l'indicateur avancé) de -7.0% à -3.6%. Réversible.
+    # Fourchette de cotes jouables. Plafond 4.50.
+    #
+    # Justification RÉVISÉE (backtest du 2026-07-26, 8500 matchs) :
+    # la première justification citait « ROI -16.7% → -2.4% », un
+    # chiffre issu de l'ANCIEN modèle (avant correction de la grille
+    # de répartition) et qui NE SE REPRODUIT PLUS. La vraie raison,
+    # elle, est structurelle et mesurée sur 18 030 sélections des
+    # 5 saisons : le CLV se dégrade de façon monotone avec la cote —
+    #   1.30-1.80 : -3.72%   1.80-2.50 : -4.73%
+    #   2.50-4.00 : -5.23%   4.00-6.00 : -7.49%   >6.00 : -13.38%
+    # Couper les grosses cotes est donc validé hors échantillon dans
+    # sa DIRECTION. Le niveau exact de 4.50 reste arbitraire : la
+    # dégradation est graduelle, rien ne distingue 4.50 de 4.00.
     MIN_ODDS = 1.30
     MAX_ODDS = 4.50
 

@@ -1923,7 +1923,7 @@
   },
   "fk sutjeska": {
     "team_id": 673,
-    "ts": 1784139925.0582807,
+    "ts": 1785429145.0667398,
     "stats": null
   },
   "kairat almaty": {
@@ -1942,7 +1942,7 @@
   },
   "cska sofia": {
     "team_id": 853,
-    "ts": 1784190027.0776172,
+    "ts": 1785426416.933991,
     "stats": null
   },
   "h2h::670-853": {
@@ -2000,7 +2000,7 @@
   },
   "fenerbahce": {
     "team_id": 611,
-    "ts": 1784219291.6426704,
+    "ts": 1785342465.0080118,
     "stats": null
   },
   "celtic": {
@@ -2015,7 +2015,7 @@
   },
   "anderlecht": {
     "team_id": 554,
-    "ts": 1784820174.6767292,
+    "ts": 1785426748.5520444,
     "stats": null
   },
   "club brugge": {
@@ -2280,25 +2280,25 @@
   },
   "hammarby": {
     "team_id": 363,
-    "ts": 1784820168.1852312,
+    "ts": 1785426754.7560906,
     "stats": null
   },
   "h2h::363-554": {
-    "ts": 1784820181.2159684,
+    "ts": 1785426761.5716617,
     "stats": null
   },
   "dynamo kiev": {
     "team_id": 1088,
-    "ts": 1784820407.2938828,
+    "ts": 1785426401.6722443,
     "stats": null
   },
   "paok": {
     "team_id": 619,
-    "ts": 1784820420.40895,
+    "ts": 1785426395.113408,
     "stats": null
   },
   "h2h::619-1088": {
-    "ts": 1784820426.8465865,
+    "ts": 1785426408.1053488,
     "stats": null
   },
   "sheriff tiraspol": {
@@ -2317,16 +2317,362 @@
   },
   "besiktas": {
     "team_id": 549,
-    "ts": 1784821362.0771015,
+    "ts": 1785425873.2439756,
     "stats": null
   },
   "fc midtjylland": {
     "team_id": 397,
-    "ts": 1784821374.5667303,
+    "ts": 1785425866.6384704,
     "stats": null
   },
   "h2h::397-549": {
     "ts": 1784821381.134437,
+    "stats": null
+  },
+  "lech poznan": {
+    "team_id": 347,
+    "ts": 1785342344.6468396,
+    "stats": null
+  },
+  "agf aarhus": {
+    "team_id": 406,
+    "ts": 1785342364.019969,
+    "stats": null
+  },
+  "h2h::347-406": {
+    "ts": 1785342370.2561874,
+    "stats": null
+  },
+  "universitatea craiova": {
+    "team_id": 632,
+    "ts": 1785342388.2574005,
+    "stats": null
+  },
+  "levski sofia": {
+    "team_id": 646,
+    "ts": 1785342400.8217168,
+    "stats": null
+  },
+  "h2h::632-646": {
+    "ts": 1785342407.3087924,
+    "stats": null
+  },
+  "hapoel beer sheva": {
+    "team_id": 563,
+    "ts": 1785342422.1710024,
+    "stats": null
+  },
+  "vikingur reykjavik": {
+    "team_id": 278,
+    "ts": 1785342435.2023313,
+    "stats": null
+  },
+  "h2h::278-563": {
+    "ts": 1785342441.3227386,
+    "stats": null
+  },
+  "gornik zabrze": {
+    "team_id": 340,
+    "ts": 1785342456.8371994,
+    "stats": null
+  },
+  "h2h::340-611": {
+    "ts": 1785342470.3367512,
+    "stats": null
+  },
+  "etoile rouge": {
+    "team_id": 3048,
+    "ts": 1785342502.0406764,
+    "stats": null
+  },
+  "fc hradec kralove": {
+    "team_id": 3723,
+    "ts": 1785425736.7322772,
+    "stats": null
+  },
+  "troms il": {
+    "team_id": 324,
+    "ts": 1785425756.413342,
+    "stats": null
+  },
+  "h2h::324-3723": {
+    "ts": 1785425762.7962093,
+    "stats": null
+  },
+  "pafos fc": {
+    "team_id": 3403,
+    "ts": 1785426367.0897505,
+    "stats": null
+  },
+  "hajduk split": {
+    "team_id": 608,
+    "ts": 1785426379.960136,
+    "stats": null
+  },
+  "h2h::608-3403": {
+    "ts": 1785426386.407349,
+    "stats": null
+  },
+  "qarabag": {
+    "team_id": 556,
+    "ts": 1785426429.9240115,
+    "stats": null
+  },
+  "h2h::556-853": {
+    "ts": 1785426436.3723392,
+    "stats": {
+      "matches": [
+        {
+          "date": "2026-07-23",
+          "home": "Qarabag",
+          "away": "CSKA Sofia",
+          "score": "0-0"
+        },
+        {
+          "date": "2023-07-04",
+          "home": "CSKA Sofia",
+          "away": "Qarabag",
+          "score": "0-1"
+        },
+        {
+          "date": "2021-07-07",
+          "home": "CSKA Sofia",
+          "away": "Qarabag",
+          "score": "0-1"
+        }
+      ],
+      "team1_wins": 2,
+      "draws": 1,
+      "team2_wins": 0,
+      "avg_goals": 0.67,
+      "btts_rate": 0.0,
+      "team1_avg_scored": 0.67,
+      "team2_avg_scored": 0.0,
+      "sample": 3
+    }
+  },
+  "ferencvarosi": {
+    "team_id": 651,
+    "ts": 1785426450.7131927,
+    "stats": null
+  },
+  "twente": {
+    "team_id": 415,
+    "ts": 1785426464.3434489,
+    "stats": null
+  },
+  "h2h::415-651": {
+    "ts": 1785426470.2710173,
+    "stats": null
+  },
+  "fc levadia tallinn": {
+    "team_id": 2273,
+    "ts": 1785427782.8835242,
+    "stats": null
+  },
+  "ifk goteborg": {
+    "team_id": 366,
+    "ts": 1785427795.8979647,
+    "stats": null
+  },
+  "h2h::366-2273": {
+    "ts": 1785427802.4273155,
+    "stats": null
+  },
+  "dinamo minsk": {
+    "team_id": 394,
+    "ts": 1785427816.4118564,
+    "stats": null
+  },
+  "neftchi": {
+    "team_id": 4217,
+    "ts": 1785427829.4412808,
+    "stats": null
+  },
+  "h2h::394-4217": {
+    "ts": 1785427836.6253426,
+    "stats": null
+  },
+  "fc petrocub": {
+    "team_id": 2271,
+    "ts": 1785427860.4232848,
+    "stats": null
+  },
+  "borac banja luka": {
+    "team_id": 3364,
+    "ts": 1785427873.2564464,
+    "stats": null
+  },
+  "h2h::2271-3364": {
+    "ts": 1785427879.8252275,
+    "stats": null
+  },
+  "dunajska streda": {
+    "team_id": 2257,
+    "ts": 1785428237.8047495,
+    "stats": null
+  },
+  "zalgiris vilnius": {
+    "team_id": 586,
+    "ts": 1785428277.649503,
+    "stats": null
+  },
+  "dinamo tbilisi": {
+    "team_id": 2262,
+    "ts": 1785428290.6973495,
+    "stats": null
+  },
+  "h2h::586-2262": {
+    "ts": 1785428297.128828,
+    "stats": {
+      "matches": [
+        {
+          "date": "2026-07-23",
+          "home": "Dinamo Tbilisi",
+          "away": "FK Zalgiris Vilnius",
+          "score": "3-0"
+        },
+        {
+          "date": "2023-02-01",
+          "home": "FK Zalgiris Vilnius",
+          "away": "Dinamo Tbilisi",
+          "score": "0-0"
+        }
+      ],
+      "team1_wins": 0,
+      "draws": 1,
+      "team2_wins": 1,
+      "avg_goals": 1.5,
+      "btts_rate": 0.0,
+      "team1_avg_scored": 0.0,
+      "team2_avg_scored": 1.5,
+      "sample": 2
+    }
+  },
+  "beitar jerusalem": {
+    "team_id": 657,
+    "ts": 1785428310.4663725,
+    "stats": null
+  },
+  "aek larnaca": {
+    "team_id": 614,
+    "ts": 1785428323.4968314,
+    "stats": null
+  },
+  "h2h::614-657": {
+    "ts": 1785428329.9746532,
+    "stats": {
+      "matches": [
+        {
+          "date": "2026-07-23",
+          "home": "AEK Larnaca",
+          "away": "Beitar Jerusalem",
+          "score": "0-1"
+        },
+        {
+          "date": "2021-07-22",
+          "home": "Beitar Jerusalem",
+          "away": "AEK Larnaca",
+          "score": "0-0"
+        }
+      ],
+      "team1_wins": 0,
+      "draws": 1,
+      "team2_wins": 1,
+      "avg_goals": 0.5,
+      "btts_rate": 0.0,
+      "team1_avg_scored": 0.0,
+      "team2_avg_scored": 0.5,
+      "sample": 2
+    }
+  },
+  "the new saints fc": {
+    "team_id": 354,
+    "ts": 1785428515.0824506,
+    "stats": null
+  },
+  "flora tallin": {
+    "team_id": 687,
+    "ts": 1785428528.124976,
+    "stats": null
+  },
+  "h2h::354-687": {
+    "ts": 1785428534.6145,
+    "stats": null
+  },
+  "flora tallinn": {
+    "team_id": 687,
+    "ts": 1785428547.7256908,
+    "stats": null
+  },
+  "ludogorets razgrad": {
+    "team_id": 566,
+    "ts": 1785428570.2774906,
+    "stats": null
+  },
+  "hapoel tel aviv": {
+    "team_id": 4501,
+    "ts": 1785428582.786306,
+    "stats": null
+  },
+  "h2h::566-4501": {
+    "ts": 1785428589.0829422,
+    "stats": null
+  },
+  "kf ballkani": {
+    "team_id": 12733,
+    "ts": 1785428610.176275,
+    "stats": null
+  },
+  "bohemians dublin": {
+    "team_id": 3840,
+    "ts": 1785428628.9398785,
+    "stats": null
+  },
+  "h2h::3840-12733": {
+    "ts": 1785428635.4290793,
+    "stats": null
+  },
+  "gks katowice": {
+    "team_id": 3484,
+    "ts": 1785428892.9884715,
+    "stats": null
+  },
+  "msk zilina": {
+    "team_id": 585,
+    "ts": 1785428912.378179,
+    "stats": null
+  },
+  "h2h::585-3484": {
+    "ts": 1785428918.9289155,
+    "stats": null
+  },
+  "coleraine": {
+    "team_id": 669,
+    "ts": 1785428932.3465025,
+    "stats": null
+  },
+  "hjk helsinki": {
+    "team_id": 649,
+    "ts": 1785428945.3143487,
+    "stats": null
+  },
+  "h2h::649-669": {
+    "ts": 1785428952.0986197,
+    "stats": null
+  },
+  "dinamo tirana": {
+    "team_id": 3326,
+    "ts": 1785428966.1849544,
+    "stats": null
+  },
+  "nk aluminij": {
+    "team_id": 4358,
+    "ts": 1785428985.8237731,
+    "stats": null
+  },
+  "h2h::3326-4358": {
+    "ts": 1785428992.220163,
     "stats": null
   }
 }

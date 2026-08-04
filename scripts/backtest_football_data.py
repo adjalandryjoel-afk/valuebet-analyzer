@@ -67,7 +67,12 @@ DIVISIONS = {
     "F1": "ligue1_fr",
 }
 
-MARKET_WEIGHT_GRID = [0.5, 0.6, 0.7, 0.8, 0.9]
+# La grille s'arrêtait à 0.9 — et 0.9 ressortait comme « optimal »
+# alors que c'était simplement la BORNE. En l'étendant, le log-loss
+# continue de baisser jusqu'à 1.0 (marché pur), sur train ET test :
+# la composante statistique maison DÉGRADE la prédiction 1X2. Ne
+# jamais laisser un optimum se poser sur le bord d'une grille.
+MARKET_WEIGHT_GRID = [0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.98, 1.0]
 
 MIN_HISTORY = 5      # matchs d'historique minimum par équipe
 WINDOW = 15          # fenêtre de matchs récents
