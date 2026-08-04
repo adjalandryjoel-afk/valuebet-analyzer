@@ -332,6 +332,47 @@ def render_sidebar_settings():
 
 
 # ══════════════════════════════════════════════════════
+#  STATUT DE VALIDATION D'UN PARI (honnêteté backtest)
+# ══════════════════════════════════════════════════════
+
+# Championnats réellement couverts par le backtest (5 grands, 8500
+# matchs, saisons 2021-2526). Tout le reste n'a JAMAIS été validé.
+_LIGUES_BACKTESTEES = {
+    "premier_league", "la_liga", "serie_a", "bundesliga", "ligue1_fr",
+}
+
+
+def statut_validation(market: str, league: str):
+    """
+    Ce que le backtest dit VRAIMENT de ce type de pari.
+
+    Backtest du 2026-07-26 (8500 matchs, vérifié deux fois) :
+      • 1X2 sur les 5 grands championnats : MESURÉ, et l'espérance
+        est significativement NÉGATIVE (CLV -4.72 %, p=0.00003).
+        Les paris venaient du bruit du modèle, pas de son
+        information — à poids marché ≥ 0.95, il n'en reste aucun.
+      • Tout le reste (marchés secondaires, autres championnats) :
+        JAMAIS backtesté. Ni validé, ni invalidé.
+
+    Retourne (niveau, message) avec niveau dans
+    {"negatif", "non_teste"}.
+    """
+    est_1x2 = (market or "").strip().upper() == "1X2"
+
+    if est_1x2 and league in _LIGUES_BACKTESTEES:
+        return ("negatif",
+                "Backtest : sur le 1X2 des 5 grands championnats, ce "
+                "type de signal a une espérance de gain MESURÉE comme "
+                "négative (CLV -4.7 %, marge du bookmaker non "
+                "franchie). Aucun avantage prouvé.")
+
+    return ("non_teste",
+            "Ce marché n'a jamais été backtesté : ni validé, ni "
+            "invalidé. Le seul backtest existant ne couvre que le "
+            "1X2 des 5 grands championnats.")
+
+
+# ══════════════════════════════════════════════════════
 #  PAGE : MATCHS DU JOUR (scan automatique)
 # ══════════════════════════════════════════════════════
 
@@ -918,6 +959,9 @@ def analyze_matches_ui(matches, bankroll, min_value, min_confidence,
         analysis._stakes = stakes
         analysis._intel = intel_report
         analysis._verdict = verdict
+        # Ligue détectée : sert à dire honnêtement si le backtest
+        # couvre (ou non) ce type de pari — voir statut_validation()
+        analysis._league = getattr(context, "league", "") or ""
         analysis._data_sources = {
             "elo": getattr(elo_pred, "elo_source", "estimé"),
             "xg": bool(
@@ -1402,6 +1446,7 @@ def display_results(analyses, bankroll):
                         f"value bet(s) détecté(s)**"
                     )
 
+                    _ligue_ctx = getattr(analysis, "_league", "") or ""
                     for vb in analysis.value_bets:
                         with st.container(border=True):
                             c_sel, c_conf, c_mise, c_pct = st.columns(
@@ -1421,6 +1466,21 @@ def display_results(analyses, bankroll):
                                 "Mise", f"{vb.recommended_stake:,.0f} FCFA")
                             c_pct.metric(
                                 "Bankroll", f"{vb.kelly_stake:.1f}%")
+
+                            # Honnêteté : ce que le backtest dit — ou
+                            # ne dit pas — de ce type de pari.
+                            niveau, message = statut_validation(
+                                vb.market, _ligue_ctx)
+                            if niveau == "negatif":
+                                st.caption(
+                                    f":red-badge[:material/warning: aucun "
+                                    f"avantage prouvé] {message}"
+                                )
+                            else:
+                                st.caption(
+                                    f":gray-badge[:material/science: non "
+                                    f"backtesté] {message}"
+                                )
                 else:
                     st.caption(
                         ":material/do_not_disturb_on: Aucun value bet détecté — "
