@@ -843,6 +843,89 @@ def _test_apparie_xg(test_sans, test_avec, weight):
     }
 
 
+def par_saison(test, poids):
+    """
+    Le verdict tient-il sur CHAQUE saison de test, ou repose-t-il sur
+    une seule ?
+
+    Un résultat agrégé sur plusieurs saisons peut masquer une saison
+    excellente et une catastrophique. La saison la plus récente
+    compte particulièrement : c'est celle qui ressemble le plus aux
+    matchs à venir.
+    """
+
+    out = {}
+    saisons = sorted({m["season"] for m in test})
+    for s in saisons:
+        sous = [m for m in test if m["season"] == s]
+        if len(sous) < 100:
+            continue
+        outcomes = [m["outcome"] for m in sous]
+        b365 = market_prob_rows(sous, "b365")
+        psc = market_prob_rows(sous, "psc")
+
+        # DEUX BASES DISTINCTES, et il faut les séparer.
+        #
+        # Comparer un log-loss de modèle calculé sur TOUS les matchs à
+        # un log-loss de cote calculé sur les seuls matchs ayant
+        # ouverture ET clôture produit des colonnes qui ne parlent pas
+        # des mêmes matchs. Ce projet s'est déjà fait prendre.
+        #
+        # Et la clôture n'est PAS toujours disponible : football-data
+        # n'a publié la clôture Pinnacle que sur ~la moitié de la
+        # saison 2025-26 (210 matchs sur 380 en Premier League), alors
+        # que l'ouverture y est complète. Restreindre toute la
+        # comparaison à ce demi-échantillon la biaiserait — c'est ce
+        # qui faisait apparaître la clôture MOINS bonne que
+        # l'ouverture, un résultat impossible en soi.
+        #
+        # Base principale : les matchs cotés à l'OUVERTURE (complets).
+        # La clôture est rapportée à part, avec son propre effectif.
+        idx = [i for i in range(len(sous)) if b365[i] is not None]
+        if len(idx) < 100:
+            continue
+        idx_clo = [i for i in idx if psc[i] is not None]
+        psc_ok = [psc[i] for i in idx_clo]
+        y_clo = [outcomes[i] for i in idx_clo]
+        sous = [sous[i] for i in idx]
+        outcomes = [outcomes[i] for i in idx]
+        b365 = [b365[i] for i in idx]
+        y = outcomes
+
+        rows_mod = [model_probs(m, poids)[:3] for m in sous]
+        rows_pur = [model_probs(m, 1.0)[:3] for m in sous]
+
+        # Le modèle bat-il le marché pur, sur CETTE saison ?
+        d = []
+        for m in sous:
+            o = m["outcome"]
+            pm = max(model_probs(m, poids)[o], 1e-12)
+            pp = max(model_probs(m, 1.0)[o], 1e-12)
+            d.append(math.log(pm) - math.log(pp))
+        n = len(d)
+        moy = sum(d) / n
+        var = sum((v - moy) ** 2 for v in d) / (n - 1)
+        et = math.sqrt(var / n) if var > 0 else 0.0
+        t = (moy / et) if et > 0 else 0.0
+
+        out[s] = {
+            "n": n,
+            "logloss_modele": round(log_loss_1x2(rows_mod, outcomes), 5),
+            "logloss_marche_pur": round(log_loss_1x2(rows_pur, outcomes), 5),
+            "logloss_b365": round(log_loss_1x2(b365, y), 5),
+            "logloss_cloture": (round(log_loss_1x2(psc_ok, y_clo), 5)
+                                if len(idx_clo) >= 100 else None),
+            "n_avec_cloture": len(idx_clo),
+            "note": ("modèle, marché pur et ouverture portent sur les "
+                     "mêmes matchs (n) ; la clôture sur n_avec_cloture, "
+                     "football-data ne l'ayant pas publiée partout"),
+            "vs_marche_pur_t": round(t, 3),
+            "bat_le_marche": bool(t > 1.96),
+            "pire_que_le_marche": bool(t < -1.96),
+        }
+    return out
+
+
 def courbe_logloss(matches, etiquette=""):
     """Log-loss 1X2 pour chaque MARKET_WEIGHT de la grille."""
 
@@ -1151,6 +1234,16 @@ def main():
     print("6) Stratégie value quart-Kelly + CLV ...")
     strategy = simulate_strategy(test, model_rows)
 
+    print("6bis) Ventilation par saison de test ...")
+    saisons_detail = par_saison(test, w_app)
+    for s_, d_ in saisons_detail.items():
+        v_ = ("BAT le marché" if d_["bat_le_marche"]
+              else "PIRE" if d_["pire_que_le_marche"] else "indiscernable")
+        print(f"   {s_} : {d_['n']} matchs · modèle "
+              f"{d_['logloss_modele']:.5f} vs marché pur "
+              f"{d_['logloss_marche_pur']:.5f}  t={d_['vs_marche_pur_t']:+.2f} "
+              f"→ {v_}")
+
     print("7) Stats empiriques par ligue (mi-temps, tirs cadrés) ...")
     half_share, sot_per_goal = empirical_league_stats(frames)
 
@@ -1200,6 +1293,7 @@ def main():
         "brier": metrics["brier"],
         "logloss": metrics["logloss"],
         "n_matchs_compares": metrics["n_matchs_compares"],
+        "par_saison": saisons_detail,
         "calibration": {"home_win": calib_home, "over25": calib_over},
         "strategie": strategy,
         "mi_temps_par_ligue": half_share,

@@ -1,5 +1,5 @@
 {
-  "genere_le": "2026-08-05T04:02:32+00:00",
+  "genere_le": "2026-08-05T15:03:45+00:00",
   "source": "football-data.co.uk (B365 ouverture, Pinnacle clôture)",
   "saisons_train": [
     "2122",
@@ -95,6 +95,32 @@
     "marche_cloture": 0.96078
   },
   "n_matchs_compares": 2595,
+  "par_saison": {
+    "2425": {
+      "n": 1722,
+      "logloss_modele": 0.96146,
+      "logloss_marche_pur": 0.96194,
+      "logloss_b365": 0.96295,
+      "logloss_cloture": 0.95896,
+      "n_avec_cloture": 1722,
+      "note": "modèle, marché pur et ouverture portent sur les mêmes matchs (n) ; la clôture sur n_avec_cloture, football-data ne l'ayant pas publiée partout",
+      "vs_marche_pur_t": 0.744,
+      "bat_le_marche": false,
+      "pire_que_le_marche": false
+    },
+    "2526": {
+      "n": 1727,
+      "logloss_modele": 0.97988,
+      "logloss_marche_pur": 0.9788,
+      "logloss_b365": 0.97917,
+      "logloss_cloture": 0.96438,
+      "n_avec_cloture": 873,
+      "note": "modèle, marché pur et ouverture portent sur les mêmes matchs (n) ; la clôture sur n_avec_cloture, football-data ne l'ayant pas publiée partout",
+      "vs_marche_pur_t": -1.699,
+      "bat_le_marche": false,
+      "pire_que_le_marche": false
+    }
+  },
   "calibration": {
     "home_win": [
       {
@@ -295,5 +321,5 @@
       "n_matchs": 1678
     }
   },
-  "duree_backtest_s": 131.1
+  "duree_backtest_s": 133.5
 }
