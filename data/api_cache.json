@@ -536,7 +536,8 @@
   },
   "fenerbahce": {
     "team_id": 611,
-    "stats": null
+    "stats": null,
+    "ts": 1785904671.7526317
   },
   "celtic": {
     "team_id": 247,
@@ -599,7 +600,8 @@
   },
   "sturm graz": {
     "team_id": 637,
-    "stats": null
+    "stats": null,
+    "ts": 1785904672.6825373
   },
   "atlas": {
     "team_id": 2283,
@@ -1632,5 +1634,32 @@
   },
   "viborg": {
     "team_id": 2070
+  },
+  "h2h::611-637": {
+    "ts": 1785904674.0065331,
+    "stats": {
+      "matches": [
+        {
+          "date": "2017-08-03",
+          "home": "Fenerbahçe",
+          "away": "Sturm Graz",
+          "score": "1-1"
+        },
+        {
+          "date": "2017-07-27",
+          "home": "Sturm Graz",
+          "away": "Fenerbahçe",
+          "score": "1-2"
+        }
+      ],
+      "team1_wins": 1,
+      "draws": 1,
+      "team2_wins": 0,
+      "avg_goals": 2.5,
+      "btts_rate": 1.0,
+      "team1_avg_scored": 1.5,
+      "team2_avg_scored": 1.0,
+      "sample": 2
+    }
   }
 }

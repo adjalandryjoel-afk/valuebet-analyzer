@@ -1,0 +1,140 @@
+{
+  "genere_le": "2026-08-05T05:21:16+00:00",
+  "perimetre": "championnats secondaires",
+  "ligues": [
+    "championship",
+    "primeira_liga",
+    "belgium_pro",
+    "super_lig"
+  ],
+  "source_xg": "API-Football (/fixtures/statistics)",
+  "saisons_train": [
+    "2324",
+    "2425"
+  ],
+  "saisons_test": [
+    "2526"
+  ],
+  "n_matchs_train": 2796,
+  "n_matchs_test": 1433,
+  "n_matchs_avec_xg": 4543,
+  "poids_marche": {
+    "courbe_train_sans_xg": {
+      "0.50": 0.98765,
+      "0.60": 0.98147,
+      "0.70": 0.97668,
+      "0.80": 0.9732,
+      "0.90": 0.97111,
+      "0.95": 0.9706,
+      "0.98": 0.97046,
+      "1.00": 0.97045
+    },
+    "courbe_train_avec_xg": {
+      "0.50": 0.97725,
+      "0.60": 0.9747,
+      "0.70": 0.97276,
+      "0.80": 0.97142,
+      "0.90": 0.97065,
+      "0.95": 0.97048,
+      "0.98": 0.97044,
+      "1.00": 0.97045
+    },
+    "courbe_test_sans_xg": {
+      "0.50": 1.01983,
+      "0.60": 1.0132,
+      "0.70": 1.00751,
+      "0.80": 1.00274,
+      "0.90": 0.99885,
+      "0.95": 0.99723,
+      "0.98": 0.99636,
+      "1.00": 0.99582
+    },
+    "courbe_test_avec_xg": {
+      "0.50": 1.01048,
+      "0.60": 1.00668,
+      "0.70": 1.00332,
+      "0.80": 1.0004,
+      "0.90": 0.9979,
+      "0.95": 0.99681,
+      "0.98": 0.9962,
+      "1.00": 0.99582
+    },
+    "meilleur_test_sans_xg": 1.0,
+    "meilleur_test_avec_xg": 1.0,
+    "valeur_app": 0.9,
+    "vs_marche_pur": {
+      "0.70": {
+        "ecart_moyen": -0.0075013,
+        "t": -4.649,
+        "bat_le_marche": false,
+        "pire_que_le_marche": true
+      },
+      "0.80": {
+        "ecart_moyen": -0.0045796,
+        "t": -4.277,
+        "bat_le_marche": false,
+        "pire_que_le_marche": true
+      },
+      "0.90": {
+        "ecart_moyen": -0.0020815,
+        "t": -3.902,
+        "bat_le_marche": false,
+        "pire_que_le_marche": true
+      },
+      "0.95": {
+        "ecart_moyen": -0.0009891,
+        "t": -3.713,
+        "bat_le_marche": false,
+        "pire_que_le_marche": true
+      },
+      "0.98": {
+        "ecart_moyen": -0.0003833,
+        "t": -3.6,
+        "bat_le_marche": false,
+        "pire_que_le_marche": true
+      }
+    }
+  },
+  "apport_xg": {
+    "n_matchs": 1433,
+    "ecart_moyen": 0.0009418,
+    "erreur_type": 0.0005395,
+    "t": 1.746,
+    "significatif": false,
+    "lecture": "positif = le xG ameliore la prediction ; |t| > 1.96 = significatif a 5 %"
+  },
+  "brier": {
+    "modele": 0.59831,
+    "marche_b365": 0.59644,
+    "marche_cloture": 0.59272
+  },
+  "logloss": {
+    "modele": 0.99732,
+    "marche_b365": 0.99538,
+    "marche_cloture": 0.99054
+  },
+  "brier_sans_xg": 0.59847,
+  "logloss_sans_xg": 0.99754,
+  "n_matchs_compares": 616,
+  "strategie": {
+    "n_paris": 1,
+    "mise_totale": 737.0,
+    "roi_pct": 290.0,
+    "profit": 2136.0,
+    "win_rate": 1.0,
+    "cote_moyenne": 3.9,
+    "value_moyenne_pct": 8.54,
+    "clv_moyen_pct": null,
+    "clv_positif_pct": null,
+    "n_paris_avec_clv": 0,
+    "par_seuil": {
+      "cotes_2.50-4.00_seuil_8pct": {
+        "n_paris": 1,
+        "roi_pct": 290.0,
+        "profit": 2136.0,
+        "win_rate": 1.0
+      }
+    }
+  },
+  "duree_s": 86.9
+}

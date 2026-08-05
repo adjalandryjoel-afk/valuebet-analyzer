@@ -23,3 +23,6 @@ data/clubelo_cache.json
 data/xg_cache.json
 data/clv_daemon.log
 data/clv_daemon_state.json
+
+# Artefact de soccerdata (verrou du pilote de scraping)
+downloaded_files/
