@@ -105,6 +105,12 @@ MOTIFS_FR = {
 # reposée, elle est sans rythme.
 SEUIL_REPRISE_JOURS = 30
 
+# Au-delà, un carton rouge ne dit plus rien de la prochaine
+# rencontre : la suspension a été purgée entre-temps, ou la trêve
+# est passée. Deux semaines couvrent le cas normal (suspension de
+# 1 à 3 matchs) sans annoncer un carton de la saison précédente.
+SEUIL_ROUGE_JOURS = 14
+
 
 def _fr_motif(motif: Optional[str]) -> str:
     if not motif:
@@ -255,9 +261,13 @@ class MatchBriefBuilder:
     # Streamlit (un simple clic en déclenche une).
     CACHE_TTL_S = 30 * 60
 
+    # Un classement bouge au rythme des journées : quelques heures
+    # suffisent largement, mais il ne doit pas être éternel.
+    STANDINGS_TTL_S = 6 * 3600
+
     def __init__(self):
         self.api = get_api_collector()
-        self._standings_cache: Dict[Tuple[int, int], Dict] = {}
+        self._standings_cache: Dict[Tuple[int, int], Tuple] = {}
         self._briefs: Dict[Tuple, Tuple[float, MatchBrief]] = {}
 
     # ─── POINT D'ENTRÉE ─────────────────────────────
@@ -311,7 +321,8 @@ class MatchBriefBuilder:
 
         # Le match lui-même : on le cherche dans les matchs programmés
         # de l'équipe à domicile en filtrant sur l'adversaire.
-        fixture = self._trouver_affiche(cal_home[1], id_away)
+        fixture = self._trouver_affiche(
+            cal_home[1], id_away, id_home, fiche.kickoff)
         if fixture and not fiche.kickoff:
             fiche.kickoff = _parse_dt(
                 (fixture.get("fixture") or {}).get("date"))
@@ -325,8 +336,8 @@ class MatchBriefBuilder:
                                (fiche.exterieur, id_away, cal_away)):
             if not ident:
                 continue
-            self._remplir_calendrier(eq, cal, ko)
-            self._remplir_rouges(eq, cal[0])
+            self._remplir_calendrier(eq, cal, ko, ident)
+            self._remplir_rouges(eq, cal[0], ident)
 
         # Absents : UNE requête donne les deux équipes
         if fixture:
@@ -336,6 +347,30 @@ class MatchBriefBuilder:
                 "Match introuvable au calendrier API — absents non "
                 "consultés (l'affiche n'est peut-être pas encore "
                 "programmée, ou les noms diffèrent)")
+
+        # ── CONTRÔLE DE VRAISEMBLANCE D'IDENTITÉ ──
+        #
+        # Le seul contrôle jusqu'ici était « un identifiant a été
+        # renvoyé ». Or la recherche par nom peut renvoyer un TOUT
+        # AUTRE club (homonyme, équipe réserve, club historique) : la
+        # fiche publiait alors ses absents, son repos et son classement
+        # comme s'il s'agissait de l'équipe analysée, sans un mot.
+        #
+        # Signal simple et robuste : un club actif joue régulièrement.
+        # Si son dernier match connu précède le coup d'envoi de plus
+        # que le seuil de reprise, c'est très probablement le mauvais
+        # club — une équipe réserve dissoute, un club renommé.
+        for eq, role in ((fiche.domicile, "domicile"),
+                         (fiche.exterieur, "extérieur")):
+            if (eq.repos_jours is not None
+                    and eq.repos_jours > SEUIL_REPRISE_JOURS
+                    and ko is not None):
+                fiche.avertissements.append(
+                    f"Identité à vérifier ({role}) : le club trouvé pour "
+                    f"« {eq.nom} » n'a pas joué depuis "
+                    f"{eq.repos_jours:.0f} jours. Reprise de saison, ou "
+                    f"mauvais club (homonyme, équipe réserve) ?"
+                )
 
         # Classement
         if league in LEAGUE_IDS:
@@ -368,22 +403,56 @@ class MatchBriefBuilder:
 
     @staticmethod
     def _trouver_affiche(prevus: List[Dict],
-                         id_adverse: Optional[int]) -> Optional[Dict]:
-        """Le prochain match opposant les deux équipes."""
+                         id_adverse: Optional[int],
+                         id_domicile: Optional[int] = None,
+                         kickoff: Optional[datetime] = None
+                         ) -> Optional[Dict]:
+        """
+        LA rencontre analysée parmi les matchs à venir.
+
+        Sur un tour aller/retour, les deux équipes s'affrontent DEUX
+        fois dans la fenêtre. La version précédente prenait le premier
+        match rencontré : elle pouvait donc décrire l'autre manche —
+        stade, météo et liste d'absents de la mauvaise rencontre, sans
+        le moindre avertissement.
+
+        On départage : par proximité avec le coup d'envoi quand il est
+        connu, sinon par l'orientation (l'équipe analysée reçoit).
+        """
 
         if not id_adverse:
             return None
+
+        candidats = []
         for fx in prevus:
             eq = fx.get("teams") or {}
             ids = {(eq.get("home") or {}).get("id"),
                    (eq.get("away") or {}).get("id")}
             if id_adverse in ids:
-                return fx
-        return None
+                candidats.append(fx)
+        if not candidats:
+            return None
+        if len(candidats) == 1:
+            return candidats[0]
+
+        if kickoff is not None:
+            def ecart(fx):
+                d = _parse_dt((fx.get("fixture") or {}).get("date"))
+                return (abs((d - kickoff).total_seconds())
+                        if d else float("inf"))
+            return min(candidats, key=ecart)
+
+        if id_domicile is not None:
+            for fx in candidats:
+                if (((fx.get("teams") or {}).get("home") or {})
+                        .get("id") == id_domicile):
+                    return fx
+        return candidats[0]
 
     def _remplir_calendrier(self, eq: FicheEquipe,
                             cal: Tuple[List[Dict], List[Dict]],
-                            ko: Optional[datetime]):
+                            ko: Optional[datetime],
+                            team_id: Optional[int] = None):
         """
         Repos réel et charge de calendrier.
 
@@ -425,7 +494,7 @@ class MatchBriefBuilder:
             "date": (_date_de(dernier) or "")[:10],
             "competition": ((dernier.get("league") or {}).get("name") or ""),
             "adversaire": _adversaire(dernier, eq.nom),
-            "score": _score(dernier),
+            "score": _score(dernier, team_id),
             "joue": _est_joue(dernier),
         }
         if ko and d_dt:
@@ -525,7 +594,8 @@ class MatchBriefBuilder:
 
     # ─── SUSPENSIONS PROBABLES ──────────────────────
 
-    def _remplir_rouges(self, eq: FicheEquipe, joues: List[Dict]):
+    def _remplir_rouges(self, eq: FicheEquipe, joues: List[Dict],
+                        team_id: Optional[int] = None):
         """
         Carton rouge au dernier match joué → suspension quasi certaine.
 
@@ -553,17 +623,33 @@ class MatchBriefBuilder:
             return
         eq.rouges_dispo = True
 
-        equipe_ref = _nom_equipe_de(competitifs[0], eq.nom)
+        # Filtrage par IDENTIFIANT, pas par nom. La comparaison de
+        # noms se désactivait en silence dès que le nom saisi ne
+        # correspondait pas exactement à celui de l'API — et le joueur
+        # expulsé de l'ADVERSAIRE devenait alors une suspension de
+        # l'équipe analysée.
         for ev in (data.get("response") or []):
             detail = str(ev.get("detail") or "").lower()
             if "red card" not in detail:
                 continue
-            nom_eq = ((ev.get("team") or {}).get("name") or "")
-            if equipe_ref and nom_eq != equipe_ref:
+            id_ev = ((ev.get("team") or {}).get("id"))
+            if team_id is not None and id_ev != team_id:
                 continue
+            if team_id is None:
+                continue      # sans identifiant, on n'attribue rien
             joueur = ((ev.get("player") or {}).get("name") or "?")
             if joueur not in eq.rouges:
                 eq.rouges.append(joueur)
+
+        # Un rouge ne vaut suspension que s'il est RÉCENT. Sans cette
+        # borne, un carton pris avant l'intersaison était annoncé
+        # « suspension probable » sur la fiche même où le module
+        # écrivait « reprise après 92 jours sans match ». La purge
+        # est appliquée après coup pour garder rouges_dispo à True :
+        # la donnée existe, elle n'est simplement plus pertinente.
+        if eq.rouges and (eq.repos_jours is None
+                          or eq.repos_jours > SEUIL_ROUGE_JOURS):
+            eq.rouges = []
 
     # ─── CLASSEMENT ─────────────────────────────────
 
@@ -585,7 +671,15 @@ class MatchBriefBuilder:
         saison = self.api._current_season()
         cle = (lid, saison)
 
-        if cle not in self._standings_cache:
+        # Cache horodaté, et surtout : un ECHEC n'est jamais mémorisé.
+        # La version précédente stockait la table même vide, figeant
+        # une panne réseau pour toute la vie du processus Streamlit —
+        # tous les classements suivants restaient absents sans qu'on
+        # sache pourquoi.
+        garde = self._standings_cache.get(cle)
+        if garde and (time.time() - garde[0]) < self.STANDINGS_TTL_S:
+            table = garde[1]
+        else:
             data = self.api._request("/standings",
                                      {"league": lid, "season": saison})
             table = {}
@@ -598,9 +692,9 @@ class MatchBriefBuilder:
                             tid = ((r.get("team") or {}).get("id"))
                             if tid:
                                 table[tid] = r
-            self._standings_cache[cle] = table
+            if table:
+                self._standings_cache[cle] = (time.time(), table)
 
-        table = self._standings_cache[cle]
         if not table:
             return
 
@@ -739,10 +833,24 @@ def _nom_equipe_de(fx: Dict, nom_equipe: str) -> Optional[str]:
     return None
 
 
-def _score(fx: Dict) -> str:
+def _score(fx: Dict, team_id: Optional[int] = None) -> str:
+    """
+    Score du point de vue de l'ÉQUIPE de la fiche : ses buts d'abord.
+
+    La version précédente renvoyait toujours domicile-extérieur. Or la
+    ligne affichée est « Dernier : date vs Adversaire — 2-1 » : sur un
+    match joué à l'extérieur, elle se lisait donc à l'envers, et une
+    défaite 1-2 s'affichait comme une victoire 2-1.
+    """
+
     buts = fx.get("goals") or {}
     d, e = buts.get("home"), buts.get("away")
-    return f"{d}-{e}" if d is not None and e is not None else "—"
+    if d is None or e is None:
+        return "—"
+    eq = fx.get("teams") or {}
+    if team_id is not None and (eq.get("away") or {}).get("id") == team_id:
+        d, e = e, d
+    return f"{d}-{e}"
 
 
 def _fr_enjeu(desc: Optional[str]) -> Optional[str]:
