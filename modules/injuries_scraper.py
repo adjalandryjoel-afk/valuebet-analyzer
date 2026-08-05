@@ -34,6 +34,16 @@ class TeamAbsences:
     """Toutes les absences d'une équipe."""
 
     team_name: str
+
+    # DISTINGUE « aucun absent » de « on n'a rien pu lire ».
+    #
+    # Sans ce drapeau, un échec de scraping produisait un objet vide
+    # que _describe_impact traduisait en « Effectif au complet » :
+    # l'app affirmait une équipe au complet alors qu'elle n'avait
+    # strictement rien lu. Sur un pari en argent réel, c'est le pire
+    # mode de défaillance — le module ne se tait pas, il ment.
+    data_available: bool = False
+
     total_absent: int = 0
     injuries: List[PlayerAbsence] = field(default_factory=list)
     suspensions: List[PlayerAbsence] = field(default_factory=list)
@@ -186,6 +196,9 @@ class InjuriesScraper:
                 except Exception:
                     continue
 
+            # On n'a lu la page qu'ici : c'est le seul endroit où le
+            # résultat est réellement une observation.
+            absences.data_available = True
             absences.total_absent = len(absences.injuries) + len(absences.suspensions)
             absences.total_impact = sum(
                 p.impact_score for p in absences.injuries + absences.suspensions
@@ -261,6 +274,18 @@ class InjuriesScraper:
             Dict avec les ajustements de probabilité
         """
 
+        # Rien n'a pu être lu : AUCUN ajustement, et on le dit.
+        # Un ajustement de 0 accompagné de « effectif au complet »
+        # serait une affirmation ; ici c'est un aveu d'ignorance.
+        if not absences.data_available:
+            return {
+                "win_prob_adjustment": 0.0,
+                "goals_adjustment": 0.0,
+                "description": ("Données d'absence indisponibles "
+                                "(source illisible) — aucun ajustement"),
+                "severity": "⚪ Inconnu",
+            }
+
         total_impact = absences.total_impact
 
         return {
@@ -279,8 +304,11 @@ class InjuriesScraper:
 
         parts = []
 
+        if not absences.data_available:
+            return "Données d'absence indisponibles (source illisible)"
+
         if absences.total_absent == 0:
-            return "Effectif au complet"
+            return "Aucun absent listé par la source"
 
         parts.append(f"{absences.total_absent} absent(s)")
 

@@ -49,18 +49,22 @@ class XgProvider:
         "ligue1_fr": "FRA-Ligue 1",
     }
 
-    # Saisons essayées dans l'ordre (2025 = saison 2025-26)
-    SEASONS = (2025, 2024)
-
     # Cache local des profils calculés
     CACHE_TTL_SECONDS = 24 * 3600
 
     # Score rapidfuzz minimum pour accepter une correspondance de nom
     FUZZY_THRESHOLD = 70
 
-    # Au-delà de cette ancienneté du dernier match, le profil
-    # est jugé périmé et n'est pas utilisé
-    MAX_STALENESS_DAYS = 550
+    # Au-delà de cette ancienneté du dernier match, le profil est
+    # jugé périmé et n'est pas utilisé.
+    #
+    # Était à 550 jours : plus d'une saison ET DEMIE. Le cache servait
+    # réellement des profils de 444 jours (Bochum et Holstein Kiel en
+    # 2024-25) comme s'ils décrivaient l'équipe d'aujourd'hui — une
+    # équipe reléguée, à l'effectif changé, dont le xG ne dit plus
+    # rien. 180 jours laisse passer une saison en cours et l'été,
+    # mais jamais une saison entière de retard.
+    MAX_STALENESS_DAYS = 180
 
     # Snapshot committé depuis le PC : permet au cloud (sans
     # soccerdata) de servir les profils xG quand même
@@ -161,11 +165,29 @@ class XgProvider:
 
     # ─── CALCUL DU PROFIL ───────────────────────────
 
+    @classmethod
+    def _seasons(cls) -> tuple:
+        """
+        Saisons à essayer, de la plus récente à la précédente.
+
+        CALCULÉ, jamais figé : la constante valait (2025, 2024) en
+        dur. Une fois la saison 2026-27 lancée, le module aurait servi
+        indéfiniment le xG de 2025-26 sans jamais tenter la nouvelle,
+        jusqu'à ce que quelqu'un pense à éditer le fichier.
+
+        Convention Understat : 2025 = saison 2025-26. Une saison
+        européenne démarre en juillet.
+        """
+
+        now = cls._now()
+        courante = now.year if now.month >= 7 else now.year - 1
+        return (courante, courante - 1)
+
     def _compute_profile(self, team_name: str,
                          sd_league: str) -> Optional[Dict]:
-        """Essaie chaque saison (2025 puis 2024) jusqu'à trouver l'équipe."""
+        """Essaie la saison en cours puis la précédente."""
 
-        for season in self.SEASONS:
+        for season in self._seasons():
             df = self._load_league(sd_league, season)
             if df is None or df.empty:
                 continue

@@ -223,7 +223,8 @@
   },
   "juventus": {
     "team_id": 496,
-    "stats": null
+    "stats": null,
+    "ts": 1785862245.3935368
   },
   "inter": {
     "team_id": 505,
@@ -392,7 +393,8 @@
   },
   "kairat almaty": {
     "team_id": 664,
-    "stats": null
+    "stats": null,
+    "ts": 1785862972.4918702
   },
   "h2h::664-673": {
     "stats": null
@@ -709,14 +711,16 @@
   },
   "levski sofia": {
     "team_id": 646,
-    "stats": null
+    "stats": null,
+    "ts": 1785862966.0615556
   },
   "h2h::632-646": {
     "stats": null
   },
   "hapoel beer sheva": {
     "team_id": 563,
-    "stats": null
+    "stats": null,
+    "ts": 1785862926.3464606
   },
   "vikingur reykjavik": {
     "team_id": 278,
@@ -734,7 +738,8 @@
   },
   "etoile rouge": {
     "team_id": 3048,
-    "stats": null
+    "stats": null,
+    "ts": 1785862952.2777495
   },
   "fc hradec kralove": {
     "team_id": 3723,
@@ -944,7 +949,9 @@
     "ts": 1785858411.427247
   },
   "olympique lyonnais": {
-    "team_id": 7919
+    "team_id": 7919,
+    "ts": 1785863008.7972045,
+    "stats": null
   },
   "h2h::7851-7919": {
     "stats": null,
@@ -952,21 +959,26 @@
   },
   "union saint gilloise": {
     "team_id": 19902,
-    "stats": null
+    "stats": null,
+    "ts": 1785863017.1656227
   },
   "bod glimt": {
     "team_id": 16227,
-    "stats": null
+    "stats": null,
+    "ts": 1785863023.5987692
   },
   "h2h::16227-19902": {
-    "stats": null
+    "stats": null,
+    "ts": 1785863030.0466785
   },
   "olympiakos": {
     "team_id": 3415,
-    "stats": null
+    "stats": null,
+    "ts": 1785863078.395575
   },
   "h2h::646-664": {
-    "stats": null
+    "stats": null,
+    "ts": 1785862979.0656219
   },
   "arsenal fc": {
     "team_id": 42,
@@ -1058,8 +1070,8 @@
     "ts": 1785857760.6446605
   },
   "_meta": {
-    "season": 2025,
-    "season_ts": 1785857757.2275233
+    "season": 2023,
+    "season_ts": 1785860690.5425043
   },
   "as roma": {
     "team_id": 497,
@@ -1263,6 +1275,337 @@
       "btts_rate": 0.5,
       "team1_avg_scored": 5.0,
       "team2_avg_scored": 0.5,
+      "sample": 2
+    }
+  },
+  "larne": {
+    "team_id": 5354,
+    "ts": 1785860651.5017974,
+    "stats": {
+      "avg_goals_scored": 2.03,
+      "avg_goals_conceded": 1.05,
+      "avg_goals_scored_home": 2.64,
+      "avg_goals_conceded_home": 1.55,
+      "avg_goals_scored_away": 1.49,
+      "avg_goals_conceded_away": 0.62,
+      "recent_form_score": 1.5,
+      "recent_results": [
+        {
+          "date": "2026-04-25",
+          "venue": "dom",
+          "adversaire": "Dungannon Swifts",
+          "score": "8-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2026-04-17",
+          "venue": "ext",
+          "adversaire": "Glentoran",
+          "score": "0-0",
+          "resultat": "N"
+        },
+        {
+          "date": "2026-04-11",
+          "venue": "ext",
+          "adversaire": "Linfield",
+          "score": "2-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2026-04-07",
+          "venue": "dom",
+          "adversaire": "Coleraine FC",
+          "score": "1-4",
+          "resultat": "D"
+        },
+        {
+          "date": "2026-04-04",
+          "venue": "ext",
+          "adversaire": "Coleraine FC",
+          "score": "1-2",
+          "resultat": "D"
+        },
+        {
+          "date": "2026-03-28",
+          "venue": "dom",
+          "adversaire": "Cliftonville FC",
+          "score": "2-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2026-03-20",
+          "venue": "ext",
+          "adversaire": "Glenavon FC",
+          "score": "3-0",
+          "resultat": "V"
+        },
+        {
+          "date": "2026-03-13",
+          "venue": "dom",
+          "adversaire": "Dungannon Swifts",
+          "score": "2-1",
+          "resultat": "V"
+        },
+        {
+          "date": "2026-03-06",
+          "venue": "ext",
+          "adversaire": "Glentoran",
+          "score": "1-1",
+          "resultat": "N"
+        },
+        {
+          "date": "2026-02-28",
+          "venue": "ext",
+          "adversaire": "Ballymena United",
+          "score": "2-0",
+          "resultat": "V"
+        }
+      ],
+      "matches_played": 15,
+      "last_match_date": "2026-04-25",
+      "stale": true,
+      "age_days": 101
+    }
+  },
+  "fc iberia 1999": {
+    "team_id": 5640,
+    "ts": 1785860690.558578,
+    "stats": null
+  },
+  "h2h::5354-5640": {
+    "ts": 1785860697.0187109,
+    "stats": null
+  },
+  "shamrock rovers": {
+    "team_id": 652,
+    "ts": 1785860996.8622668,
+    "stats": null
+  },
+  "kf egnatia rrogozhine": {
+    "team_id": 3327,
+    "ts": 1785861058.3538194,
+    "stats": null
+  },
+  "h2h::652-3327": {
+    "ts": 1785861064.842292,
+    "stats": null
+  },
+  "rotherham": {
+    "team_id": 73,
+    "ts": 1785861219.6617906,
+    "stats": null
+  },
+  "derby": {
+    "team_id": 69,
+    "ts": 1785861232.6164975,
+    "stats": null
+  },
+  "h2h::69-73": {
+    "ts": 1785861239.1520367,
+    "stats": {
+      "matches": [
+        {
+          "date": "2021-02-03",
+          "home": "Rotherham",
+          "away": "Derby",
+          "score": "3-0"
+        },
+        {
+          "date": "2021-01-16",
+          "home": "Derby",
+          "away": "Rotherham",
+          "score": "0-1"
+        },
+        {
+          "date": "2019-03-30",
+          "home": "Derby",
+          "away": "Rotherham",
+          "score": "6-1"
+        },
+        {
+          "date": "2018-09-15",
+          "home": "Rotherham",
+          "away": "Derby",
+          "score": "1-0"
+        },
+        {
+          "date": "2017-05-07",
+          "home": "Rotherham",
+          "away": "Derby",
+          "score": "1-1"
+        },
+        {
+          "date": "2016-11-19",
+          "home": "Derby",
+          "away": "Rotherham",
+          "score": "3-0"
+        },
+        {
+          "date": "2016-03-12",
+          "home": "Rotherham",
+          "away": "Derby",
+          "score": "3-3"
+        },
+        {
+          "date": "2015-10-31",
+          "home": "Derby",
+          "away": "Rotherham",
+          "score": "3-0"
+        },
+        {
+          "date": "2015-02-17",
+          "home": "Rotherham",
+          "away": "Derby",
+          "score": "3-3"
+        },
+        {
+          "date": "2014-08-09",
+          "home": "Derby",
+          "away": "Rotherham",
+          "score": "1-0"
+        }
+      ],
+      "team1_wins": 4,
+      "draws": 3,
+      "team2_wins": 3,
+      "avg_goals": 3.3,
+      "btts_rate": 0.4,
+      "team1_avg_scored": 2.0,
+      "team2_avg_scored": 1.3,
+      "sample": 10
+    }
+  },
+  "ipswich": {
+    "team_id": 57,
+    "ts": 1785861592.322563,
+    "stats": null
+  },
+  "le havre": {
+    "team_id": 111,
+    "ts": 1785861605.0721872,
+    "stats": null
+  },
+  "h2h::57-111": {
+    "ts": 1785861611.6129131,
+    "stats": null
+  },
+  "chelsea fc": {
+    "team_id": 49,
+    "ts": 1785862237.4904332,
+    "stats": null
+  },
+  "h2h::49-496": {
+    "ts": 1785862250.9774377,
+    "stats": {
+      "matches": [
+        {
+          "date": "2021-11-23",
+          "home": "Chelsea",
+          "away": "Juventus",
+          "score": "4-0"
+        },
+        {
+          "date": "2021-09-29",
+          "home": "Juventus",
+          "away": "Chelsea",
+          "score": "1-0"
+        },
+        {
+          "date": "2012-11-20",
+          "home": "Juventus",
+          "away": "Chelsea",
+          "score": "3-0"
+        },
+        {
+          "date": "2012-09-19",
+          "home": "Chelsea",
+          "away": "Juventus",
+          "score": "2-2"
+        }
+      ],
+      "team1_wins": 1,
+      "draws": 1,
+      "team2_wins": 2,
+      "avg_goals": 3.0,
+      "btts_rate": 0.25,
+      "team1_avg_scored": 1.5,
+      "team2_avg_scored": 1.5,
+      "sample": 4
+    }
+  },
+  "osasuna": {
+    "team_id": 727,
+    "ts": 1785862552.8396065,
+    "stats": null
+  },
+  "ssc napoli": {
+    "team_id": 492
+  },
+  "h2h::492-727": {
+    "ts": 1785862572.2150457,
+    "stats": null
+  },
+  "sassuolo": {
+    "team_id": 488,
+    "ts": 1785862586.429784,
+    "stats": null
+  },
+  "celta vigo": {
+    "team_id": 538,
+    "ts": 1785862599.693033,
+    "stats": null
+  },
+  "h2h::488-538": {
+    "ts": 1785862605.9811497,
+    "stats": null
+  },
+  "betis": {
+    "team_id": 543,
+    "ts": 1785862621.1393452,
+    "stats": null
+  },
+  "h2h::42-543": {
+    "ts": 1785862626.9877934,
+    "stats": null
+  },
+  "h2h::563-3048": {
+    "ts": 1785862958.6681986,
+    "stats": null
+  },
+  "dinamo zagreb": {
+    "team_id": 620,
+    "ts": 1785863044.046406,
+    "stats": null
+  },
+  "zalgiris kaunas": {
+    "team_id": 586,
+    "ts": 1785863063.6793504,
+    "stats": null
+  },
+  "h2h::586-620": {
+    "ts": 1785863070.0805495,
+    "stats": {
+      "matches": [
+        {
+          "date": "2014-07-22",
+          "home": "FK Zalgiris Vilnius",
+          "away": "Dinamo Zagreb",
+          "score": "0-2"
+        },
+        {
+          "date": "2014-07-15",
+          "home": "Dinamo Zagreb",
+          "away": "FK Zalgiris Vilnius",
+          "score": "2-0"
+        }
+      ],
+      "team1_wins": 0,
+      "draws": 0,
+      "team2_wins": 2,
+      "avg_goals": 2.0,
+      "btts_rate": 0.0,
+      "team1_avg_scored": 0.0,
+      "team2_avg_scored": 2.0,
       "sample": 2
     }
   }

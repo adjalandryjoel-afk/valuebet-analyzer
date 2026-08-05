@@ -112,8 +112,16 @@ class ApiFootballCollector:
     # Statuts de matchs considérés comme terminés
     FINISHED_STATUSES = ("FT", "AET", "PEN")
 
+    # Espacement entre deux requêtes (secondes). Point de départ
+    # prudent : nettement plus rapide que les 6,5 s du plan gratuit,
+    # sans prétendre connaître le débit exact du plan payant. En cas
+    # de 429, l'espacement double jusqu'à INTERVALLE_MAX_S.
+    INTERVALLE_DEPART_S = 0.35
+    INTERVALLE_MAX_S = 6.5
+
     def __init__(self):
         self.api_key = APIKeys.RAPIDAPI_KEY
+        self._intervalle = self.INTERVALLE_DEPART_S
         self.cache_path = os.path.join(Paths.DATA_DIR, "api_cache.json")
         self.cache: Dict = self._load_cache()
         self._request_count = 0
@@ -186,12 +194,21 @@ class ApiFootballCollector:
         if self._abonnement_inactif:
             return None
 
-        # Régulateur : le plan gratuit tolère 10 requêtes/minute —
-        # espacer les appels évite les 429 (qui gâchent le quota)
+        # Régulateur de débit ADAPTATIF.
+        #
+        # L'intervalle était figé à 6,5 s : la valeur du plan gratuit
+        # (10 req/min). Sur le plan Pro, elle coûtait ~13 s par match
+        # (2 équipes) et rendait toute collecte plus riche impossible
+        # — 30 requêtes auraient demandé plus de 3 minutes.
+        #
+        # On part donc de l'intervalle rapide et on RALENTIT seulement
+        # si l'API répond 429. Prudence assumée : le débit réel du plan
+        # n'est pas mesuré, on ne fait donc pas confiance à la doc du
+        # fournisseur — c'est la réponse de l'API qui décide.
         now = time.time()
         elapsed = now - getattr(self, "_last_request_ts", 0)
-        if elapsed < 6.5:
-            time.sleep(6.5 - elapsed)
+        if elapsed < self._intervalle:
+            time.sleep(self._intervalle - elapsed)
         self._last_request_ts = time.time()
         self._last_was_ratelimit = False
 
@@ -209,10 +226,16 @@ class ApiFootballCollector:
             return None
 
         if response.status_code == 429:
-            # Rate limit : échec TRANSITOIRE — ne surtout pas le figer
+            # Rate limit : échec TRANSITOIRE — ne surtout pas le figer.
+            # On ralentit pour la suite de la session : le plan réel
+            # est plus lent que ce qu'on supposait.
             self._last_was_ratelimit = True
-            print("      ⚠️ API-Football : limite de débit atteinte "
-                  "(10 req/min) — réessayer dans une minute")
+            ancien = self._intervalle
+            self._intervalle = min(self.INTERVALLE_MAX_S,
+                                   max(0.4, self._intervalle * 2))
+            print(f"      ⚠️ API-Football : limite de débit atteinte — "
+                  f"espacement porté de {ancien:.2f} s à "
+                  f"{self._intervalle:.2f} s")
             return None
 
         if response.status_code in (401, 403):

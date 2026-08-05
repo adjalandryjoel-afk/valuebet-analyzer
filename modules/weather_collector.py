@@ -69,7 +69,11 @@ class WeatherCollector:
     }
 
     def __init__(self):
-        self.api_key = APIKeys.OPENAI_API_KEY  # Utiliser une clé dédiée en prod
+        # FUITE DE CLÉ CORRIGÉE : ce champ valait APIKeys.OPENAI_API_KEY.
+        # La clé était envoyée à api.openweathermap.org dans le
+        # paramètre `appid` de l'URL — donc dans les journaux d'accès
+        # d'un service tiers. La clé dédiée existe déjà en config.
+        self.api_key = APIKeys.OPENWEATHER_API_KEY
 
     def get_weather(self, city: str,
                     match_date: str = None) -> Optional[MatchWeather]:
@@ -80,6 +84,11 @@ class WeatherCollector:
             city: Nom de la ville
             match_date: Date du match (YYYY-MM-DD), utilise aujourd'hui si None
         """
+
+        # Sans clé dédiée, on ne part PAS : mieux vaut aucune météo
+        # qu'un appel qui expédie une clé au mauvais destinataire.
+        if not self.api_key:
+            return None
 
         city_lower = city.lower().strip()
         coords = self.CITY_COORDS.get(city_lower)
