@@ -1608,5 +1608,29 @@
       "team2_avg_scored": 2.0,
       "sample": 2
     }
+  },
+  "sandefjord": {
+    "team_id": 332
+  },
+  "kfum oslo": {
+    "team_id": 2143
+  },
+  "wisla krakow": {
+    "team_id": 338
+  },
+  "wisla plock": {
+    "team_id": 341
+  },
+  "cambuur": {
+    "team_id": 420
+  },
+  "excelsior": {
+    "team_id": 196
+  },
+  "sonderjyske": {
+    "team_id": 396
+  },
+  "viborg": {
+    "team_id": 2070
   }
 }

@@ -34,6 +34,7 @@ from modules.kelly_criterion import KellyStakeCalculator
 from modules.database_manager import DatabaseManager
 from modules.backtester import Backtester
 from modules.match_intel import get_match_intelligence
+from modules.match_brief import get_brief_builder
 from modules.clv_tracker import ClvTracker
 from modules.monte_carlo import simulate_bets
 from modules.settlement import settle_match
@@ -300,6 +301,17 @@ def render_sidebar_settings():
             value=True,
             help="H2H, forme détaillée, contexte et verdict du chef "
                  "analyste. Ajoute quelques secondes par match."
+        )
+        st.toggle(
+            "Fiche du match",
+            value=True,
+            key="fiche_match",
+            help="Blessés, suspensions, jours de repos, classement et "
+                 "météo — collectés automatiquement à la place de tes "
+                 "recherches. Environ 8 requêtes et 10 secondes par "
+                 "match. Ces faits sont AFFICHÉS seulement : ils "
+                 "n'entrent pas dans le calcul tant que tu ne les "
+                 "recopies pas toi-même dans tes notes."
         )
 
         st.subheader(":material/bolt: Affichage")
@@ -943,6 +955,32 @@ def analyze_matches_ui(matches, bankroll, min_value, min_confidence,
         # 6. Calculer les mises
         stakes = kelly.calculate_all_stakes(analysis)
 
+        # 6bis. Fiche du match (blessés, repos, suspensions, enjeu).
+        #
+        # PUREMENT INFORMATIVE : elle n'entre NI dans le Poisson NI
+        # dans l'agent contexte. C'est un choix, pas un oubli — voir
+        # l'en-tête de modules/match_brief.py. Ce que la fiche
+        # automatise, c'est la RECHERCHE que l'utilisateur faisait à
+        # la main ; ce qu'il en retient et écrit dans ses notes reste
+        # sa décision, et c'est cette décision seule qui touche λ.
+        # Coût : ~8 requêtes et ~15 s par match, dominés par la
+        # latence réseau. Sur un scan de 30 matchs cela ferait dix
+        # minutes d'attente. On la construit donc là où elle sert :
+        # les matchs où un pari est envisageable, et les petits lots
+        # où l'utilisateur examine explicitement quelques affiches.
+        merite_fiche = analysis.has_value or len(matches) <= 3
+
+        brief = None
+        if st.session_state.get("fiche_match", True) and merite_fiche:
+            try:
+                brief = get_brief_builder().build(
+                    home_name, away_name,
+                    league=getattr(context, "league", "") or "",
+                    kickoff=match.get("kickoff"),
+                )
+            except Exception:
+                brief = None
+
         # 7. Verdict du chef analyste
         verdict = ""
         if deep and intel_report is not None:
@@ -959,6 +997,7 @@ def analyze_matches_ui(matches, bankroll, min_value, min_confidence,
         analysis._stakes = stakes
         analysis._intel = intel_report
         analysis._verdict = verdict
+        analysis._brief = brief
         # Ligue détectée : sert à dire honnêtement si le backtest
         # couvre (ou non) ce type de pari — voir statut_validation()
         analysis._league = getattr(context, "league", "") or ""
@@ -1070,6 +1109,172 @@ def _form_badges(sequence):
     return " ".join(
         f":{colors.get(c, 'gray')}-badge[{c}]" for c in sequence
     )
+
+
+def _render_brief_section(analysis):
+    """
+    Fiche du match : les faits que l'utilisateur cherchait à la main.
+
+    Cette section n'affiche QUE des faits vérifiables, et distingue
+    partout « aucun absent listé » de « aucune donnée ». La nuance
+    n'est pas cosmétique : la source sous-déclare — un joueur absent
+    de cinq feuilles de match d'affilée peut n'avoir aucune ligne.
+    Lire un zéro comme « effectif au complet » ferait parier sur une
+    équipe qu'on croit intacte.
+    """
+
+    brief = getattr(analysis, "_brief", None)
+
+    if brief is None:
+        if not st.session_state.get("fiche_match", True):
+            st.caption(
+                ":material/toggle_off: Fiche désactivée dans la barre "
+                "latérale."
+            )
+        elif not analysis.has_value:
+            st.caption(
+                ":material/savings: Fiche non collectée — ce match n'a "
+                "aucun value bet, et la collecte coûte une quinzaine de "
+                "secondes. Analyse-le seul (ou avec deux autres au "
+                "maximum) pour l'obtenir quand même."
+            )
+        else:
+            st.caption(
+                ":material/info: Fiche indisponible pour ce match."
+            )
+        return
+
+    if brief.est_vide():
+        st.caption(
+            ":material/help: Aucune donnée réunie pour ce match. "
+            "C'est souvent le cas hors saison, sur une compétition peu "
+            "couverte, ou quand les noms d'équipes ne correspondent "
+            "pas à ceux de la source."
+        )
+        for avert in brief.avertissements:
+            st.caption(f":material/warning: {avert}")
+        return
+
+    if brief.kickoff:
+        lieu = f" · {brief.stade}" if brief.stade else ""
+        st.caption(
+            f":material/schedule: Coup d'envoi "
+            f"{brief.kickoff.strftime('%d/%m/%Y à %Hh%M')} UTC{lieu}"
+        )
+
+    col_dom, col_ext = st.columns(2)
+    for col, eq, role in ((col_dom, brief.domicile, "Domicile"),
+                          (col_ext, brief.exterieur, "Extérieur")):
+        with col:
+            with st.container(border=True):
+                st.markdown(f"**{eq.nom}** · {role}")
+
+                # ── Calendrier ──
+                if eq.repos_jours is not None:
+                    if eq.reprise:
+                        st.markdown(
+                            f":material/restart_alt: **Reprise** — "
+                            f"{eq.repos_jours:.0f} jours sans jouer")
+                        st.caption("Ce n'est pas de la fraîcheur : une "
+                                   "équipe sans match depuis si "
+                                   "longtemps est sans rythme.")
+                    else:
+                        st.markdown(
+                            f":material/bedtime: **{eq.repos_jours:.0f} "
+                            f"jours de repos**")
+                    if eq.prolongations:
+                        st.caption(":material/timer: A joué les "
+                                   "prolongations")
+                    if eq.matchs_14j and eq.matchs_14j >= 3:
+                        st.caption(f":material/local_fire_department: "
+                                   f"{eq.matchs_14j} matchs en 14 jours")
+                if eq.dernier_match:
+                    dm = eq.dernier_match
+                    suffixe = "" if dm["joue"] else " (à jouer)"
+                    st.caption(
+                        f"Dernier : {dm['date']} vs {dm['adversaire']} "
+                        f"— {dm['score']} · {dm['competition']}{suffixe}")
+                if eq.match_suivant and (
+                        eq.match_suivant.get("dans_jours") or 99) <= 4:
+                    st.caption(
+                        f":material/fast_forward: Rejoue "
+                        f"{eq.match_suivant['competition']} "
+                        f"{eq.match_suivant['dans_jours']} jours après — "
+                        f"rotation possible")
+
+                # ── Absents ──
+                st.markdown("")
+                if not eq.absents_dispo:
+                    st.markdown(":material/help: **Absents inconnus**")
+                    st.caption("La source ne couvre pas encore ce "
+                               "match. Ce n'est PAS « effectif au "
+                               "complet ».")
+                elif not eq.absents:
+                    st.markdown(":material/check: **Aucun absent listé**")
+                    st.caption("La source couvre ce match mais elle "
+                               "sous-déclare — à confirmer toi-même si "
+                               "l'enjeu est important.")
+                else:
+                    certains = [a for a in eq.absents if a.certain]
+                    doutes = [a for a in eq.absents if not a.certain]
+                    if certains:
+                        st.markdown(
+                            f":material/personal_injury: "
+                            f"**{len(certains)} absent(s)**")
+                        for a in certains:
+                            st.caption(f"· {a.nom} — {a.motif}")
+                    if doutes:
+                        st.markdown(":material/help_outline: "
+                                    "**Incertain(s)**")
+                        for a in doutes:
+                            st.caption(f"· {a.nom} — {a.motif}")
+
+                # ── Suspension probable ──
+                if eq.rouges:
+                    st.markdown(":material/gavel: **Suspension "
+                                "probable**")
+                    for nom in eq.rouges:
+                        st.caption(f"· {nom} — rouge au dernier match")
+                    st.caption("La source ne donne ni la durée ni la "
+                               "portée : à vérifier.")
+
+                # ── Classement ──
+                if eq.rang and eq.classement_fiable:
+                    txt = f"{eq.rang}ᵉ · {eq.points} pts"
+                    if eq.enjeu:
+                        txt += f" · {eq.enjeu}"
+                    st.markdown(f":material/leaderboard: {txt}")
+                    st.caption(f"après {eq.journees} journées")
+                elif eq.rang:
+                    st.caption(
+                        f":material/leaderboard: {eq.rang}ᵉ après "
+                        f"{eq.journees} journée(s) — trop tôt pour que "
+                        f"le classement veuille dire quelque chose")
+
+    if brief.meteo:
+        m = brief.meteo
+        st.caption(
+            f":material/thermostat: **{m['ville']}** — "
+            f"{m['temperature']} °C · {m['pluie_mm']} mm de pluie · "
+            f"vent {m['vent_kmh']} km/h  \n"
+            f"Prévision sur la ville, pas sur le stade — et on ne sait "
+            f"pas si l'enceinte est couverte."
+        )
+
+    for avert in brief.avertissements:
+        st.caption(f":material/warning: {avert}")
+
+    resume = brief.resume()
+    if resume:
+        with st.expander(":material/content_copy: Résumé à recopier "
+                         "dans tes notes"):
+            st.caption(
+                "Ces faits **n'entrent pas** dans le calcul. Si tu juges "
+                "qu'un point compte, recopie-le dans « Actus des "
+                "matchs » : c'est ton jugement qui décide de ce qui "
+                "pèse, pas l'app."
+            )
+            st.code(resume, language=None)
 
 
 def _render_intel_section(analysis):
@@ -1219,10 +1424,20 @@ def display_results(analyses, bankroll):
             icon=exp_icon,
         ):
 
-            tab_markets, tab_vb, tab_agents = st.tabs([
+            _brief = getattr(analysis, "_brief", None)
+            _n_abs = 0
+            if _brief is not None:
+                _n_abs = (len(_brief.domicile.absents)
+                          + len(_brief.exterieur.absents)
+                          + len(_brief.domicile.rouges)
+                          + len(_brief.exterieur.rouges))
+
+            tab_markets, tab_vb, tab_fiche, tab_agents = st.tabs([
                 ":material/table_chart: Marchés",
                 f":material/target: Value bets "
                 f"({analysis.total_value_bets})",
+                (f":material/clinical_notes: Fiche ({_n_abs})"
+                 if _n_abs else ":material/clinical_notes: Fiche"),
                 ":material/groups: Agents & verdict",
             ])
 
@@ -1541,6 +1756,9 @@ def display_results(analyses, bankroll):
 
                 if analysis.data_warning:
                     st.warning(analysis.data_warning, icon=":material/warning:")
+
+            with tab_fiche:
+                _render_brief_section(analysis)
 
             with tab_agents:
                 _render_intel_section(analysis)
