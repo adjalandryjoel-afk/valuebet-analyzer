@@ -87,6 +87,11 @@ USE_COLS = [
     "Date", "HomeTeam", "AwayTeam", "FTHG", "FTAG", "HTHG", "HTAG",
     "HST", "AST", "B365H", "B365D", "B365A", "PSH", "PSD", "PSA",
     "PSCH", "PSCD", "PSCA", "B365>2.5", "B365<2.5",
+    # Over/Under de CLÔTURE (Pinnacle) : indispensable pour juger le
+    # marché des totaux comme on juge le 1X2. Sans ligne de clôture,
+    # pas de CLV — donc aucun moyen de savoir si une sélection était
+    # bonne avant même de connaître le résultat.
+    "PC>2.5", "PC<2.5",
 ]
 
 
@@ -152,7 +157,9 @@ def _read_csv(path: str):
     # le renommerait en position (_11), ce qui casse silencieusement
     # dès que l'ordre des colonnes change. On renomme explicitement.
     df = df.rename(columns={"B365>2.5": "B365_OV25",
-                            "B365<2.5": "B365_UN25"})
+                            "B365<2.5": "B365_UN25",
+                            "PC>2.5": "PC_OV25",
+                            "PC<2.5": "PC_UN25"})
     return df
 
 
@@ -564,6 +571,12 @@ def prepare_matches(frames, xg_par_match=None, avec_xg=False):
                             "fthg": fthg, "ftag": ftag,
                             "outcome": outcome,
                             "over25": 1 if fthg + ftag >= 3 else 0,
+                            # Marchés secondaires : issue réelle et
+                            # cotes d'ouverture / de clôture.
+                            "btts": 1 if (fthg > 0 and ftag > 0) else 0,
+                            "ou_open": (o_ov, o_un),
+                            "ou_close": (_f(getattr(row, "PC_OV25", 0)),
+                                         _f(getattr(row, "PC_UN25", 0))),
                             "b365": (o1, ox, o2),
                             "psc": (_f(row.PSCH), _f(row.PSCD), _f(row.PSCA)),
                             "stats_lams": stats_lams,
