@@ -75,6 +75,16 @@ class TeamStats:
     avg_sot_for: float = 0.0
     avg_sot_against: float = 0.0
     sot_available: bool = False
+    # Splits par venue. Sans eux, _sot_lambdas croisait deux moyennes
+    # toutes venues et perdait entierement l'avantage du terrain :
+    # mesure sur 3449 matchs, les tirs cadres a domicile etaient
+    # sous-estimes de 9,6 points et ceux a l'exterieur surestimes de
+    # 6,3 points (biais jusqu'a 11,9 ecarts-types).
+    avg_sot_for_home: float = 0.0
+    avg_sot_against_home: float = 0.0
+    avg_sot_for_away: float = 0.0
+    avg_sot_against_away: float = 0.0
+    sot_venue_available: bool = False
 
     # Forme récente (points par match sur les 5 derniers, 0..3)
     recent_form_score: float = 1.50
@@ -117,6 +127,10 @@ class MatchContext:
     # Tirs cadrés moyens par équipe et par match dans la ligue
     # (référence pour normaliser attaque × défense)
     league_avg_sot: float = 0.0
+    # Moyennes de ligue PAR VENUE : denominateur correct quand on
+    # croise une attaque a domicile avec une defense a l'exterieur.
+    league_avg_sot_home: float = 0.0
+    league_avg_sot_away: float = 0.0
 
     # Qualité des données disponibles (0-100)
     data_completeness: float = 0.0
@@ -125,6 +139,29 @@ class MatchContext:
 # ══════════════════════════════════════════════════════
 #  COLLECTEUR
 # ══════════════════════════════════════════════════════
+
+def _poser_sot_venue(stats, profil) -> None:
+    """
+    Renseigne les tirs cadrés PAR VENUE depuis un profil football-data.
+
+    Les quatre valeurs sont exigées ensemble : un profil partiel
+    (équipe n'ayant encore joué qu'à domicile, par exemple) laisse le
+    drapeau à False et le modèle retombe proprement sur les moyennes
+    toutes venues.
+    """
+
+    if not profil:
+        return
+    cles = ("sot_pour_dom", "sot_contre_dom",
+            "sot_pour_ext", "sot_contre_ext")
+    valeurs = [profil.get(c) for c in cles]
+    if any(v is None or v <= 0 for v in valeurs):
+        return
+    (stats.avg_sot_for_home, stats.avg_sot_against_home,
+     stats.avg_sot_for_away, stats.avg_sot_against_away) = \
+        (float(v) for v in valeurs)
+    stats.sot_venue_available = True
+
 
 class DataCollector:
     """
@@ -190,6 +227,7 @@ class DataCollector:
                 stats.avg_sot_for = float(pour)
                 stats.avg_sot_against = float(contre)
                 stats.sot_available = True
+            _poser_sot_venue(stats, profil)
 
     # ─── CONSTRUCTION DU CONTEXTE ───────────────────
 
@@ -265,6 +303,8 @@ class DataCollector:
                 "first_half_share", PoissonConfig.FIRST_HALF_SHARE
             ),
             league_avg_sot=league_info.get("avg_sot", 0.0),
+            league_avg_sot_home=league_info.get("avg_sot_home", 0.0),
+            league_avg_sot_away=league_info.get("avg_sot_away", 0.0),
             league_avg_goals_home=league_info.get("avg_goals_home", 0.0),
             league_avg_goals_away=league_info.get("avg_goals_away", 0.0),
         )
@@ -419,6 +459,7 @@ class DataCollector:
             stats.avg_sot_for = float(sp)
             stats.avg_sot_against = float(sc)
             stats.sot_available = True
+        _poser_sot_venue(stats, prof)
 
         return stats
 

@@ -789,6 +789,13 @@ class FootballData:
         if len(sot) >= self.MIN_MATCHS:
             params["avg_sot"] = round(
                 float((sot.HST + sot.AST).mean() / 2), 3)
+            # Moyennes PAR VENUE : indispensables comme dénominateur.
+            # Croiser deux moyennes par venue puis diviser par une
+            # moyenne toutes venues compte l'avantage du terrain DEUX
+            # FOIS — c'est l'erreur déjà corrigée sur les buts, et
+            # elle se reproduisait ici sur les tirs cadrés.
+            params["avg_sot_home"] = round(float(sot.HST.mean()), 3)
+            params["avg_sot_away"] = round(float(sot.AST.mean()), 3)
             params["sot_par_but"] = round(
                 float((sot.HST + sot.AST).sum()
                       / max((sot.FTHG + sot.FTAG).sum(), 1)), 3)
@@ -839,6 +846,11 @@ class FootballData:
             "sot_contre": moy(pd.concat([dom.AST, ext.HST])),
             "sot_pour_dom": moy(dom.HST),
             "sot_pour_ext": moy(ext.AST),
+            # Manquaient : sans les tirs ENCAISSÉS par venue, le
+            # modèle croisait une attaque par venue avec une défense
+            # toutes venues et perdait l'avantage du terrain.
+            "sot_contre_dom": moy(dom.AST),
+            "sot_contre_ext": moy(ext.HST),
         }
         return profil
 

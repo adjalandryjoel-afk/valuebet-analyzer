@@ -541,6 +541,32 @@ class PoissonPredictor:
                 or not getattr(away, "sot_available", False)):
             return None
 
+        # ── Chemin PAR VENUE, quand les splits existent ──
+        #
+        # Sans lui, on croisait deux moyennes TOUTES VENUES et
+        # l'avantage du terrain disparaissait entièrement : mesuré sur
+        # 3449 matchs, les tirs cadrés à domicile étaient sous-estimés
+        # de 9,6 points et ceux à l'extérieur surestimés de 6,3 points
+        # (jusqu'à 11,9 écarts-types).
+        #
+        # Le dénominateur DOIT être la moyenne de la même venue.
+        # Croiser deux moyennes par venue puis diviser par une moyenne
+        # toutes venues compte l'avantage du terrain DEUX fois et
+        # inverse simplement le biais (mesuré : 11,9 σ → 9,6 σ, sens
+        # opposé). Avec le bon dénominateur : 11,9 σ → 3,0 σ.
+        lg_dom = float(getattr(context, "league_avg_sot_home", 0) or 0)
+        lg_ext = float(getattr(context, "league_avg_sot_away", 0) or 0)
+        if (lg_dom > 0 and lg_ext > 0
+                and getattr(home, "sot_venue_available", False)
+                and getattr(away, "sot_venue_available", False)):
+            lam_h = (home.avg_sot_for_home
+                     * away.avg_sot_against_away / lg_dom)
+            lam_a = (away.avg_sot_for_away
+                     * home.avg_sot_against_home / lg_ext)
+            lam_h = min(max(lam_h, 1.0), 12.0)
+            lam_a = min(max(lam_a, 1.0), 12.0)
+            return round(lam_h, 2), round(lam_a, 2)
+
         lam_h = home.avg_sot_for * away.avg_sot_against / ligue
         lam_a = away.avg_sot_for * home.avg_sot_against / ligue
 

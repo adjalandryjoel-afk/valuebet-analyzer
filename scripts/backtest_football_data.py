@@ -374,7 +374,8 @@ def _weighted_avg(rows, ref_date, take_last=WINDOW):
     return swf / sw, swa / sw
 
 
-def build_team_stats(name, history, ref_date, avec_xg=False) -> TeamStats:
+def build_team_stats(name, history, ref_date, avec_xg=False,
+                     avec_sot=False) -> TeamStats:
     """TeamStats "api" depuis l'historique strictement antérieur au match.
 
     history : {"all": [(date, gf, ga, pts)], "home": [(date, gf, ga)],
@@ -437,6 +438,30 @@ def build_team_stats(name, history, ref_date, avec_xg=False) -> TeamStats:
             stats.xg_home_split_real = True
             stats.xg_away_split_real = True
 
+    if avec_sot:
+        # Tirs cadrés reconstruits comme les buts, depuis les matchs
+        # PRÉCÉDENTS uniquement. Sans eux, _sot_lambdas renvoie None
+        # et le modèle retombe sur l'approximation buts × SOT_PER_GOAL
+        # — or l'app REFUSE de parier ce repli (sot_from_real_data).
+        # Tester sans les reconstruire, ce serait tester un chemin
+        # qu'elle n'emprunte jamais.
+        sh = history.get("sot_home") or []
+        sa = history.get("sot_away") or []
+        tous = sorted(sh + sa, key=lambda r: r[0])
+        if tous:
+            moy = _weighted_avg(tous, ref_date)
+            if moy:
+                stats.avg_sot_for, stats.avg_sot_against = moy
+                stats.sot_available = True
+        # Splits par venue : c'est eux que le modèle corrigé utilise.
+        if sh and sa:
+            md = _weighted_avg(sh, ref_date)
+            me = _weighted_avg(sa, ref_date)
+            if md and me:
+                stats.avg_sot_for_home, stats.avg_sot_against_home = md
+                stats.avg_sot_for_away, stats.avg_sot_against_away = me
+                stats.sot_venue_available = True
+
     return stats
 
 
@@ -450,7 +475,20 @@ def league_averages(frames) -> dict:
     }
 
 
-def prepare_matches(frames, xg_par_match=None, avec_xg=False):
+def league_avg_sot(frames) -> dict:
+    """Tirs cadrés moyens par équipe et par match, par (saison, div)."""
+
+    out = {}
+    for (season, div), df in frames.items():
+        d = df.dropna(subset=["HST", "AST"])
+        if len(d) < 20:
+            continue
+        out[(season, div)] = float((d["HST"] + d["AST"]).mean() / 2)
+    return out
+
+
+def prepare_matches(frames, xg_par_match=None, avec_xg=False,
+                    avec_sot=False):
     """Parcours chronologique par ligue : contexte + λ précalculés.
 
     Retourne la liste des matchs évaluables (≥ MIN_HISTORY matchs
@@ -464,6 +502,14 @@ def prepare_matches(frames, xg_par_match=None, avec_xg=False):
     xg_par_match = xg_par_match or {}
     predictor = PoissonPredictor()
     lg_avgs = league_averages(frames)
+    lg_sot = league_avg_sot(frames)
+    # Moyennes de tirs cadrés PAR VENUE, dénominateur du modèle corrigé
+    lg_sot_dom, lg_sot_ext = {}, {}
+    for (_s, _d), _df in frames.items():
+        _x = _df.dropna(subset=["HST", "AST"])
+        if len(_x) >= 20:
+            lg_sot_dom[(_s, _d)] = float(_x["HST"].mean())
+            lg_sot_ext[(_s, _d)] = float(_x["AST"].mean())
     prev_season = dict(zip(SEASONS_ALL[1:], SEASONS_ALL[:-1]))
 
     market_cache = {}  # (o1, ox, o2, league_avg arrondi) → λ marché
@@ -507,12 +553,13 @@ def prepare_matches(frames, xg_par_match=None, avec_xg=False):
                 ht, at = str(row.HomeTeam), str(row.AwayTeam)
                 fthg, ftag = int(row.FTHG), int(row.FTAG)
 
+                vide = {"all": [], "home": [], "away": [],
+                        "xg_home": [], "xg_away": [],
+                        "sot_home": [], "sot_away": []}
                 h_hist = history.setdefault(
-                    ht, {"all": [], "home": [], "away": [],
-                         "xg_home": [], "xg_away": []})
+                    ht, {k: list(v) for k, v in vide.items()})
                 a_hist = history.setdefault(
-                    at, {"all": [], "home": [], "away": [],
-                         "xg_home": [], "xg_away": []})
+                    at, {k: list(v) for k, v in vide.items()})
 
                 o1, ox, o2 = _f(row.B365H), _f(row.B365D), _f(row.B365A)
                 usable_odds = o1 > 1 and ox > 1 and o2 > 1
@@ -534,9 +581,11 @@ def prepare_matches(frames, xg_par_match=None, avec_xg=False):
                     ctx = MatchContext(
                         home_team=ht, away_team=at, league=league_key,
                         home_stats=build_team_stats(
-                            ht, h_hist, date, avec_xg=avec_xg),
+                            ht, h_hist, date, avec_xg=avec_xg,
+                            avec_sot=avec_sot),
                         away_stats=build_team_stats(
-                            at, a_hist, date, avec_xg=avec_xg),
+                            at, a_hist, date, avec_xg=avec_xg,
+                            avec_sot=avec_sot),
                         odds=odds_ctx,
                         league_avg_goals=lg_avg,
                         first_half_share=league_info["first_half_share"],
@@ -544,6 +593,16 @@ def prepare_matches(frames, xg_par_match=None, avec_xg=False):
                             "avg_goals_home", 0.0),
                         league_avg_goals_away=league_info.get(
                             "avg_goals_away", 0.0),
+                        # Moyenne de tirs cadrés de la SAISON
+                        # PRÉCÉDENTE — même précaution que pour les
+                        # buts : utiliser celle de la saison en cours
+                        # ferait entrer des matchs non encore joués.
+                        league_avg_sot=lg_sot.get(
+                            (prev_season[season], div), 0.0),
+                        league_avg_sot_home=lg_sot_dom.get(
+                            (prev_season[season], div), 0.0),
+                        league_avg_sot_away=lg_sot_ext.get(
+                            (prev_season[season], div), 0.0),
                         data_completeness=70.0,
                     )
                     stats_lams = predictor._lambdas_from_stats(ctx)
@@ -577,6 +636,25 @@ def prepare_matches(frames, xg_par_match=None, avec_xg=False):
                             "ou_open": (o_ov, o_un),
                             "ou_close": (_f(getattr(row, "PC_OV25", 0)),
                                          _f(getattr(row, "PC_UN25", 0))),
+                            # Issues réelles des marchés par équipe,
+                            # par mi-temps et des tirs cadrés — pour
+                            # mesurer la calibration du modèle là où
+                            # aucune cote historique n'existe.
+                            "buts": (fthg, ftag),
+                            "first_half_share":
+                                league_info["first_half_share"],
+                            # λ tirs cadrés par la VRAIE méthode de
+                            # l'app (attaque × défense / moyenne de
+                            # ligue). None si les statistiques de tirs
+                            # manquent — c'est alors le repli que
+                            # l'app refuse de parier.
+                            "sot_lams": (
+                                PoissonPredictor._sot_lambdas(ctx)
+                                if avec_sot else None),
+                            "mi_temps": (_i(getattr(row, "HTHG", None)),
+                                         _i(getattr(row, "HTAG", None))),
+                            "sot": (_i(getattr(row, "HST", None)),
+                                    _i(getattr(row, "AST", None))),
                             "b365": (o1, ox, o2),
                             "psc": (_f(row.PSCH), _f(row.PSCD), _f(row.PSCA)),
                             "stats_lams": stats_lams,
@@ -615,9 +693,25 @@ def prepare_matches(frames, xg_par_match=None, avec_xg=False):
                     h_hist["xg_home"].append((date, xg_h, xg_a))
                     a_hist["xg_away"].append((date, xg_a, xg_h))
 
+                # Tirs cadrés — même règle : après l'évaluation.
+                hst, ast = _i(getattr(row, "HST", None)), \
+                    _i(getattr(row, "AST", None))
+                if hst is not None and ast is not None:
+                    h_hist["sot_home"].append((date, hst, ast))
+                    a_hist["sot_away"].append((date, ast, hst))
+
     print(f"  {n_seen} matchs lus — {len(matches)} évaluables "
           f"({n_skip_hist} skip historique, {n_skip_odds} skip cotes)")
     return matches
+
+
+def _i(x):
+    """Entier robuste, ou None (NaN, vide, illisible)."""
+    try:
+        v = float(x)
+        return int(v) if v == v else None
+    except (TypeError, ValueError):
+        return None
 
 
 def _f(x) -> float:

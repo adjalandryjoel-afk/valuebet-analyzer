@@ -1,0 +1,806 @@
+{
+  "genere_le": "2026-08-05T08:18:16+00:00",
+  "poids_marche": 0.9,
+  "avertissement": "Aucune cote historique n'existe pour ces marchés. Ce backtest mesure la CALIBRATION du modèle, pas son edge. Un biais positif signifie que le modèle surestime l'événement et fabriquera de la value là où il n'y en a pas.",
+  "top5": {
+    "n_test": 3449,
+    "n_avec_sot": 3449,
+    "marches": {
+      "1re_mt_domicile": {
+        "0_5": {
+          "n": 3448,
+          "annonce": 0.4861,
+          "observe": 0.489,
+          "biais": -0.0029,
+          "biais_en_ecarts_types": -0.34,
+          "significatif": false,
+          "brier": 0.23402,
+          "brier_taux_de_base": 0.24988,
+          "bat_le_taux_de_base": true
+        },
+        "1_5": {
+          "n": 3448,
+          "annonce": 0.1565,
+          "observe": 0.1485,
+          "biais": 0.008,
+          "biais_en_ecarts_types": 1.32,
+          "significatif": false,
+          "brier": 0.11865,
+          "brier_taux_de_base": 0.12644,
+          "bat_le_taux_de_base": true
+        },
+        "2_5": {
+          "n": 3448,
+          "annonce": 0.0391,
+          "observe": 0.0319,
+          "biais": 0.0072,
+          "biais_en_ecarts_types": 2.42,
+          "significatif": true,
+          "brier": 0.0299,
+          "brier_taux_de_base": 0.03088,
+          "bat_le_taux_de_base": true
+        }
+      },
+      "1re_mt_exterieur": {
+        "0_5": {
+          "n": 3448,
+          "annonce": 0.412,
+          "observe": 0.4237,
+          "biais": -0.0117,
+          "biais_en_ecarts_types": -1.39,
+          "significatif": false,
+          "brier": 0.23576,
+          "brier_taux_de_base": 0.24418,
+          "bat_le_taux_de_base": true
+        },
+        "1_5": {
+          "n": 3448,
+          "annonce": 0.1099,
+          "observe": 0.1096,
+          "biais": 0.0002,
+          "biais_en_ecarts_types": 0.04,
+          "significatif": false,
+          "brier": 0.09385,
+          "brier_taux_de_base": 0.09761,
+          "bat_le_taux_de_base": true
+        },
+        "2_5": {
+          "n": 3448,
+          "annonce": 0.0228,
+          "observe": 0.0212,
+          "biais": 0.0016,
+          "biais_en_ecarts_types": 0.65,
+          "significatif": false,
+          "brier": 0.02036,
+          "brier_taux_de_base": 0.02072,
+          "bat_le_taux_de_base": true
+        }
+      },
+      "2e_mt_domicile": {
+        "0_5": {
+          "n": 3448,
+          "annonce": 0.5775,
+          "observe": 0.5684,
+          "biais": 0.009,
+          "biais_en_ecarts_types": 1.07,
+          "significatif": false,
+          "brier": 0.23306,
+          "brier_taux_de_base": 0.24532,
+          "bat_le_taux_de_base": true
+        },
+        "1_5": {
+          "n": 3448,
+          "annonce": 0.2299,
+          "observe": 0.2071,
+          "biais": 0.0228,
+          "biais_en_ecarts_types": 3.31,
+          "significatif": true,
+          "brier": 0.15796,
+          "brier_taux_de_base": 0.1642,
+          "bat_le_taux_de_base": true
+        },
+        "2_5": {
+          "n": 3448,
+          "annonce": 0.072,
+          "observe": 0.0539,
+          "biais": 0.018,
+          "biais_en_ecarts_types": 4.69,
+          "significatif": true,
+          "brier": 0.05003,
+          "brier_taux_de_base": 0.05103,
+          "bat_le_taux_de_base": true
+        }
+      },
+      "2e_mt_exterieur": {
+        "0_5": {
+          "n": 3448,
+          "annonce": 0.4974,
+          "observe": 0.5174,
+          "biais": -0.02,
+          "biais_en_ecarts_types": -2.35,
+          "significatif": true,
+          "brier": 0.23931,
+          "brier_taux_de_base": 0.2497,
+          "bat_le_taux_de_base": true
+        },
+        "1_5": {
+          "n": 3448,
+          "annonce": 0.1655,
+          "observe": 0.1581,
+          "biais": 0.0074,
+          "biais_en_ecarts_types": 1.19,
+          "significatif": false,
+          "brier": 0.1271,
+          "brier_taux_de_base": 0.13308,
+          "bat_le_taux_de_base": true
+        },
+        "2_5": {
+          "n": 3448,
+          "annonce": 0.0431,
+          "observe": 0.0368,
+          "biais": 0.0063,
+          "biais_en_ecarts_types": 1.97,
+          "significatif": true,
+          "brier": 0.03386,
+          "brier_taux_de_base": 0.03548,
+          "bat_le_taux_de_base": true
+        }
+      },
+      "buts_1re_mi_temps": {
+        "0_5": {
+          "n": 3448,
+          "annonce": 0.7053,
+          "observe": 0.7169,
+          "biais": -0.0116,
+          "biais_en_ecarts_types": -1.52,
+          "significatif": false,
+          "brier": 0.1996,
+          "brier_taux_de_base": 0.20294,
+          "bat_le_taux_de_base": true
+        },
+        "1_5": {
+          "n": 3448,
+          "annonce": 0.3508,
+          "observe": 0.344,
+          "biais": 0.0068,
+          "biais_en_ecarts_types": 0.84,
+          "significatif": false,
+          "brier": 0.22043,
+          "brier_taux_de_base": 0.22565,
+          "bat_le_taux_de_base": true
+        },
+        "2_5": {
+          "n": 3448,
+          "annonce": 0.1322,
+          "observe": 0.1262,
+          "biais": 0.006,
+          "biais_en_ecarts_types": 1.06,
+          "significatif": false,
+          "brier": 0.10806,
+          "brier_taux_de_base": 0.11024,
+          "bat_le_taux_de_base": true
+        }
+      },
+      "buts_2e_mi_temps": {
+        "0_5": {
+          "n": 3448,
+          "annonce": 0.7967,
+          "observe": 0.8083,
+          "biais": -0.0116,
+          "biais_en_ecarts_types": -1.73,
+          "significatif": false,
+          "brier": 0.15426,
+          "brier_taux_de_base": 0.15495,
+          "bat_le_taux_de_base": true
+        },
+        "1_5": {
+          "n": 3448,
+          "annonce": 0.4785,
+          "observe": 0.4672,
+          "biais": 0.0113,
+          "biais_en_ecarts_types": 1.33,
+          "significatif": false,
+          "brier": 0.24536,
+          "brier_taux_de_base": 0.24893,
+          "bat_le_taux_de_base": true
+        },
+        "2_5": {
+          "n": 3448,
+          "annonce": 0.224,
+          "observe": 0.1992,
+          "biais": 0.0248,
+          "biais_en_ecarts_types": 3.64,
+          "significatif": true,
+          "brier": 0.15813,
+          "brier_taux_de_base": 0.15955,
+          "bat_le_taux_de_base": true
+        }
+      },
+      "buts_domicile": {
+        "0_5": {
+          "n": 3449,
+          "annonce": 0.7702,
+          "observe": 0.7698,
+          "biais": 0.0004,
+          "biais_en_ecarts_types": 0.05,
+          "significatif": false,
+          "brier": 0.16314,
+          "brier_taux_de_base": 0.17721,
+          "bat_le_taux_de_base": true
+        },
+        "1_5": {
+          "n": 3449,
+          "annonce": 0.4569,
+          "observe": 0.4422,
+          "biais": 0.0147,
+          "biais_en_ecarts_types": 1.74,
+          "significatif": false,
+          "brier": 0.22254,
+          "brier_taux_de_base": 0.24665,
+          "bat_le_taux_de_base": true
+        },
+        "2_5": {
+          "n": 3449,
+          "annonce": 0.2223,
+          "observe": 0.2041,
+          "biais": 0.0182,
+          "biais_en_ecarts_types": 2.65,
+          "significatif": true,
+          "brier": 0.1469,
+          "brier_taux_de_base": 0.16245,
+          "bat_le_taux_de_base": true
+        }
+      },
+      "buts_exterieur": {
+        "0_5": {
+          "n": 3449,
+          "annonce": 0.6923,
+          "observe": 0.7164,
+          "biais": -0.0241,
+          "biais_en_ecarts_types": -3.15,
+          "significatif": true,
+          "brier": 0.19289,
+          "brier_taux_de_base": 0.20315,
+          "bat_le_taux_de_base": true
+        },
+        "1_5": {
+          "n": 3449,
+          "annonce": 0.3532,
+          "observe": 0.3639,
+          "biais": -0.0107,
+          "biais_en_ecarts_types": -1.3,
+          "significatif": false,
+          "brier": 0.2152,
+          "brier_taux_de_base": 0.23147,
+          "bat_le_taux_de_base": true
+        },
+        "2_5": {
+          "n": 3449,
+          "annonce": 0.146,
+          "observe": 0.138,
+          "biais": 0.0079,
+          "biais_en_ecarts_types": 1.35,
+          "significatif": false,
+          "brier": 0.10845,
+          "brier_taux_de_base": 0.11896,
+          "bat_le_taux_de_base": true
+        }
+      },
+      "tirs_cadres_domicile": {
+        "1_5": {
+          "n": 3448,
+          "annonce": 0.9126,
+          "observe": 0.9281,
+          "biais": -0.0155,
+          "biais_en_ecarts_types": -3.53,
+          "significatif": true,
+          "brier": 0.06573,
+          "brier_taux_de_base": 0.06675,
+          "bat_le_taux_de_base": true
+        },
+        "2_5": {
+          "n": 3448,
+          "annonce": 0.7924,
+          "observe": 0.8129,
+          "biais": -0.0205,
+          "biais_en_ecarts_types": -3.09,
+          "significatif": true,
+          "brier": 0.14609,
+          "brier_taux_de_base": 0.15207,
+          "bat_le_taux_de_base": true
+        },
+        "3_5": {
+          "n": 3448,
+          "annonce": 0.6378,
+          "observe": 0.663,
+          "biais": -0.0252,
+          "biais_en_ecarts_types": -3.13,
+          "significatif": true,
+          "brier": 0.21213,
+          "brier_taux_de_base": 0.22343,
+          "bat_le_taux_de_base": true
+        },
+        "4_5": {
+          "n": 3448,
+          "annonce": 0.4775,
+          "observe": 0.4893,
+          "biais": -0.0118,
+          "biais_en_ecarts_types": -1.39,
+          "significatif": false,
+          "brier": 0.23311,
+          "brier_taux_de_base": 0.24988,
+          "bat_le_taux_de_base": true
+        },
+        "5_5": {
+          "n": 3448,
+          "annonce": 0.335,
+          "observe": 0.3445,
+          "biais": -0.0095,
+          "biais_en_ecarts_types": -1.18,
+          "significatif": false,
+          "brier": 0.21219,
+          "brier_taux_de_base": 0.22583,
+          "bat_le_taux_de_base": true
+        }
+      },
+      "tirs_cadres_exterieur": {
+        "1_5": {
+          "n": 3448,
+          "annonce": 0.8544,
+          "observe": 0.8733,
+          "biais": -0.0189,
+          "biais_en_ecarts_types": -3.33,
+          "significatif": true,
+          "brier": 0.11146,
+          "brier_taux_de_base": 0.11068,
+          "bat_le_taux_de_base": false
+        },
+        "2_5": {
+          "n": 3448,
+          "annonce": 0.6908,
+          "observe": 0.7106,
+          "biais": -0.0197,
+          "biais_en_ecarts_types": -2.55,
+          "significatif": true,
+          "brier": 0.20313,
+          "brier_taux_de_base": 0.20567,
+          "bat_le_taux_de_base": true
+        },
+        "3_5": {
+          "n": 3448,
+          "annonce": 0.5099,
+          "observe": 0.5212,
+          "biais": -0.0113,
+          "biais_en_ecarts_types": -1.33,
+          "significatif": false,
+          "brier": 0.24239,
+          "brier_taux_de_base": 0.24955,
+          "bat_le_taux_de_base": true
+        },
+        "4_5": {
+          "n": 3448,
+          "annonce": 0.3472,
+          "observe": 0.3509,
+          "biais": -0.0037,
+          "biais_en_ecarts_types": -0.45,
+          "significatif": false,
+          "brier": 0.2197,
+          "brier_taux_de_base": 0.22778,
+          "bat_le_taux_de_base": true
+        },
+        "5_5": {
+          "n": 3448,
+          "annonce": 0.2211,
+          "observe": 0.2207,
+          "biais": 0.0003,
+          "biais_en_ecarts_types": 0.05,
+          "significatif": false,
+          "brier": 0.16725,
+          "brier_taux_de_base": 0.172,
+          "bat_le_taux_de_base": true
+        }
+      }
+    }
+  },
+  "secondaires": {
+    "n_test": 1433,
+    "n_avec_sot": 1433,
+    "marches": {
+      "1re_mt_domicile": {
+        "0_5": {
+          "n": 1433,
+          "annonce": 0.4819,
+          "observe": 0.4815,
+          "biais": 0.0004,
+          "biais_en_ecarts_types": 0.03,
+          "significatif": false,
+          "brier": 0.23919,
+          "brier_taux_de_base": 0.24966,
+          "bat_le_taux_de_base": true
+        },
+        "1_5": {
+          "n": 1433,
+          "annonce": 0.151,
+          "observe": 0.1424,
+          "biais": 0.0087,
+          "biais_en_ecarts_types": 0.94,
+          "significatif": false,
+          "brier": 0.11756,
+          "brier_taux_de_base": 0.12209,
+          "bat_le_taux_de_base": true
+        },
+        "2_5": {
+          "n": 1433,
+          "annonce": 0.036,
+          "observe": 0.0293,
+          "biais": 0.0067,
+          "biais_en_ecarts_types": 1.51,
+          "significatif": false,
+          "brier": 0.02765,
+          "brier_taux_de_base": 0.02845,
+          "bat_le_taux_de_base": true
+        }
+      },
+      "1re_mt_exterieur": {
+        "0_5": {
+          "n": 1433,
+          "annonce": 0.4084,
+          "observe": 0.4027,
+          "biais": 0.0058,
+          "biais_en_ecarts_types": 0.44,
+          "significatif": false,
+          "brier": 0.2312,
+          "brier_taux_de_base": 0.24052,
+          "bat_le_taux_de_base": true
+        },
+        "1_5": {
+          "n": 1433,
+          "annonce": 0.106,
+          "observe": 0.1144,
+          "biais": -0.0085,
+          "biais_en_ecarts_types": -1.01,
+          "significatif": false,
+          "brier": 0.09924,
+          "brier_taux_de_base": 0.10135,
+          "bat_le_taux_de_base": true
+        },
+        "2_5": {
+          "n": 1433,
+          "annonce": 0.021,
+          "observe": 0.0188,
+          "biais": 0.0021,
+          "biais_en_ecarts_types": 0.6,
+          "significatif": false,
+          "brier": 0.0184,
+          "brier_taux_de_base": 0.01849,
+          "bat_le_taux_de_base": true
+        }
+      },
+      "2e_mt_domicile": {
+        "0_5": {
+          "n": 1433,
+          "annonce": 0.5478,
+          "observe": 0.5506,
+          "biais": -0.0028,
+          "biais_en_ecarts_types": -0.22,
+          "significatif": false,
+          "brier": 0.23794,
+          "brier_taux_de_base": 0.24744,
+          "bat_le_taux_de_base": true
+        },
+        "1_5": {
+          "n": 1433,
+          "annonce": 0.2016,
+          "observe": 0.1786,
+          "biais": 0.023,
+          "biais_en_ecarts_types": 2.27,
+          "significatif": true,
+          "brier": 0.14028,
+          "brier_taux_de_base": 0.14673,
+          "bat_le_taux_de_base": true
+        },
+        "2_5": {
+          "n": 1433,
+          "annonce": 0.0573,
+          "observe": 0.0433,
+          "biais": 0.014,
+          "biais_en_ecarts_types": 2.61,
+          "significatif": true,
+          "brier": 0.0406,
+          "brier_taux_de_base": 0.04139,
+          "bat_le_taux_de_base": true
+        }
+      },
+      "2e_mt_exterieur": {
+        "0_5": {
+          "n": 1433,
+          "annonce": 0.4695,
+          "observe": 0.4829,
+          "biais": -0.0134,
+          "biais_en_ecarts_types": -1.01,
+          "significatif": false,
+          "brier": 0.23924,
+          "brier_taux_de_base": 0.24971,
+          "bat_le_taux_de_base": true
+        },
+        "1_5": {
+          "n": 1433,
+          "annonce": 0.144,
+          "observe": 0.1549,
+          "biais": -0.0109,
+          "biais_en_ecarts_types": -1.14,
+          "significatif": false,
+          "brier": 0.12557,
+          "brier_taux_de_base": 0.13092,
+          "bat_le_taux_de_base": true
+        },
+        "2_5": {
+          "n": 1433,
+          "annonce": 0.0342,
+          "observe": 0.0307,
+          "biais": 0.0035,
+          "biais_en_ecarts_types": 0.76,
+          "significatif": false,
+          "brier": 0.02951,
+          "brier_taux_de_base": 0.02976,
+          "bat_le_taux_de_base": true
+        }
+      },
+      "buts_1re_mi_temps": {
+        "0_5": {
+          "n": 1433,
+          "annonce": 0.7012,
+          "observe": 0.7027,
+          "biais": -0.0015,
+          "biais_en_ecarts_types": -0.13,
+          "significatif": false,
+          "brier": 0.20751,
+          "brier_taux_de_base": 0.2089,
+          "bat_le_taux_de_base": true
+        },
+        "1_5": {
+          "n": 1433,
+          "annonce": 0.3429,
+          "observe": 0.3461,
+          "biais": -0.0032,
+          "biais_en_ecarts_types": -0.26,
+          "significatif": false,
+          "brier": 0.22532,
+          "brier_taux_de_base": 0.22632,
+          "bat_le_taux_de_base": true
+        },
+        "2_5": {
+          "n": 1433,
+          "annonce": 0.1255,
+          "observe": 0.1158,
+          "biais": 0.0096,
+          "biais_en_ecarts_types": 1.14,
+          "significatif": false,
+          "brier": 0.10216,
+          "brier_taux_de_base": 0.10242,
+          "bat_le_taux_de_base": true
+        }
+      },
+      "buts_2e_mi_temps": {
+        "0_5": {
+          "n": 1433,
+          "annonce": 0.7687,
+          "observe": 0.7725,
+          "biais": -0.0038,
+          "biais_en_ecarts_types": -0.34,
+          "significatif": false,
+          "brier": 0.17438,
+          "brier_taux_de_base": 0.17574,
+          "bat_le_taux_de_base": true
+        },
+        "1_5": {
+          "n": 1433,
+          "annonce": 0.4336,
+          "observe": 0.448,
+          "biais": -0.0144,
+          "biais_en_ecarts_types": -1.1,
+          "significatif": false,
+          "brier": 0.24394,
+          "brier_taux_de_base": 0.2473,
+          "bat_le_taux_de_base": true
+        },
+        "2_5": {
+          "n": 1433,
+          "annonce": 0.1874,
+          "observe": 0.1738,
+          "biais": 0.0137,
+          "biais_en_ecarts_types": 1.37,
+          "significatif": false,
+          "brier": 0.14225,
+          "brier_taux_de_base": 0.14357,
+          "bat_le_taux_de_base": true
+        }
+      },
+      "buts_domicile": {
+        "0_5": {
+          "n": 1433,
+          "annonce": 0.7554,
+          "observe": 0.7683,
+          "biais": -0.013,
+          "biais_en_ecarts_types": -1.16,
+          "significatif": false,
+          "brier": 0.16941,
+          "brier_taux_de_base": 0.17801,
+          "bat_le_taux_de_base": true
+        },
+        "1_5": {
+          "n": 1433,
+          "annonce": 0.4313,
+          "observe": 0.4117,
+          "biais": 0.0196,
+          "biais_en_ecarts_types": 1.51,
+          "significatif": false,
+          "brier": 0.22221,
+          "brier_taux_de_base": 0.24221,
+          "bat_le_taux_de_base": true
+        },
+        "2_5": {
+          "n": 1433,
+          "annonce": 0.1983,
+          "observe": 0.1786,
+          "biais": 0.0196,
+          "biais_en_ecarts_types": 1.94,
+          "significatif": false,
+          "brier": 0.13611,
+          "brier_taux_de_base": 0.14673,
+          "bat_le_taux_de_base": true
+        }
+      },
+      "buts_exterieur": {
+        "0_5": {
+          "n": 1433,
+          "annonce": 0.6762,
+          "observe": 0.6999,
+          "biais": -0.0237,
+          "biais_en_ecarts_types": -1.96,
+          "significatif": false,
+          "brier": 0.19877,
+          "brier_taux_de_base": 0.21003,
+          "bat_le_taux_de_base": true
+        },
+        "1_5": {
+          "n": 1433,
+          "annonce": 0.3305,
+          "observe": 0.344,
+          "biais": -0.0135,
+          "biais_en_ecarts_types": -1.08,
+          "significatif": false,
+          "brier": 0.2079,
+          "brier_taux_de_base": 0.22567,
+          "bat_le_taux_de_base": true
+        },
+        "2_5": {
+          "n": 1433,
+          "annonce": 0.1286,
+          "observe": 0.1186,
+          "biais": 0.01,
+          "biais_en_ecarts_types": 1.17,
+          "significatif": false,
+          "brier": 0.09853,
+          "brier_taux_de_base": 0.10456,
+          "bat_le_taux_de_base": true
+        }
+      },
+      "tirs_cadres_domicile": {
+        "1_5": {
+          "n": 1433,
+          "annonce": 0.9055,
+          "observe": 0.9274,
+          "biais": -0.0219,
+          "biais_en_ecarts_types": -3.2,
+          "significatif": true,
+          "brier": 0.06996,
+          "brier_taux_de_base": 0.06731,
+          "bat_le_taux_de_base": false
+        },
+        "2_5": {
+          "n": 1433,
+          "annonce": 0.7767,
+          "observe": 0.8032,
+          "biais": -0.0265,
+          "biais_en_ecarts_types": -2.52,
+          "significatif": true,
+          "brier": 0.15912,
+          "brier_taux_de_base": 0.15806,
+          "bat_le_taux_de_base": false
+        },
+        "3_5": {
+          "n": 1433,
+          "annonce": 0.6128,
+          "observe": 0.6343,
+          "biais": -0.0216,
+          "biais_en_ecarts_types": -1.7,
+          "significatif": false,
+          "brier": 0.22939,
+          "brier_taux_de_base": 0.23195,
+          "bat_le_taux_de_base": true
+        },
+        "4_5": {
+          "n": 1433,
+          "annonce": 0.4458,
+          "observe": 0.4655,
+          "biais": -0.0197,
+          "biais_en_ecarts_types": -1.49,
+          "significatif": false,
+          "brier": 0.24087,
+          "brier_taux_de_base": 0.24881,
+          "bat_le_taux_de_base": true
+        },
+        "5_5": {
+          "n": 1433,
+          "annonce": 0.3014,
+          "observe": 0.3266,
+          "biais": -0.0252,
+          "biais_en_ecarts_types": -2.03,
+          "significatif": true,
+          "brier": 0.21168,
+          "brier_taux_de_base": 0.21993,
+          "bat_le_taux_de_base": true
+        }
+      },
+      "tirs_cadres_exterieur": {
+        "1_5": {
+          "n": 1433,
+          "annonce": 0.8578,
+          "observe": 0.8451,
+          "biais": 0.0127,
+          "biais_en_ecarts_types": 1.33,
+          "significatif": false,
+          "brier": 0.12691,
+          "brier_taux_de_base": 0.13092,
+          "bat_le_taux_de_base": true
+        },
+        "2_5": {
+          "n": 1433,
+          "annonce": 0.6955,
+          "observe": 0.6923,
+          "biais": 0.0033,
+          "biais_en_ecarts_types": 0.27,
+          "significatif": false,
+          "brier": 0.21217,
+          "brier_taux_de_base": 0.21304,
+          "bat_le_taux_de_base": true
+        },
+        "3_5": {
+          "n": 1433,
+          "annonce": 0.5139,
+          "observe": 0.5136,
+          "biais": 0.0003,
+          "biais_en_ecarts_types": 0.02,
+          "significatif": false,
+          "brier": 0.24914,
+          "brier_taux_de_base": 0.24981,
+          "bat_le_taux_de_base": true
+        },
+        "4_5": {
+          "n": 1433,
+          "annonce": 0.3492,
+          "observe": 0.3412,
+          "biais": 0.0079,
+          "biais_en_ecarts_types": 0.63,
+          "significatif": false,
+          "brier": 0.22156,
+          "brier_taux_de_base": 0.2248,
+          "bat_le_taux_de_base": true
+        },
+        "5_5": {
+          "n": 1433,
+          "annonce": 0.2206,
+          "observe": 0.2135,
+          "biais": 0.007,
+          "biais_en_ecarts_types": 0.65,
+          "significatif": false,
+          "brier": 0.16782,
+          "brier_taux_de_base": 0.16794,
+          "bat_le_taux_de_base": true
+        }
+      }
+    }
+  },
+  "duree_s": 164.5
+}

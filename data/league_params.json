@@ -11,6 +11,8 @@
    "saison": "2526",
    "first_half_share": 0.433,
    "avg_sot": 4.187,
+   "avg_sot_home": 4.503,
+   "avg_sot_away": 3.871,
    "sot_par_but": 3.045
   },
   "championship": {
@@ -22,6 +24,8 @@
    "saison": "2526",
    "first_half_share": 0.464,
    "avg_sot": 4.072,
+   "avg_sot_home": 4.469,
+   "avg_sot_away": 3.676,
    "sot_par_but": 3.127
   },
   "scotland_prem": {
@@ -33,6 +37,8 @@
    "saison": "2526",
    "first_half_share": 0.451,
    "avg_sot": 4.327,
+   "avg_sot_home": 4.86,
+   "avg_sot_away": 3.794,
    "sot_par_but": 3.112
   },
   "bundesliga": {
@@ -44,6 +50,8 @@
    "saison": "2526",
    "first_half_share": 0.446,
    "avg_sot": 4.771,
+   "avg_sot_home": 5.35,
+   "avg_sot_away": 4.193,
    "sot_par_but": 2.949
   },
   "bundesliga2": {
@@ -55,6 +63,8 @@
    "saison": "2526",
    "first_half_share": 0.446,
    "avg_sot": 4.521,
+   "avg_sot_home": 4.98,
+   "avg_sot_away": 4.062,
    "sot_par_but": 3.085
   },
   "serie_a": {
@@ -66,6 +76,8 @@
    "saison": "2526",
    "first_half_share": 0.43,
    "avg_sot": 4.03,
+   "avg_sot_home": 4.432,
+   "avg_sot_away": 3.629,
    "sot_par_but": 3.322
   },
   "serie_b": {
@@ -77,6 +89,8 @@
    "saison": "2526",
    "first_half_share": 0.446,
    "avg_sot": 4.218,
+   "avg_sot_home": 4.734,
+   "avg_sot_away": 3.703,
    "sot_par_but": 3.295
   },
   "la_liga": {
@@ -88,6 +102,8 @@
    "saison": "2526",
    "first_half_share": 0.427,
    "avg_sot": 4.336,
+   "avg_sot_home": 4.918,
+   "avg_sot_away": 3.753,
    "sot_par_but": 3.218
   },
   "la_liga2": {
@@ -99,6 +115,8 @@
    "saison": "2526",
    "first_half_share": 0.447,
    "avg_sot": 4.33,
+   "avg_sot_home": 4.803,
+   "avg_sot_away": 3.857,
    "sot_par_but": 3.29
   },
   "ligue1_fr": {
@@ -110,6 +128,8 @@
    "saison": "2526",
    "first_half_share": 0.432,
    "avg_sot": 4.319,
+   "avg_sot_home": 4.752,
+   "avg_sot_away": 3.886,
    "sot_par_but": 3.063
   },
   "ligue2_fr": {
@@ -121,6 +141,8 @@
    "saison": "2526",
    "first_half_share": 0.466,
    "avg_sot": 3.93,
+   "avg_sot_home": 4.148,
+   "avg_sot_away": 3.711,
    "sot_par_but": 3.093
   },
   "eredivisie": {
@@ -132,6 +154,8 @@
    "saison": "2526",
    "first_half_share": 0.455,
    "avg_sot": 5.196,
+   "avg_sot_home": 5.605,
+   "avg_sot_away": 4.788,
    "sot_par_but": 3.272
   },
   "belgium_pro": {
@@ -143,6 +167,8 @@
    "saison": "2526",
    "first_half_share": 0.453,
    "avg_sot": 4.461,
+   "avg_sot_home": 4.842,
+   "avg_sot_away": 4.08,
    "sot_par_but": 3.335
   },
   "primeira_liga": {
@@ -154,6 +180,8 @@
    "saison": "2526",
    "first_half_share": 0.447,
    "avg_sot": 4.118,
+   "avg_sot_home": 4.373,
+   "avg_sot_away": 3.863,
    "sot_par_but": 3.069
   },
   "super_lig": {
@@ -165,6 +193,8 @@
    "saison": "2526",
    "first_half_share": 0.432,
    "avg_sot": 4.265,
+   "avg_sot_home": 4.768,
+   "avg_sot_away": 3.761,
    "sot_par_but": 3.214
   },
   "greece_super": {
@@ -176,6 +206,8 @@
    "saison": "2526",
    "first_half_share": 0.465,
    "avg_sot": 3.987,
+   "avg_sot_home": 4.36,
+   "avg_sot_away": 3.614,
    "sot_par_but": 3.106
   },
   "swe_allsvenskan": {
