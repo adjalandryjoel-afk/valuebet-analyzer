@@ -157,6 +157,193 @@ def _read_csv(path: str):
 
 
 # ══════════════════════════════════════════════════════════════
+#  1bis. HISTORIQUE xG MATCH PAR MATCH (Understat via soccerdata)
+# ══════════════════════════════════════════════════════════════
+#
+# Le backtest tournait sur les BUTS seuls. Or l'app mélange xG et buts
+# (XG_BLEND) dès que le xG est disponible : la courbe de poids marché
+# mesurée sans xG ne décrivait donc pas le modèle réellement servi.
+#
+# APPARIEMENT DES NOMS — le point dangereux. football-data écrit
+# « Man City », Understat « Manchester City ». Plutôt que de se fier à
+# une ressemblance de chaînes (la mémoire du projet garde la trace
+# d'un « Paris Saint-Germain » apparié à « Paris FC »), on DÉDUIT la
+# correspondance des données elles-mêmes : deux matchs qui partagent
+# la date ET le score exact sont le même match. Les paires ainsi
+# identifiées votent, le vote majoritaire donne le mapping, puis on
+# revérifie TOUTES les rencontres. Un mapping faux se trahit
+# immédiatement par des scores qui divergent.
+
+UNDERSTAT_LEAGUES = {
+    "E0": "ENG-Premier League",
+    "SP1": "ESP-La Liga",
+    "I1": "ITA-Serie A",
+    "D1": "GER-Bundesliga",
+    "F1": "FRA-Ligue 1",
+}
+
+XG_CACHE_PATH = os.path.join(CACHE_DIR, "xg_par_match.json")
+
+# Sous ce taux de concordance des scores, on refuse le xG de la
+# ligue-saison entière : mieux vaut aucun xG qu'un xG attribué à la
+# mauvaise équipe.
+SEUIL_CONCORDANCE = 0.90
+
+
+def _cle_match(date, home, away) -> str:
+    return f"{str(date)[:10]}|{home}|{away}"
+
+
+def charger_xg(frames) -> dict:
+    """
+    {(saison, div): {clé_match: (xg_domicile, xg_extérieur)}}
+
+    Utilise le cache disque si présent (le scraping Understat prend
+    plusieurs minutes).
+    """
+
+    if os.path.exists(XG_CACHE_PATH):
+        try:
+            with open(XG_CACHE_PATH, encoding="utf-8") as f:
+                brut = json.load(f)
+            out = {}
+            for cle, d in brut.items():
+                saison, div = cle.split("|")
+                out[(saison, div)] = {k: tuple(v) for k, v in d.items()}
+            total = sum(len(v) for v in out.values())
+            print(f"  cache xG : {total} matchs sur "
+                  f"{len(out)} ligues-saisons")
+            return out
+        except Exception as e:
+            print(f"  cache xG illisible ({e}) — reconstruction")
+
+    import warnings
+    warnings.filterwarnings("ignore")
+    import soccerdata as sd
+
+    resultat = {}
+    for div, sd_league in UNDERSTAT_LEAGUES.items():
+        for saison in SEASONS_BACKTEST:
+            fd = frames.get((saison, div))
+            if fd is None:
+                continue
+            try:
+                us = sd.Understat(leagues=sd_league, seasons=saison)
+                udf = us.read_team_match_stats().reset_index()
+            except Exception as e:
+                print(f"  {div} {saison} : xG indisponible "
+                      f"({type(e).__name__})")
+                continue
+
+            mapping, taux, n = _deduire_mapping(fd, udf)
+            if taux < SEUIL_CONCORDANCE:
+                print(f"  {div} {saison} : REFUSÉ — concordance des "
+                      f"scores {taux:.0%} sur {n} matchs")
+                continue
+
+            table = {}
+            for u in udf.itertuples(index=False):
+                h = mapping.get(u.home_team)
+                a = mapping.get(u.away_team)
+                if not h or not a:
+                    continue
+                try:
+                    xh, xa = float(u.home_xg), float(u.away_xg)
+                except (TypeError, ValueError):
+                    continue
+                if xh != xh or xa != xa:      # NaN
+                    continue
+                table[_cle_match(u.date, h, a)] = (xh, xa)
+
+            resultat[(saison, div)] = table
+            print(f"  {div} {saison} : {len(table)} matchs avec xG "
+                  f"(concordance {taux:.0%})")
+
+    try:
+        os.makedirs(CACHE_DIR, exist_ok=True)
+        with open(XG_CACHE_PATH, "w", encoding="utf-8") as f:
+            json.dump({f"{s}|{d}": v for (s, d), v in resultat.items()},
+                      f)
+    except OSError:
+        pass
+
+    return resultat
+
+
+def _deduire_mapping(fd, udf):
+    """
+    Correspondance nom Understat → nom football-data, déduite des
+    (date, score) uniques, puis validée sur toutes les rencontres.
+
+    Retourne (mapping, taux_de_concordance, n_verifies).
+    """
+
+    from collections import defaultdict, Counter
+
+    # Index football-data : (date, score) → [(home, away)]
+    par_date_score = defaultdict(list)
+    for r in fd.itertuples(index=False):
+        cle = (str(r.Date)[:10], int(r.FTHG), int(r.FTAG))
+        par_date_score[cle].append((str(r.HomeTeam), str(r.AwayTeam)))
+
+    votes_h = defaultdict(Counter)
+    votes_a = defaultdict(Counter)
+
+    for u in udf.itertuples(index=False):
+        try:
+            hg, ag = int(u.home_goals), int(u.away_goals)
+        except (TypeError, ValueError):
+            continue
+        # ±1 jour : Understat horodate en UTC, football-data en local
+        for delta in (0, -1, 1):
+            d = pd.Timestamp(u.date) + pd.Timedelta(days=delta)
+            cands = par_date_score.get((str(d)[:10], hg, ag), [])
+            if len(cands) == 1:            # appariement NON ambigu
+                fh, fa = cands[0]
+                votes_h[u.home_team][fh] += 1
+                votes_a[u.away_team][fa] += 1
+                break
+
+    # Un nom Understat vote comme domicile ET comme extérieur :
+    # on additionne les deux urnes.
+    urnes = defaultdict(Counter)
+    for nom, c in votes_h.items():
+        urnes[nom].update(c)
+    for nom, c in votes_a.items():
+        urnes[nom].update(c)
+
+    mapping = {nom: c.most_common(1)[0][0]
+               for nom, c in urnes.items() if c}
+
+    # VALIDATION : on rejoue toutes les rencontres avec ce mapping et
+    # on exige que les scores concordent.
+    scores_fd = {}
+    for r in fd.itertuples(index=False):
+        scores_fd[_cle_match(r.Date, str(r.HomeTeam), str(r.AwayTeam))] = \
+            (int(r.FTHG), int(r.FTAG))
+
+    ok = total = 0
+    for u in udf.itertuples(index=False):
+        h, a = mapping.get(u.home_team), mapping.get(u.away_team)
+        if not h or not a:
+            continue
+        try:
+            attendu = (int(u.home_goals), int(u.away_goals))
+        except (TypeError, ValueError):
+            continue
+        for delta in (0, -1, 1):
+            d = pd.Timestamp(u.date) + pd.Timedelta(days=delta)
+            trouve = scores_fd.get(_cle_match(d, h, a))
+            if trouve is not None:
+                total += 1
+                ok += int(trouve == attendu)
+                break
+
+    taux = (ok / total) if total else 0.0
+    return mapping, taux, total
+
+
+# ══════════════════════════════════════════════════════════════
 #  2. RECONSTRUCTION DES STATS D'ÉQUIPE (matchs précédents seuls)
 # ══════════════════════════════════════════════════════════════
 
@@ -180,11 +367,20 @@ def _weighted_avg(rows, ref_date, take_last=WINDOW):
     return swf / sw, swa / sw
 
 
-def build_team_stats(name, history, ref_date) -> TeamStats:
+def build_team_stats(name, history, ref_date, avec_xg=False) -> TeamStats:
     """TeamStats "api" depuis l'historique strictement antérieur au match.
 
     history : {"all": [(date, gf, ga, pts)], "home": [(date, gf, ga)],
-               "away": [(date, gf, ga)]} — listes chronologiques.
+               "away": [(date, gf, ga)],
+               "xg_home": [(date, xgf, xga)], "xg_away": [...]}
+              — listes chronologiques.
+
+    avec_xg : remplit les champs xG de TeamStats comme le fait
+    xg_provider en production, avec la MÊME fenêtre et la même décote
+    temporelle que les buts. C'est indispensable : l'app mélange
+    XG_BLEND × xG + (1−XG_BLEND) × buts, et comparer un xG calculé
+    sur une fenêtre différente de celle des buts mesurerait l'écart
+    de fenêtres, pas l'apport du xG.
     """
 
     overall = _weighted_avg([(d, gf, ga) for d, gf, ga, _ in history["all"]], ref_date)
@@ -214,6 +410,26 @@ def build_team_stats(name, history, ref_date) -> TeamStats:
     stats.recent_form_score = form
     stats.points_per_game = form
     stats.matches_played = len(history["all"])
+
+    if avec_xg:
+        xh = history.get("xg_home") or []
+        xa = history.get("xg_away") or []
+        # On exige un VRAI split des deux côtés : c'est la condition
+        # que poisson_model teste (xg_home_split_real) pour décider
+        # s'il réapplique l'avantage du terrain. Un xG « toutes
+        # venues » servi comme un split ferait sauter cet avantage.
+        if xh and xa:
+            xg_h = _weighted_avg(xh, ref_date)
+            xg_a = _weighted_avg(xa, ref_date)
+            stats.xg_for_home, stats.xg_against_home = xg_h
+            stats.xg_for_away, stats.xg_against_away = xg_a
+            tous = sorted(xh + xa, key=lambda r: r[0])
+            stats.xg_scored, stats.xg_conceded = _weighted_avg(
+                tous, ref_date)
+            stats.xg_available = True
+            stats.xg_home_split_real = True
+            stats.xg_away_split_real = True
+
     return stats
 
 
@@ -227,13 +443,18 @@ def league_averages(frames) -> dict:
     }
 
 
-def prepare_matches(frames):
+def prepare_matches(frames, xg_par_match=None, avec_xg=False):
     """Parcours chronologique par ligue : contexte + λ précalculés.
 
     Retourne la liste des matchs évaluables (≥ MIN_HISTORY matchs
     d'historique pour les deux équipes + cotes B365 valides).
+
+    avec_xg : injecte le xG des matchs PRÉCÉDENTS dans TeamStats.
+    Comme pour les buts, le xG du match en cours n'est ajouté à
+    l'historique qu'APRÈS l'évaluation — aucune anticipation.
     """
 
+    xg_par_match = xg_par_match or {}
     predictor = PoissonPredictor()
     lg_avgs = league_averages(frames)
     prev_season = dict(zip(SEASONS_ALL[1:], SEASONS_ALL[:-1]))
@@ -266,6 +487,7 @@ def prepare_matches(frames):
             if df is None:
                 continue
             df = df.sort_values("Date", kind="stable")
+            xg_saison = xg_par_match.get((season, div), {})
 
             # Moyenne de la ligue = saison précédente (fallback config)
             lg_avg = lg_avgs.get(
@@ -279,9 +501,11 @@ def prepare_matches(frames):
                 fthg, ftag = int(row.FTHG), int(row.FTAG)
 
                 h_hist = history.setdefault(
-                    ht, {"all": [], "home": [], "away": []})
+                    ht, {"all": [], "home": [], "away": [],
+                         "xg_home": [], "xg_away": []})
                 a_hist = history.setdefault(
-                    at, {"all": [], "home": [], "away": []})
+                    at, {"all": [], "home": [], "away": [],
+                         "xg_home": [], "xg_away": []})
 
                 o1, ox, o2 = _f(row.B365H), _f(row.B365D), _f(row.B365A)
                 usable_odds = o1 > 1 and ox > 1 and o2 > 1
@@ -302,8 +526,10 @@ def prepare_matches(frames):
 
                     ctx = MatchContext(
                         home_team=ht, away_team=at, league=league_key,
-                        home_stats=build_team_stats(ht, h_hist, date),
-                        away_stats=build_team_stats(at, a_hist, date),
+                        home_stats=build_team_stats(
+                            ht, h_hist, date, avec_xg=avec_xg),
+                        away_stats=build_team_stats(
+                            at, a_hist, date, avec_xg=avec_xg),
                         odds=odds_ctx,
                         league_avg_goals=lg_avg,
                         first_half_share=league_info["first_half_share"],
@@ -367,6 +593,14 @@ def prepare_matches(frames):
                 h_hist["home"].append((date, fthg, ftag))
                 a_hist["all"].append((date, ftag, fthg, a_pts))
                 a_hist["away"].append((date, ftag, fthg))
+
+                # xG du match qui vient d'être évalué — ajouté APRÈS,
+                # exactement comme les buts.
+                xg = xg_saison.get(_cle_match(date, ht, at))
+                if xg:
+                    xg_h, xg_a = xg
+                    h_hist["xg_home"].append((date, xg_h, xg_a))
+                    a_hist["xg_away"].append((date, xg_a, xg_h))
 
     print(f"  {n_seen} matchs lus — {len(matches)} évaluables "
           f"({n_skip_hist} skip historique, {n_skip_odds} skip cotes)")
@@ -460,15 +694,75 @@ def brier_1x2(prob_rows, outcomes):
 #  4. ÉVALUATIONS
 # ══════════════════════════════════════════════════════════════
 
-def grid_search_weight(train):
-    """Courbe log-loss 1X2 sur le train pour chaque MARKET_WEIGHT."""
+def _test_apparie_xg(test_sans, test_avec, weight):
+    """
+    Le xG améliore-t-il vraiment, ou est-ce du bruit ?
 
-    outcomes = [m["outcome"] for m in train]
+    Les deux variantes portent sur LES MÊMES matchs, dans le même
+    ordre : on compare donc match par match (test apparié), ce qui
+    élimine la variance due au tirage des rencontres. Un écart moyen
+    de 0,0009 de log-loss sur ~3400 matchs peut très bien n'être
+    qu'une fluctuation — seul l'écart-type des différences le dit.
+    """
+
+    if len(test_sans) != len(test_avec):
+        return None
+
+    diffs = []
+    for ms, ma in zip(test_sans, test_avec):
+        if ms["date"] != ma["date"] or ms["home"] != ma["home"]:
+            return None                      # alignement rompu
+        o = ms["outcome"]
+        ps = max(model_probs(ms, weight)[o], 1e-12)
+        pa = max(model_probs(ma, weight)[o], 1e-12)
+        # log-loss = −ln(p) ; positif = la variante xG fait mieux
+        diffs.append(math.log(pa) - math.log(ps))
+
+    n = len(diffs)
+    if n < 2:
+        return None
+    moy = sum(diffs) / n
+    var = sum((d - moy) ** 2 for d in diffs) / (n - 1)
+    et = math.sqrt(var / n) if var > 0 else 0.0
+    t = (moy / et) if et > 0 else 0.0
+    return {
+        "n_matchs": n,
+        "ecart_moyen": round(moy, 7),
+        "erreur_type": round(et, 7),
+        "t": round(t, 3),
+        "significatif": abs(t) > 1.96,
+        "lecture": ("positif = le xG ameliore la prediction ; "
+                    "|t| > 1.96 = significatif a 5 %"),
+    }
+
+
+def courbe_logloss(matches, etiquette=""):
+    """Log-loss 1X2 pour chaque MARKET_WEIGHT de la grille."""
+
+    outcomes = [m["outcome"] for m in matches]
     curve = {}
     for w in MARKET_WEIGHT_GRID:
-        rows = [model_probs(m, w)[:3] for m in train]
-        curve[f"{w:.1f}"] = round(log_loss_1x2(rows, outcomes), 5)
-        print(f"  MARKET_WEIGHT={w:.1f} → log-loss {curve[f'{w:.1f}']:.5f}")
+        rows = [model_probs(m, w)[:3] for m in matches]
+        curve[f"{w:.2f}"] = round(log_loss_1x2(rows, outcomes), 5)
+    if etiquette:
+        for w, ll in curve.items():
+            print(f"    w={w} → {ll:.5f}")
+    return curve
+
+
+def grid_search_weight(train):
+    """
+    Courbe log-loss 1X2 sur le train pour chaque MARKET_WEIGHT.
+
+    ATTENTION À LA LECTURE : 1.0 est le BORD DROIT de la grille. Un
+    minimum qui s'y pose n'est pas un optimum observé — c'est une
+    borne. Et cette courbe est calculée EN ÉCHANTILLON ; seule la
+    courbe test (hors échantillon) autorise une conclusion.
+    """
+
+    curve = courbe_logloss(train)
+    for w, ll in curve.items():
+        print(f"  MARKET_WEIGHT={w} → log-loss {ll:.5f}")
     best = min(curve, key=curve.get)
     return curve, float(best)
 
@@ -673,8 +967,18 @@ def main():
     frames = download_all()
     print(f"   {len(frames)} fichiers chargés")
 
-    print("2) Reconstruction chronologique des stats + λ précalculés ...")
-    matches = prepare_matches(frames)
+    print("1bis) Historique xG match par match (Understat) ...")
+    xg_par_match = charger_xg(frames)
+
+    # ── Variante SANS xG : reproduit le backtest précédent, et sert
+    #    de référence pour mesurer ce que le xG apporte (ou non).
+    print("2) Reconstruction chronologique — SANS xG ...")
+    matches_sans = prepare_matches(frames, xg_par_match, avec_xg=False)
+    train_s = [m for m in matches_sans if m["season"] in SEASONS_TRAIN]
+    test_s = [m for m in matches_sans if m["season"] in SEASONS_TEST]
+
+    print("2bis) Reconstruction chronologique — AVEC xG ...")
+    matches = prepare_matches(frames, xg_par_match, avec_xg=True)
 
     train = [m for m in matches if m["season"] in SEASONS_TRAIN]
     test = [m for m in matches if m["season"] in SEASONS_TEST]
@@ -683,10 +987,53 @@ def main():
 
     print("3) Grille MARKET_WEIGHT sur le train (log-loss 1X2) ...")
     curve, best_w = grid_search_weight(train)
-    print(f"   meilleur poids marché : {best_w:.1f}")
+    print(f"   meilleur poids marché (train, AVEC xG) : {best_w:.2f}")
+
+    # ── LE chiffre qui décide : la courbe HORS ÉCHANTILLON.
+    #    La courbe train est en échantillon et son minimum se pose
+    #    sur le bord de grille ; elle ne prouve rien à elle seule.
+    print("3bis) Courbes HORS ÉCHANTILLON (test) ...")
+    print("   sans xG :")
+    curve_test_sans = courbe_logloss(test_s, etiquette="test sans xG")
+    print("   avec xG :")
+    curve_test_avec = courbe_logloss(test, etiquette="test avec xG")
+    curve_train_sans = courbe_logloss(train_s)
+    best_test_sans = float(min(curve_test_sans, key=curve_test_sans.get))
+    best_test_avec = float(min(curve_test_avec, key=curve_test_avec.get))
+    print(f"   meilleur poids HORS ÉCHANTILLON — "
+          f"sans xG : {best_test_sans:.2f} · avec xG : "
+          f"{best_test_avec:.2f}")
+
+    # Comparaison à poids IDENTIQUE (celui de l'app) : isole l'effet
+    # du xG de l'effet d'un changement de poids.
+    w_app = original_weight
+    cle_app = f"{w_app:.2f}"
+    apport = None
+    if cle_app in curve_test_sans and cle_app in curve_test_avec:
+        apport = round(curve_test_sans[cle_app] - curve_test_avec[cle_app], 6)
+        print(f"   à w={cle_app} (valeur de l'app), le xG change le "
+              f"log-loss test de {apport:+.6f} "
+              f"({'mieux' if apport > 0 else 'moins bien'})")
+
+    # Test apparié : l'écart de 0,0009 de log-loss est-il un signal
+    # ou du bruit ? Sans ce test, on lirait une amélioration là où il
+    # n'y a qu'une fluctuation. Comparaison match par match, à poids
+    # IDENTIQUE — sinon on mesure le changement de poids, pas le xG.
+    apport_test = _test_apparie_xg(test_s, test, w_app)
+    if apport_test:
+        print(f"   test apparié à w={w_app} : écart moyen "
+              f"{apport_test['ecart_moyen']:+.6f} par match, "
+              f"t={apport_test['t']:+.2f}, "
+              f"{'SIGNIFICATIF' if apport_test['significatif'] else 'NON significatif'}")
 
     print("4) Test : modèle vs marché no-vig (Shin) ...")
     metrics, model_rows = evaluate_test(test, best_w)
+    # Comparaison sans/avec xG au poids de l'APP (0.90). L'évaluer au
+    # poids retenu (1.00) donnerait deux fois le même chiffre : à
+    # poids marché pur, la composante statistique — donc le xG — ne
+    # pèse rien. Le piège est facile à ne pas voir.
+    metrics_sans_app, _ = evaluate_test(test_s, w_app)
+    metrics_avec_app, _ = evaluate_test(test, w_app)
 
     print("5) Calibration par déciles ...")
     calib_home = calibration_table(
@@ -715,6 +1062,33 @@ def main():
             "courbe_logloss_train": curve,
             "meilleur": best_w,
             "valeur_app": original_weight,
+            # ── Hors échantillon : le seul juge recevable. La courbe
+            #    train est en échantillon et son minimum se pose sur
+            #    le bord droit de la grille (1.0), ce qui n'est pas un
+            #    optimum observé mais une borne.
+            "courbe_logloss_test_sans_xg": curve_test_sans,
+            "courbe_logloss_test_avec_xg": curve_test_avec,
+            "courbe_logloss_train_sans_xg": curve_train_sans,
+            "meilleur_test_sans_xg": best_test_sans,
+            "meilleur_test_avec_xg": best_test_avec,
+        },
+        "apport_xg": {
+            "description": ("Écart de log-loss HORS ÉCHANTILLON entre "
+                            "le modèle sans xG et avec xG, à poids "
+                            "marché identique. Positif = le xG "
+                            "améliore."),
+            "poids_compare": original_weight,
+            "gain_logloss_test": apport,
+            "brier_test_sans_xg": metrics_sans_app["brier"]["modele"],
+            "brier_test_avec_xg": metrics_avec_app["brier"]["modele"],
+            "logloss_test_sans_xg": metrics_sans_app["logloss"]["modele"],
+            "logloss_test_avec_xg": metrics_avec_app["logloss"]["modele"],
+            "n_matchs_test": metrics_avec_app["n_matchs_compares"],
+            "test_apparie": apport_test,
+            "avertissement": ("À w=1.00 la composante statistique ne "
+                              "pèse rien : sans xG et avec xG y donnent "
+                              "le MÊME chiffre, par construction. Toute "
+                              "comparaison doit se faire à poids < 1."),
         },
         "brier": metrics["brier"],
         "logloss": metrics["logloss"],
@@ -741,10 +1115,43 @@ def _print_summary(r):
     print("═" * 60)
     print(f"Matchs : {r['n_matchs_train']} train / {r['n_matchs_test']} test")
 
-    print("\nGrille MARKET_WEIGHT (log-loss train) :")
-    for w, ll in r["poids_marche"]["courbe_logloss_train"].items():
-        star = "  ← meilleur" if float(w) == r["poids_marche"]["meilleur"] else ""
-        print(f"  w={w} : {ll:.5f}{star}")
+    pm = r["poids_marche"]
+    print("\nGrille MARKET_WEIGHT — log-loss (plus bas = mieux)")
+    print(f"  {'poids':>6s} {'train sans':>11s} {'train avec':>11s} "
+          f"{'TEST sans':>11s} {'TEST avec':>11s}")
+    for w in pm["courbe_logloss_train"]:
+        ts = pm["courbe_logloss_test_sans_xg"].get(w)
+        ta = pm["courbe_logloss_test_avec_xg"].get(w)
+        trs = pm["courbe_logloss_train_sans_xg"].get(w)
+        tra = pm["courbe_logloss_train"].get(w)
+        marque = ""
+        if ta is not None and ta == min(
+                pm["courbe_logloss_test_avec_xg"].values()):
+            marque = "  ← meilleur hors échantillon"
+        print(f"  {w:>6s} {trs:11.5f} {tra:11.5f} {ts:11.5f} "
+              f"{ta:11.5f}{marque}")
+    print(f"  Meilleur poids HORS ÉCHANTILLON — "
+          f"sans xG : {pm['meilleur_test_sans_xg']:.2f} · "
+          f"avec xG : {pm['meilleur_test_avec_xg']:.2f}")
+
+    ax = r["apport_xg"]
+    print(f"\nApport du xG (hors échantillon, {ax['n_matchs_test']} matchs, "
+          f"à poids {ax['poids_compare']}) :")
+    print(f"  log-loss  sans xG {ax['logloss_test_sans_xg']:.5f}  →  "
+          f"avec xG {ax['logloss_test_avec_xg']:.5f}")
+    print(f"  Brier     sans xG {ax['brier_test_sans_xg']:.5f}  →  "
+          f"avec xG {ax['brier_test_avec_xg']:.5f}")
+    if ax["gain_logloss_test"] is not None:
+        signe = "AMÉLIORE" if ax["gain_logloss_test"] > 0 else "DÉGRADE"
+        print(f"  → le xG {signe} de {abs(ax['gain_logloss_test']):.6f} "
+              f"de log-loss")
+    ta = ax.get("test_apparie")
+    if ta:
+        verdict = ("SIGNIFICATIF" if ta["significatif"]
+                   else "NON significatif — indiscernable du bruit")
+        print(f"  Test apparié ({ta['n_matchs']} matchs) : "
+              f"écart {ta['ecart_moyen']:+.6f} ± {ta['erreur_type']:.6f}, "
+              f"t={ta['t']:+.2f} → {verdict}")
 
     b, l = r["brier"], r["logloss"]
     print(f"\nTest ({r['n_matchs_compares']} matchs) — Brier / log-loss 1X2 :")

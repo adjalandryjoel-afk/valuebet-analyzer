@@ -1,5 +1,5 @@
 {
-  "genere_le": "2026-08-04T09:00:43+00:00",
+  "genere_le": "2026-08-05T04:02:32+00:00",
   "source": "football-data.co.uk (B365 ouverture, Pinnacle clôture)",
   "saisons_train": [
     "2122",
@@ -21,15 +21,68 @@
   "n_matchs_test": 3449,
   "poids_marche": {
     "courbe_logloss_train": {
-      "0.5": 0.99276,
-      "0.6": 0.98599,
-      "0.7": 0.98046,
-      "0.8": 0.97618,
-      "0.9": 0.97205,
-      "1.0": 0.97131
+      "0.50": 0.98236,
+      "0.60": 0.97875,
+      "0.70": 0.97584,
+      "0.80": 0.97362,
+      "0.90": 0.9721,
+      "0.95": 0.97161,
+      "0.98": 0.97141,
+      "1.00": 0.97131
     },
     "meilleur": 1.0,
-    "valeur_app": 0.9
+    "valeur_app": 0.9,
+    "courbe_logloss_test_sans_xg": {
+      "0.50": 0.98676,
+      "0.60": 0.9814,
+      "0.70": 0.97708,
+      "0.80": 0.9738,
+      "0.90": 0.97156,
+      "0.95": 0.97084,
+      "0.98": 0.97053,
+      "1.00": 0.97038
+    },
+    "courbe_logloss_test_avec_xg": {
+      "0.50": 0.97832,
+      "0.60": 0.97551,
+      "0.70": 0.97329,
+      "0.80": 0.97166,
+      "0.90": 0.97068,
+      "0.95": 0.97044,
+      "0.98": 0.97038,
+      "1.00": 0.97038
+    },
+    "courbe_logloss_train_sans_xg": {
+      "0.50": 0.99276,
+      "0.60": 0.98599,
+      "0.70": 0.98046,
+      "0.80": 0.97618,
+      "0.90": 0.97311,
+      "0.95": 0.97205,
+      "0.98": 0.97156,
+      "1.00": 0.97131
+    },
+    "meilleur_test_sans_xg": 1.0,
+    "meilleur_test_avec_xg": 0.98
+  },
+  "apport_xg": {
+    "description": "Écart de log-loss HORS ÉCHANTILLON entre le modèle sans xG et avec xG, à poids marché identique. Positif = le xG améliore.",
+    "poids_compare": 0.9,
+    "gain_logloss_test": 0.00088,
+    "brier_test_sans_xg": 0.5727,
+    "brier_test_avec_xg": 0.57202,
+    "logloss_test_sans_xg": 0.96296,
+    "logloss_test_avec_xg": 0.962,
+    "n_matchs_test": 2595,
+    "test_apparie": {
+      "n_matchs": 3449,
+      "ecart_moyen": 0.0008824,
+      "erreur_type": 0.0003252,
+      "t": 2.713,
+      "significatif": true,
+      "lecture": "positif = le xG ameliore la prediction ; |t| > 1.96 = significatif a 5 %"
+    },
+    "avertissement": "À w=1.00 la composante statistique ne pèse rien : sans xG et avec xG y donnent le MÊME chiffre, par construction. Toute comparaison doit se faire à poids < 1."
   },
   "brier": {
     "modele": 0.57203,
@@ -242,5 +295,5 @@
       "n_matchs": 1678
     }
   },
-  "duree_backtest_s": 59.4
+  "duree_backtest_s": 131.1
 }
