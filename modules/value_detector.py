@@ -228,6 +228,39 @@ class ValueBetDetector:
             w = PoissonConfig.MARKET_WEIGHT
             return w * probs[0] + (1 - w) * p_modele
 
+        # ── INVARIANT : des λ par défaut ne parient RIEN ──
+        #
+        # Quand ni l'ancrage marché ni des statistiques d'équipe
+        # mesurées ne sont disponibles, les λ retombent sur les
+        # valeurs par défaut de TeamStats — identiques d'un match à
+        # l'autre. Toutes les probabilités dérivées des buts
+        # deviennent alors des CONSTANTES, et le détecteur lit comme
+        # « value » le simple écart entre une constante et un prix.
+        #
+        # Cas mesuré en argent réel : 8 matchs (cotes 1X2 absentes,
+        # ou marge ~16 % rejetée par margin_ok) ont tous reçu
+        # λ = 1.425 / 1.125 → P(Under 2.5) = 0.5311 sur les huit, et
+        # jusqu'à +23 % de « value » annoncée. Sept des quinze paris
+        # du journal venaient de là.
+        #
+        # Le 1X2 reste évaluable : ses cotes servent de référence
+        # directe et sont déjà filtrées par odds_1x2_suspect. Ce sont
+        # les marchés DÉRIVÉS des λ (totaux, BTTS, par équipe,
+        # mi-temps) qui n'ont plus rien de propre à opposer au book.
+        lambdas_fiables = getattr(
+            poisson_pred, "lambdas_from_real_data", True)
+        if not lambdas_fiables:
+            analysis.data_warning = (
+                (analysis.data_warning + " ") if analysis.data_warning
+                else ""
+            ) + (
+                "Aucune donnée propre sur ces équipes et cotes 1X2 "
+                "inutilisables : les marchés de buts (Over/Under, "
+                "BTTS, buts par équipe, mi-temps) ne sont pas évalués "
+                "— le modèle n'aurait comparé qu'une valeur par "
+                "défaut au prix du bookmaker."
+            )
+
         # ── Scanner chaque marché ──
         # (marché, sélection, cote, prob modèle, pénalité de confiance)
         candidates = [
@@ -238,7 +271,7 @@ class ValueBetDetector:
 
         o_over25 = float(odds.get("over_2_5", 0) or 0)
         o_under25 = float(odds.get("under_2_5", 0) or 0)
-        if _paire_ok(o_over25, o_under25):
+        if lambdas_fiables and _paire_ok(o_over25, o_under25):
             candidates.append(("Over/Under 2.5", "Over 2.5",
                                o_over25, poisson_pred.prob_over25, 0))
             candidates.append(("Over/Under 2.5", "Under 2.5",
@@ -246,7 +279,7 @@ class ValueBetDetector:
 
         o_btts_oui = float(odds.get("btts_oui", 0) or 0)
         o_btts_non = float(odds.get("btts_non", 0) or 0)
-        if _paire_ok(o_btts_oui, o_btts_non):
+        if lambdas_fiables and _paire_ok(o_btts_oui, o_btts_non):
             candidates.append(("BTTS", "Oui",
                                o_btts_oui, poisson_pred.prob_btts_yes, 0))
             candidates.append(("BTTS", "Non",
@@ -257,7 +290,8 @@ class ValueBetDetector:
             ("home", home_team, poisson_pred.team_totals_home, "HOME_TOTALS"),
             ("away", away_team, poisson_pred.team_totals_away, "AWAY_TOTALS"),
         )
-        for side, team, totals, probs_key in team_sides:
+        for side, team, totals, probs_key in (team_sides
+                                              if lambdas_fiables else ()):
             analysis.model_probs[probs_key] = {}
             for line, p_over in totals.items():
                 line_txt = line.replace("_", ".")
@@ -309,7 +343,8 @@ class ValueBetDetector:
             ("h2_away", f"Buts 2MT {away_team}",
              poisson_pred.h2_team_away, "H2_AWAY"),
         )
-        for prefix, market_label, totals, probs_key in team_halves:
+        for prefix, market_label, totals, probs_key in (
+                team_halves if lambdas_fiables else ()):
             analysis.model_probs[probs_key] = {}
             for line, p_over in totals.items():
                 line_txt = line.replace("_", ".")

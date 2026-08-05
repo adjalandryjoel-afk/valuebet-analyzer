@@ -74,6 +74,22 @@ class PoissonPrediction:
     # réelle, le modèle n'a rien de propre à opposer au marché.
     sot_from_real_data: bool = False
 
+    # λ adossés à quelque chose de RÉEL — ancrage marché valide, ou
+    # statistiques d'équipe mesurées. False = les λ sont les valeurs
+    # par défaut de TeamStats, identiques d'un match à l'autre.
+    #
+    # Le cas s'est produit en argent réel : 8 matchs (cotes 1X2
+    # absentes, ou marge ~16 % rejetée par margin_ok) ont tous reçu
+    # λ = 1.425 / 1.125, donc P(Under 2.5) = 0.5311 CONSTANT. Le
+    # détecteur a comparé cette constante aux cotes du book et a
+    # annoncé jusqu'à +23 % de « value » — 7 des 15 paris du journal.
+    # Ce n'était pas un désaccord avec le marché : c'était une valeur
+    # par défaut confrontée à un prix.
+    #
+    # Même invariant que sot_from_real_data : un marché sans donnée
+    # propre ne doit JAMAIS générer de value.
+    lambdas_from_real_data: bool = False
+
     # Double chance
     prob_1x: float = 0.0
     prob_x2: float = 0.0
@@ -118,6 +134,8 @@ class PoissonPredictor:
         pred = PoissonPrediction(
             lambda_home=round(lam_home, 3),
             lambda_away=round(lam_away, 3),
+            lambdas_from_real_data=getattr(
+                self, "_lambdas_reels", False),
         )
 
         self._fill_probabilities(
@@ -142,6 +160,17 @@ class PoissonPredictor:
 
         stats_lams = self._lambdas_from_stats(context)
         market_lams = self._lambdas_from_market(context)
+
+        # Les λ valent-ils quelque chose ? Il faut au moins UNE
+        # source réelle : l'ancrage marché, ou des statistiques
+        # d'équipe mesurées. Sans cela, ce sont les valeurs par
+        # défaut de TeamStats, identiques pour tous les matchs.
+        self._lambdas_reels = bool(market_lams) or any(
+            getattr(s, "data_source", "estimated") != "estimated"
+            or getattr(s, "matches_played", 0) > 0
+            for s in (context.home_stats, context.away_stats)
+            if s is not None
+        )
 
         if market_lams:
             w = PoissonConfig.MARKET_WEIGHT
