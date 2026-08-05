@@ -606,6 +606,13 @@ class FootballData:
         "ligue europa": "europa_league", "europa league": "europa_league",
         "coupe du monde": "world_cup", "world cup": "world_cup",
         "superettan": "swe_superettan",
+        # Conference League — libellés Betclic CI observés en base :
+        # « Ligue Conférence », « conférence », et des troncatures
+        # OCR (« ue Conférence »). Le mot « conference » seul suffit
+        # à trancher : aucune autre compétition suivie ne le porte.
+        "ligue conference": "conference_league",
+        "conference league": "conference_league",
+        "conference": "conference_league",
     }
 
     # Indices purement GÉOGRAPHIQUES ou trop génériques : ils

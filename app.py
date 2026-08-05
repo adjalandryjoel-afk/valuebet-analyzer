@@ -2557,19 +2557,36 @@ def page_backtesting():
                     # non couverte par The Odds API) fait scanner les 26
                     # championnats à 2 crédits chacun — jusqu'à 52 crédits
                     # gaspillés pour un seul clic sans le moindre résultat.
-                    from modules.football_data import get_football_data
-                    from modules.odds_collector import OddsAPICollector
-                    fd_hint = get_football_data()
-                    ligues_dues = {}
-                    for bet in pending:
-                        comp = (bet.get("competition") or "").strip()
-                        # Le scan du jour stocke DÉJÀ la clé interne
-                        cle = (comp
-                               if comp in OddsAPICollector.LEAGUE_KEYS
-                               else fd_hint.league_from_competition(comp))
-                        sport_key = OddsAPICollector.LEAGUE_KEYS.get(cle)
-                        if cle and sport_key:
-                            ligues_dues[cle] = sport_key
+                    # CIBLAGE PAR RECHERCHE DES ÉQUIPES, pas par le
+                    # libellé de compétition.
+                    #
+                    # Le libellé vient de l'OCR et arrive tronqué une
+                    # fois sur six (« ue Conférence », chaînes vides).
+                    # Mesuré sur les paris en attente : il ne désignait
+                    # qu'UN pari sur six, les autres ne déclenchaient
+                    # aucune requête. Pire, il désignait des ligues où
+                    # l'affiche n'est PAS (Ligue des Champions et Ligue
+                    # Europa, hors saison) — 6 crédits payés pour rien.
+                    #
+                    # /events est GRATUIT : on localise d'abord, on ne
+                    # paie /odds que là où l'affiche existe vraiment.
+                    ligues_dues = tracker.ligues_des_paris(pending)
+
+                    # Repli sur le libellé seulement si la recherche
+                    # n'a rien donné (panne réseau, API muette).
+                    if not ligues_dues:
+                        from modules.football_data import get_football_data
+                        from modules.odds_collector import OddsAPICollector
+                        fd_hint = get_football_data()
+                        for bet in pending:
+                            comp = (bet.get("competition") or "").strip()
+                            cle = (comp
+                                   if comp in OddsAPICollector.LEAGUE_KEYS
+                                   else fd_hint.league_from_competition(comp))
+                            sport_key = OddsAPICollector.LEAGUE_KEYS.get(cle)
+                            if cle and sport_key:
+                                ligues_dues[cle] = sport_key
+
                     tracker.LEAGUE_KEYS = ligues_dues
                     res = (tracker.capture_closing_odds(pending)
                            if ligues_dues else

@@ -435,6 +435,24 @@ SUPPORTED_LEAGUES = {
         "avg_goals": 2.80, "home_win_rate": 0.44,
         "first_half_share": 0.46,
     },
+    # Tours préliminaires et Conference : c'est là que Joel parie
+    # réellement, et ces compétitions n'existaient nulle part dans
+    # l'app — d'où un CLV impossible à capturer. Les tours
+    # préliminaires opposent souvent des écarts de niveau énormes
+    # (champion national contre champion d'un petit pays), d'où un
+    # avantage du terrain et un volume de buts plus élevés que dans
+    # la phase de groupes.
+    "champions_league_qual": {
+        "name": "Ligue des Champions (qualifications)",
+        "country": "Europe",
+        "avg_goals": 2.95, "home_win_rate": 0.50,
+        "first_half_share": 0.45,
+    },
+    "conference_league": {
+        "name": "Conference League", "country": "Europe",
+        "avg_goals": 2.85, "home_win_rate": 0.46,
+        "first_half_share": 0.46,
+    },
     "ligue1_ci": {
         "name": "Ligue 1 Côte d'Ivoire", "country": "Côte d'Ivoire",
         "avg_goals": 2.20, "home_win_rate": 0.48,

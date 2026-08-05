@@ -224,7 +224,7 @@
   "juventus": {
     "team_id": 496,
     "stats": null,
-    "ts": 1785862245.3935368
+    "ts": 1785924727.3265646
   },
   "inter": {
     "team_id": 505,
@@ -412,7 +412,8 @@
   },
   "ferencvarosi tc": {
     "team_id": 651,
-    "stats": null
+    "stats": null,
+    "ts": 1785925495.1600032
   },
   "vojvodina": {
     "team_id": 702,
@@ -537,7 +538,7 @@
   "fenerbahce": {
     "team_id": 611,
     "stats": null,
-    "ts": 1785904671.7526317
+    "ts": 1785925929.9718447
   },
   "celtic": {
     "team_id": 247,
@@ -601,7 +602,7 @@
   "sturm graz": {
     "team_id": 637,
     "stats": null,
-    "ts": 1785904672.6825373
+    "ts": 1785925930.7878132
   },
   "atlas": {
     "team_id": 2283,
@@ -702,7 +703,8 @@
   },
   "agf aarhus": {
     "team_id": 406,
-    "stats": null
+    "stats": null,
+    "ts": 1785925741.3041058
   },
   "h2h::347-406": {
     "stats": null
@@ -733,7 +735,8 @@
   },
   "gornik zabrze": {
     "team_id": 340,
-    "stats": null
+    "stats": null,
+    "ts": 1785925495.8809333
   },
   "h2h::340-611": {
     "stats": null
@@ -1493,7 +1496,7 @@
   },
   "chelsea fc": {
     "team_id": 49,
-    "ts": 1785862237.4904332,
+    "ts": 1785924726.5846634,
     "stats": null
   },
   "h2h::49-496": {
@@ -1661,5 +1664,35 @@
       "team2_avg_scored": 1.0,
       "sample": 2
     }
+  },
+  "brann bergen": {
+    "team_id": 6968,
+    "ts": 1785925099.0570745,
+    "stats": null
+  },
+  "apollon limassol": {
+    "team_id": 602,
+    "ts": 1785925100.6242204,
+    "stats": null
+  },
+  "h2h::602-6968": {
+    "ts": 1785925101.4079068,
+    "stats": null
+  },
+  "h2h::340-651": {
+    "ts": 1785925496.6402135,
+    "stats": null
+  },
+  "sabah fk": {
+    "team_id": 2505,
+    "ts": 1785925743.6377451,
+    "stats": null
+  },
+  "h2h::406-2505": {
+    "ts": 1785925744.3765798,
+    "stats": null
+  },
+  "newcastle united": {
+    "team_id": 7199
   }
 }

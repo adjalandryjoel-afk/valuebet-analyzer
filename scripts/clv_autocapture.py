@@ -88,10 +88,19 @@ def main():
     except Exception as e:
         say(f"Sync cloud impossible : {e}")
 
-    pending = [b for b in db.get_pending_bets()
+    # Critère : la cote de clôture manque. PAS « le résultat manque »
+    # — un pari réglé le soir même sortait du périmètre avant que le
+    # robot ait eu sa fenêtre, et son CLV était perdu pour toujours.
+    pending = [b for b in db.get_bets_awaiting_clv()
                if not b.get("closing_odds")]
     if not pending:
-        return  # rien à faire, aucune requête
+        # Battement de cœur : sans cette ligne, un passage à vide est
+        # indiscernable d'un robot qui ne tourne pas. Cas déjà vécu —
+        # un coup d'envoi repéré, sa fenêtre passée, et aucune trace
+        # ni de capture ni d'échec dans le journal.
+        say("Aucun pari en attente de CLV — rien à faire.")
+        log.close()
+        return
 
     # ── État persistant ──
     state = {"kickoffs": {}, "lookups": {}, "missed": []}
@@ -179,6 +188,16 @@ def main():
                     "ligue": trouve[0], "utc": trouve[1]}
                 say(f"Coup d'envoi repéré : {key.replace('|', ' vs ')} "
                     f"→ {trouve[1]} ({trouve[0]})")
+            else:
+                # Un échec de recherche doit se VOIR. Sans cette
+                # ligne, l'affiche s'enterrait dans state["lookups"]
+                # et on ne pouvait pas distinguer « The Odds API ne
+                # couvre pas ce match » de « le robot n'a pas tourné ».
+                # Mesuré : 12 recherches, 2 coups d'envoi trouvés,
+                # 10 échecs totalement muets.
+                say(f"Affiche introuvable chez The Odds API : "
+                    f"{key.replace('|', ' vs ')} — aucun CLV possible "
+                    f"(compétition non couverte)")
 
     # ── Matchs dans la fenêtre de capture ──
     dus, ligues_dues = [], {}
@@ -205,10 +224,27 @@ def main():
     if dus:
         if quota is not None and int(quota) < MIN_QUOTA:
             say(f"Quota trop bas ({quota} crédits) — capture annulée")
+        elif not ligues_dues:
+            # GARDE-FOU DE QUOTA. Sans lui, un match dont la
+            # compétition n'est pas reconnue laissait le tracker avec
+            # TOUTES ses clés : un balayage complet, ~2 crédits ×
+            # le nombre de championnats suivis, en silence, toutes
+            # les 20 minutes. Mesuré à 56 crédits par passage — et
+            # l'élargissement de la couverture le porterait à près
+            # de 100, un cinquième du quota mensuel d'un coup.
+            #
+            # Un match introuvable n'est pas une raison de tout
+            # scanner : c'est une raison de le dire et de passer.
+            affiches = sorted({
+                f"{b.get('home_team')} vs {b.get('away_team')}"
+                for b in dus})
+            say(f"{len(dus)} pari(s) dus mais aucune compétition "
+                f"reconnue parmi les clés suivies — capture annulée, "
+                f"AUCUNE requête émise. Affiches : "
+                f"{', '.join(affiches[:5])}")
         else:
             tracker = ClvTracker(db)
-            if ligues_dues:
-                tracker.LEAGUE_KEYS = ligues_dues  # ligues ciblées
+            tracker.LEAGUE_KEYS = ligues_dues  # ligues ciblées
             res = tracker.capture_closing_odds(dus)
             say(f"Capture : {res['captures']} CLV enregistré(s), "
                 f"{res['ignores']} ignoré(s), "

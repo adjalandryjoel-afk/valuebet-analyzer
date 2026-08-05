@@ -789,6 +789,33 @@ class DatabaseManager:
 
             return [dict(row) for row in rows]
 
+    def get_bets_awaiting_clv(self) -> List[Dict]:
+        """
+        Paris dont la cote de clôture n'a PAS encore été capturée.
+
+        Distinct de get_pending_bets() : celui-ci filtre sur
+        `result IS NULL`, ce qui exclut définitivement du CLV tout
+        pari dont Joel a saisi le résultat. Or le résultat et la cote
+        de clôture n'ont rien à voir — le CLV se mesure au coup
+        d'envoi, le résultat arrive après. Un pari réglé le soir même
+        sortait du périmètre avant que le robot ait eu sa fenêtre de
+        capture, et son CLV était perdu pour toujours.
+
+        Le critère correct est donc « clv_pct est vide », rien d'autre.
+        """
+
+        with self._get_connection() as conn:
+            rows = conn.execute("""
+                SELECT vb.*, m.home_team, m.away_team, m.match_date,
+                       m.competition
+                FROM value_bets vb
+                JOIN matches m ON vb.match_id = m.id
+                WHERE vb.clv_pct IS NULL
+                ORDER BY m.match_date DESC, vb.created_at DESC
+            """).fetchall()
+
+            return [dict(row) for row in rows]
+
     def get_performance_stats(self) -> Dict:
         """Récupère les statistiques de performance globales."""
 

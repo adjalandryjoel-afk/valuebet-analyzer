@@ -82,6 +82,64 @@ class ClvTracker:
 
     # ─── API PUBLIQUE ────────────────────────────────
 
+    def ligues_des_paris(self, paris: List[Dict]) -> Dict[str, str]:
+        """
+        {clé_interne: sport_key} des championnats où se trouvent
+        RÉELLEMENT ces paris — localisés par recherche des équipes,
+        pas par le libellé de compétition.
+
+        POURQUOI PAS LE LIBELLÉ : il vient de l'OCR d'une capture
+        d'écran et arrive tronqué une fois sur six (« ue Conférence »,
+        « e des Champions », chaînes vides). Mesuré sur les paris en
+        attente : le ciblage par libellé n'identifiait qu'UN pari sur
+        six, les cinq autres ne déclenchaient aucune requête et
+        l'utilisateur voyait un avertissement sans comprendre.
+
+        COÛT : ZÉRO. L'endpoint /events n'est pas facturé (vérifié :
+        x-requests-last = 0). On dépense donc des requêtes gratuites
+        pour localiser, et on ne paie /odds que sur les championnats
+        effectivement trouvés — l'inverse exact de l'ancien
+        comportement, qui payait un balayage complet dès que le
+        libellé était illisible.
+        """
+
+        import requests
+        from rapidfuzz import fuzz
+
+        affiches = {(str(b.get("home_team") or ""),
+                     str(b.get("away_team") or ""))
+                    for b in paris}
+        affiches = {(h, a) for h, a in affiches if h and a}
+        if not affiches:
+            return {}
+
+        trouvees: Dict[str, str] = {}
+        restantes = set(affiches)
+
+        for league, sport_key in OddsAPICollector.LEAGUE_KEYS.items():
+            if not restantes:
+                break
+            try:
+                r = requests.get(
+                    f"{self.BASE_URL}/sports/{sport_key}/events",
+                    params={"apiKey": self.api_key}, timeout=20)
+                if r.status_code != 200:
+                    continue
+                events = r.json()
+            except Exception:
+                continue
+
+            for ev in events:
+                eh = str(ev.get("home_team", "")).lower()
+                ea = str(ev.get("away_team", "")).lower()
+                for h, a in list(restantes):
+                    if (fuzz.token_sort_ratio(h.lower(), eh) >= 65
+                            and fuzz.token_sort_ratio(a.lower(), ea) >= 65):
+                        trouvees[league] = sport_key
+                        restantes.discard((h, a))
+
+        return trouvees
+
     def capture_closing_odds(self, pending_bets: List[Dict]) -> Dict:
         """
         Capture les cotes de clôture des paris en attente et

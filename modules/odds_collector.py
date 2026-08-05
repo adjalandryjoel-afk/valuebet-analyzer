@@ -132,6 +132,22 @@ class OddsAPICollector:
         "champions_league": "soccer_uefa_champs_league",
         "europa_league": "soccer_uefa_europa_league",
         "world_cup": "soccer_fifa_world_cup",
+        # TOURS PRÉLIMINAIRES ET CONFERENCE LEAGUE.
+        #
+        # Ajoutées parce que c'est LÀ que se trouvent les paris réels :
+        # 14 des 15 paris du journal portaient sur des compétitions
+        # absentes de cette table — d'où un CLV jamais capturé, sur
+        # aucun pari. Sans ces clés, l'instrument qui mesure la
+        # qualité des paris ne peut structurellement rien voir.
+        #
+        # Vérifiées une à une contre /sports?all=true :
+        # soccer_uefa_champs_league_qualification est ACTIVE
+        # aujourd'hui ; conference l'est par saison. Les clés
+        # « inactives » en août (C1, C3, Coupe du Monde) le sont pour
+        # des raisons de CALENDRIER — ne jamais les retirer sur ce
+        # motif, elles reviennent en septembre.
+        "champions_league_qual": "soccer_uefa_champs_league_qualification",
+        "conference_league": "soccer_uefa_europa_conference_league",
     }
 
     # Bookmakers africains / francophones à surveiller
