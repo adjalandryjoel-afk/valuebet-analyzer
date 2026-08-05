@@ -101,6 +101,12 @@ class ApiFootballCollector:
     # Nombre de derniers matchs terminés utilisés
     LAST_FIXTURES = 15
 
+    # Nombre demandé à l'API. Plus large que LAST_FIXTURES pour
+    # pouvoir écarter les amicaux et garder quand même 15 matchs
+    # officiels — en août, une équipe peut aligner 6 matchs de
+    # préparation d'affilée.
+    LAST_FETCH = 25
+
     # Minimum de matchs terminés pour qu'une saison soit exploitable.
     # Doit rester aligné sur le seuil de _compute_stats : accepter une
     # saison qui n'en a pas assez revient à ne renvoyer aucune stat.
@@ -392,24 +398,80 @@ class ApiFootballCollector:
         nouvelles saisons avec le temps, et rien ne le signale — sans
         cette réévaluation, l'app vieillit silencieusement.
         """
+        courante = self._current_season()
         meta = self.cache.get("_meta")
         meta = meta if isinstance(meta, dict) else {}
         season = meta.get("season")
         ts = meta.get("season_ts") or 0
 
         if not season or (time.time() - ts) > self.SEASON_REVALIDATION_S:
-            return self._current_season()
+            return courante
+
+        # PLAFOND DE RETARD. La descente de saison ne va que vers le
+        # PASSÉ (season -= 1) : rien ne ramène jamais l'app vers une
+        # saison plus récente, et une vieille saison RÉUSSIT toujours
+        # sur un plan payant (les archives sont accessibles). Elle se
+        # re-confirme donc à l'infini.
+        #
+        # Constaté en production : l'abonnement Pro donnait accès à
+        # 2026, et l'app interrogeait encore 2023 — trois ans de
+        # retard, servis comme des statistiques actuelles, parce que
+        # la valeur avait été apprise du temps du plan gratuit.
+        #
+        # Un retard d'UNE saison est légitime (en août, la saison
+        # courante n'a pas assez de matchs joués et la précédente est
+        # la bonne source). Au-delà, c'est toujours une anomalie.
+        if season < courante - 1:
+            return courante
         return season
+
+    # Compétitions amicales : exclues des moyennes. Un match de
+    # préparation d'août n'a ni l'intensité ni la composition d'un
+    # match officiel, et en début de saison il domine la fenêtre.
+    LIGUES_AMICALES = {667, 10, 666}
 
     def _fetch_last_fixtures(self, team_id: int) -> List[Dict]:
         """
-        Récupère les derniers matchs terminés d'une équipe (max 15).
+        Derniers matchs OFFICIELS terminés d'une équipe (max 15).
 
-        Le plan gratuit refuse le paramètre `last` : on interroge la
-        saison la plus récente autorisée (mémorisée dans le cache) et
-        on filtre/trie côté client.
+        Utilise le paramètre `last`, refusé par le plan gratuit mais
+        accepté par le plan Pro (vérifié). C'est nettement mieux que
+        l'ancienne approche « une saison entière puis filtrage » :
+
+        - les matchs sont réellement les plus RÉCENTS, en franchissant
+          les frontières de saison. Mesuré sur Arsenal : la voie par
+          saison s'arrêtait au 30/05/2026 (fin de la saison passée),
+          `last` remonte jusqu'au 01/08/2026 ;
+        - la réponse contient 15 matchs au lieu de 69, pour le même
+          crédit ;
+        - et surtout, plus besoin de deviner quelle saison interroger,
+          la mécanique qui avait figé l'app trois ans en arrière.
+
+        On demande large (`LAST_FETCH`) pour pouvoir écarter les
+        amicaux et garder quand même LAST_FIXTURES matchs officiels.
+
+        Repli sur l'ancienne voie si `last` est refusé — le plan peut
+        changer, et un échec ici doit dégrader, pas casser.
         """
 
+        data = self._request("/fixtures", {"team": team_id,
+                                           "last": self.LAST_FETCH})
+        if data and not data.get("errors"):
+            officiels = [
+                fx for fx in (data.get("response") or [])
+                if ((fx.get("fixture") or {}).get("status") or {})
+                .get("short") in self.FINISHED_STATUSES
+                and (fx.get("league") or {}).get("id")
+                not in self.LIGUES_AMICALES
+            ]
+            if len(officiels) >= self.MIN_FIXTURES:
+                officiels.sort(
+                    key=lambda fx: (fx.get("fixture") or {}).get("date") or "",
+                    reverse=True,
+                )
+                return officiels[:self.LAST_FIXTURES]
+
+        # ── Repli : interrogation par saison (voie historique) ──
         season = self._season_de_depart()
 
         for _ in range(4):
