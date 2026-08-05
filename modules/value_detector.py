@@ -218,13 +218,29 @@ class ValueBetDetector:
             de la value — un pari fantôme sur un marché où le modèle
             n'a aucune donnée propre à l'équipe (même invariant que le
             garde-fou déjà appliqué aux tirs cadrés).
+
+            Retourne None quand aucun ancrage n'est possible — et
+            l'appelant doit alors REFUSER le pari.
+
+            La version précédente renvoyait `p_modele` inchangé dans
+            ce cas : un simple passe-plat. Or c'est précisément la
+            situation dangereuse. Quand un seul côté de la paire est
+            coté (fréquent sur les mi-temps chez Betclic), il n'y a
+            pas d'ancrage, et la répartition MOYENNE DE LIGUE partait
+            telle quelle contre le prix du bookmaker. L'écart entre
+            « 45 % de moyenne » et le vrai profil de l'équipe se
+            lisait alors comme un edge, jusqu'à +37 % de value
+            annoncée, à la mise Kelly maximale.
+
+            Pas d'ancrage possible = pas de pari. Même invariant que
+            pour les tirs cadrés et les λ par défaut.
             """
             if not (o_over > 1 and o_under > 1
                     and margin_ok([o_over, o_under])):
-                return p_modele
+                return None
             probs = novig_probs([o_over, o_under])
             if not probs:
-                return p_modele
+                return None
             w = PoissonConfig.MARKET_WEIGHT
             return w * probs[0] + (1 - w) * p_modele
 
@@ -311,7 +327,8 @@ class ValueBetDetector:
             ("h1", "1ère mi-temps", poisson_pred.h1_totals, "H1"),
             ("h2", "2ème mi-temps", poisson_pred.h2_totals, "H2"),
         )
-        for prefix, label, totals, probs_key in halves:
+        for prefix, label, totals, probs_key in (
+                halves if lambdas_fiables else ()):
             analysis.model_probs[probs_key] = {}
             for line, p_over in totals.items():
                 line_txt = line.replace("_", ".")
@@ -325,6 +342,13 @@ class ValueBetDetector:
                     # avant de servir à détecter la value, sinon l'écart
                     # pur moyenne-vs-réalité se lit à tort comme un edge.
                     p_ancre = _blend_vers_marche(p_over, o_over, o_under)
+                    # Pas d'ancrage possible → pas de pari. La
+                    # répartition 1MT/2MT est une moyenne de LIGUE :
+                    # sans le prix du book en face, l'écart entre
+                    # cette moyenne et le profil réel de l'équipe se
+                    # lit à tort comme un edge.
+                    if p_ancre is None:
+                        continue
                     candidates.append((
                         f"Buts {label}", f"Over {line_txt}", o_over, p_ancre, 5))
                     candidates.append((
@@ -358,6 +382,8 @@ class ValueBetDetector:
                     # Même raison qu'au-dessus : p_over = λ équipe ×
                     # part de ligue, pas un vrai profil équipe×mi-temps.
                     p_ancre = _blend_vers_marche(p_over, o_over, o_under)
+                    if p_ancre is None:
+                        continue
                     candidates.append((
                         market_label, f"Over {line_txt}", o_over, p_ancre, 8))
                     candidates.append((
@@ -517,7 +543,14 @@ class ValueBetDetector:
         analysis.analysis_confidence = min(analysis.analysis_confidence, 95)
 
         # ── Avertissements ──
-        warnings = []
+        #
+        # On REPART du message éventuellement déjà posé plus haut :
+        # cette ligne écrasait purement et simplement l'explication
+        # « les marchés de buts ne sont pas évalués », composée quand
+        # les λ ne valent rien. Les marchés disparaissaient donc de
+        # l'écran sans un mot, et c'est exactement le moment où
+        # l'utilisateur a besoin de comprendre.
+        warnings = [analysis.data_warning] if analysis.data_warning else []
         if odds_1x2_suspect:
             warnings.append(
                 f"🚨 Cotes 1X2 incohérentes (marge {analysis.bookmaker_margin:.1f}%) "

@@ -476,9 +476,22 @@ def _charger_params_mesures():
     for cle, params in mesures.items():
         if cle not in SUPPORTED_LEAGUES:
             continue
+        # Tout champ mesuré doit figurer ici, SANS EXCEPTION : ce
+        # tuple est le seul pont entre league_params.json et le
+        # modèle. Un champ oublié n'échoue pas — il reste simplement
+        # absent, et le code qui en dépend retombe en silence sur son
+        # chemin de repli.
+        #
+        # C'est arrivé : avg_sot_home / avg_sot_away étaient écrits
+        # dans le fichier mais jamais recopiés ici, si bien que le
+        # correctif des tirs cadrés par venue (qui ramenait le biais
+        # de 11,9 à 3,5 écarts-types) n'était JAMAIS exécuté. Le
+        # backtest le validait pourtant : il pose les valeurs
+        # directement sur le contexte, sans passer par ce pont.
         for champ in ("avg_goals", "avg_goals_home", "avg_goals_away",
                       "home_win_rate", "first_half_share",
-                      "avg_sot", "sot_par_but"):
+                      "avg_sot", "avg_sot_home", "avg_sot_away",
+                      "sot_par_but"):
             if isinstance(params.get(champ), (int, float)):
                 SUPPORTED_LEAGUES[cle][champ] = params[champ]
         SUPPORTED_LEAGUES[cle]["mesure"] = {

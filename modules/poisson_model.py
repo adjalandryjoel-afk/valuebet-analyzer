@@ -121,7 +121,7 @@ class PoissonPredictor:
         l'analyse pré-match (H2H, forme, contexte) — bornés par sécurité.
         """
 
-        lam_home, lam_away = self._estimate_lambdas(context)
+        lam_home, lam_away, lambdas_reels = self._estimate_lambdas(context)
 
         # Ajustements du conseil d'agents (bornés une seconde fois)
         mult_h = max(0.85, min(1.15, lambda_multipliers[0]))
@@ -134,8 +134,7 @@ class PoissonPredictor:
         pred = PoissonPrediction(
             lambda_home=round(lam_home, 3),
             lambda_away=round(lam_away, 3),
-            lambdas_from_real_data=getattr(
-                self, "_lambdas_reels", False),
+            lambdas_from_real_data=lambdas_reels,
         )
 
         self._fill_probabilities(
@@ -151,7 +150,8 @@ class PoissonPredictor:
 
     # ─── ESTIMATION DES LAMBDAS ─────────────────────
 
-    def _estimate_lambdas(self, context: MatchContext) -> Tuple[float, float]:
+    def _estimate_lambdas(self, context: MatchContext
+                          ) -> Tuple[float, float, bool]:
         """
         Estime λ_home et λ_away en combinant :
         1. Le marché (cotes no-vig 1X2 + over/under)  — poids MARKET_WEIGHT
@@ -161,13 +161,29 @@ class PoissonPredictor:
         stats_lams = self._lambdas_from_stats(context)
         market_lams = self._lambdas_from_market(context)
 
-        # Les λ valent-ils quelque chose ? Il faut au moins UNE
-        # source réelle : l'ancrage marché, ou des statistiques
-        # d'équipe mesurées. Sans cela, ce sont les valeurs par
-        # défaut de TeamStats, identiques pour tous les matchs.
-        self._lambdas_reels = bool(market_lams) or any(
+        # Les λ valent-ils quelque chose ?
+        #
+        # DEUX CORRECTIFS par rapport à la première version :
+        #
+        # 1. Le drapeau était posé sur `self`. Or cette instance est
+        #    partagée entre TOUTES les sessions Streamlit
+        #    (@st.cache_resource) et l'analyse boucle sur les matchs :
+        #    un match pouvait hériter du drapeau d'un autre, et
+        #    rouvrir les marchés de buts sur des λ par défaut. Le
+        #    drapeau est désormais RETOURNÉ, jamais stocké.
+        #
+        # 2. `any` → `all`. Il suffisait qu'UNE des deux équipes ait
+        #    des statistiques pour déverrouiller les marchés de buts,
+        #    alors que la moitié de chaque λ restait une constante.
+        #    Le croisement attaque × défense mélange les deux profils :
+        #    un seul côté documenté ne suffit pas.
+        #
+        # La clause `matches_played > 0` est retirée : elle était
+        # toujours vraie dès qu'une équipe avait le moindre historique,
+        # y compris avec des stats dérivées des cotes — ce qui vidait
+        # le garde-fou de son sens.
+        lambdas_reels = bool(market_lams) or all(
             getattr(s, "data_source", "estimated") != "estimated"
-            or getattr(s, "matches_played", 0) > 0
             for s in (context.home_stats, context.away_stats)
             if s is not None
         )
@@ -185,7 +201,7 @@ class PoissonPredictor:
         lam_away = max(PoissonConfig.MIN_LAMBDA,
                        min(PoissonConfig.MAX_LAMBDA, lam_away))
 
-        return lam_home, lam_away
+        return lam_home, lam_away, lambdas_reels
 
     def _lambdas_from_stats(self, context: MatchContext) -> Tuple[float, float]:
         """
