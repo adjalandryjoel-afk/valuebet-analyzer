@@ -27,7 +27,40 @@ except ImportError:
 class TeamMatcher:
     """Rattache un nom brut d'équipe à son identité officielle."""
 
-    FUZZY_CUTOFF = 70  # score minimum (0-100) pour accepter un match
+    # ── APPARIEMENT FLOU : trois verrous, pas un seuil ──
+    #
+    # Un seuil unique de 70 sur une base de 45 equipes appariait
+    # n'importe quoi. Cas reel, argent reel : « SC Braga » (Ligue
+    # Conference) est devenu « SC Gagnoa » (Ligue 1 ivoirienne) avec
+    # un score de 70,6 — un dixieme de point au-dessus du seuil. Et
+    # « Sporting Braga » -> « Sporting Gagnoa » atteignait 83.
+    # L'analyse entiere partait ensuite sur le mauvais club : mauvais
+    # championnat, mauvaises statistiques, mauvais pari.
+    #
+    # Le mot GENERIQUE (sc, sporting, real...) faisait tout le score.
+    # Le discriminant, c'est le mot DISTINCTIF : « braga » contre
+    # « gagnoa » ne vaut que 55.
+    FUZZY_CUTOFF = 85          # score global minimum
+    FUZZY_COEUR_MIN = 80       # score du mot distinctif, hors generiques
+    FUZZY_MARGE = 8            # avance minimale sur le 2e candidat
+
+    # Mots de club sans pouvoir discriminant : deux clubs de pays
+    # differents les partagent constamment.
+    MOTS_GENERIQUES = {
+        "sc", "fc", "ac", "as", "ss", "us", "cd", "ca", "cf", "sk",
+        "sv", "fk", "nk", "hk", "if", "ik", "bk", "afc", "cfc",
+        "sporting", "club", "real", "atletico", "athletic",
+        "deportivo", "united", "city", "olympique", "racing",
+        "stade", "sport", "sports", "de", "du", "la", "le", "of",
+    }
+
+    @classmethod
+    def _coeur(cls, nom: str) -> str:
+        """Le nom prive de ses mots generiques — sa partie distinctive."""
+
+        mots = [m for m in nom.lower().split()
+                if m not in cls.MOTS_GENERIQUES]
+        return " ".join(mots)
 
     def __init__(self):
         self.teams: Dict[str, Dict] = {}
@@ -90,14 +123,27 @@ class TeamMatcher:
         candidates = list(self._alias_index.keys())
         if candidates:
             if HAS_RAPIDFUZZ:
-                match = process.extractOne(
-                    cleaned.lower(),
-                    candidates,
-                    scorer=fuzz.token_sort_ratio,
-                    score_cutoff=self.FUZZY_CUTOFF,
-                )
-                if match:
-                    alias, score = match[0], match[1]
+                tops = process.extract(
+                    cleaned.lower(), candidates,
+                    scorer=fuzz.token_sort_ratio, limit=2)
+                alias = score = None
+                if tops and tops[0][1] >= self.FUZZY_CUTOFF:
+                    alias, score = tops[0][0], tops[0][1]
+                    # Verrou 1 : avance nette sur le second. Deux
+                    # candidats a egalite = on ne sait pas, donc on
+                    # refuse.
+                    if (len(tops) > 1
+                            and score - tops[1][1] < self.FUZZY_MARGE):
+                        alias = None
+                    # Verrou 2 : le mot DISTINCTIF doit correspondre.
+                    # C'est lui qui separe « braga » de « gagnoa ».
+                    if alias is not None:
+                        ca = self._coeur(cleaned)
+                        cb = self._coeur(alias)
+                        if ca and cb and fuzz.token_sort_ratio(
+                                ca, cb) < self.FUZZY_COEUR_MIN:
+                            alias = None
+                if alias is not None:
                     official = self._alias_index[alias]
                     return {
                         "raw_name": raw_name,
