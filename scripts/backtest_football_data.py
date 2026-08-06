@@ -338,13 +338,34 @@ def _deduire_mapping(fd, udf):
             attendu = (int(u.home_goals), int(u.away_goals))
         except (TypeError, ValueError):
             continue
+        # Une rencontre introuvable cote football-data est un ECHEC,
+        # pas une ligne a ignorer. La version precedente n'incrementait
+        # `total` que si la cle existait deja : un appariement faux
+        # fabrique une cle inexistante, il sortait donc du DENOMINATEUR
+        # au lieu d'etre compte en echec, et le taux de concordance
+        # MONTAIT. B1 2324 affichait 100 % en ayant apparie deux noms
+        # source a la meme cible.
+        total += 1
         for delta in (0, -1, 1):
             d = pd.Timestamp(u.date) + pd.Timedelta(days=delta)
             trouve = scores_fd.get(_cle_match(d, h, a))
             if trouve is not None:
-                total += 1
                 ok += int(trouve == attendu)
                 break
+
+    # ── Injectivite : deux noms source ne peuvent pas designer la
+    # meme equipe football-data. On retire le nom MINORITAIRE, pas la
+    # ligue-saison entiere : supprimer toutes les equipes partageant
+    # une cible ferait perdre le vrai club et des centaines de xG.
+    cibles = Counter(mapping.values())
+    for cible, n in cibles.items():
+        if n < 2:
+            continue
+        sources = [nom for nom, c in mapping.items() if c == cible]
+        garde = max(sources, key=lambda nom: urnes[nom][cible])
+        for nom in sources:
+            if nom != garde:
+                mapping.pop(nom, None)
 
     taux = (ok / total) if total else 0.0
     return mapping, taux, total
@@ -996,8 +1017,18 @@ def evaluate_test(test, weight):
     b365 = [b365_rows[i] for i in idx]
     psc = [psc_rows[i] for i in idx]
 
+    # Le trio exige les trois jeux de probabilites, donc le
+    # sous-ensemble commun. Or football-data n'a publie la cloture
+    # Pinnacle que sur la moitie de 2025-26 : 2595 des 3449 matchs.
+    # On expose donc AUSSI le modele sur l'ensemble, pour qu'on ne
+    # confonde jamais les deux populations.
+    tous_out = [m['outcome'] for m in test]
+    tous_mod = [r[:3] for r in model_rows]
     metrics = {
         "n_matchs_compares": len(idx),
+        "n_matchs_total": len(test),
+        "logloss_modele_tous": round(log_loss_1x2(tous_mod, tous_out), 5),
+        "brier_modele_tous": round(brier_1x2(tous_mod, tous_out), 5),
         "brier": {
             "modele": round(brier_1x2(mod, outcomes), 5),
             "marche_b365": round(brier_1x2(b365, outcomes), 5),
@@ -1114,6 +1145,11 @@ def simulate_strategy(test, model_rows):
         "n_paris": len(bets),
         "mise_totale": round(staked, 0),
         "roi_pct": round(100 * profit / staked, 2),
+        # Un ROI sans son incertitude est un piege : ce projet s'est
+        # deja fait prendre par un « +45 % sur 13 paris » et un
+        # « +290 % sur 1 pari ». L'intervalle voyage desormais AVEC
+        # le chiffre, dans le fichier de resultats.
+        "roi_ic95": _bootstrap_roi_paris(bets),
         "profit": round(profit, 0),
         "win_rate": round(sum(b["won"] for b in bets) / len(bets), 4),
         "cote_moyenne": round(sum(b["odds"] for b in bets) / len(bets), 2),
@@ -1125,6 +1161,41 @@ def simulate_strategy(test, model_rows):
         "n_paris_avec_clv": len(clvs),
         "par_seuil": par_seuil,
     }
+
+
+def _bootstrap_roi_paris(bets, n_tirages=20000, graine=20260806):
+    """IC95 du ROI par reechantillonnage AVEC REMISE des paris."""
+
+    import random
+
+    # En dessous de ce nombre, le bootstrap n'est PAS fiable : il
+    # reechantillonne toujours les memes issues et ne capture pas
+    # l'incertitude sur QUELS paris seraient tombes dans un autre
+    # echantillon. Sur 7 paris il a annonce [12.8 ; 166.0] — zero
+    # exclu — alors que le CLV de ces memes paris valait -6.34 %.
+    N_MIN_FIABLE = 30
+    if not bets or len(bets) < 5:
+        return {"note": "trop peu de paris pour un intervalle",
+                "n": len(bets or [])}
+    rng = random.Random(graine)
+    n = len(bets)
+    rois = []
+    for _ in range(n_tirages):
+        ech = [bets[rng.randrange(n)] for _ in range(n)]
+        st = sum(b["stake"] for b in ech)
+        pf = sum(b["profit"] for b in ech)
+        rois.append(100 * pf / st if st else 0.0)
+    rois.sort()
+    bas, haut = rois[int(0.025 * n_tirages)], rois[int(0.975 * n_tirages)]
+    fiable = n >= N_MIN_FIABLE
+    return {"bas": round(bas, 1), "haut": round(haut, 1),
+            "zero_dedans": bool(bas <= 0 <= haut),
+            "n": n, "fiable": fiable,
+            "avertissement": None if fiable else (
+                f"IC calcule sur {n} paris seulement : NON FIABLE. "
+                f"Le bootstrap reechantillonne les memes issues et "
+                f"sous-estime gravement l'incertitude. Se fier au CLV, "
+                f"pas au ROI.")}
 
 
 def empirical_league_stats(frames):
@@ -1232,6 +1303,12 @@ def main():
 
     print("4) Test : modèle vs marché no-vig (Shin) ...")
     metrics, model_rows = evaluate_test(test, best_w)
+    # La STRATÉGIE doit être simulée au poids que l'app utilise
+    # réellement (MARKET_WEIGHT), pas à `best_w` qui vaut 1.00 —
+    # c'est-à-dire le BORD DROIT de la grille, donc une borne et non
+    # un optimum. À w=1.00 la composante statistique ne pèse rien :
+    # on simulait une stratégie que l'app n'exécute jamais.
+    _, model_rows_app = evaluate_test(test, w_app)
     # Comparaison sans/avec xG au poids de l'APP (0.90). L'évaluer au
     # poids retenu (1.00) donnerait deux fois le même chiffre : à
     # poids marché pur, la composante statistique — donc le xG — ne
@@ -1246,7 +1323,7 @@ def main():
         [r[3] for r in model_rows], [m["over25"] for m in test])
 
     print("6) Stratégie value quart-Kelly + CLV ...")
-    strategy = simulate_strategy(test, model_rows)
+    strategy = simulate_strategy(test, model_rows_app)
 
     print("6bis) Ventilation par saison de test ...")
     saisons_detail = par_saison(test, w_app)
@@ -1307,6 +1384,9 @@ def main():
         "brier": metrics["brier"],
         "logloss": metrics["logloss"],
         "n_matchs_compares": metrics["n_matchs_compares"],
+        "n_matchs_total": metrics.get("n_matchs_total"),
+        "logloss_modele_tous": metrics.get("logloss_modele_tous"),
+        "brier_modele_tous": metrics.get("brier_modele_tous"),
         "par_saison": saisons_detail,
         "calibration": {"home_win": calib_home, "over25": calib_over},
         "strategie": strategy,

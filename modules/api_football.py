@@ -27,6 +27,7 @@ import re
 import json
 import math
 import time
+import threading
 import unicodedata
 import requests
 from datetime import datetime
@@ -125,6 +126,20 @@ class ApiFootballCollector:
     INTERVALLE_DEPART_S = 0.35
     INTERVALLE_MAX_S = 6.5
 
+    # Après cette série de requêtes sans 429, l'espacement redescend
+    # d'un cran. Sans cela, trois 429 dans un pic de charge figeaient
+    # tout le processus à 6,5 s par requête, définitivement.
+    SUCCES_AVANT_ACCELERATION = 20
+
+    # Verrou de CLASSE : le collecteur est un singleton partagé
+    # (@st.cache_resource) et plusieurs sessions Streamlit tournent
+    # dans le MÊME processus. Sans lui, la séquence lire / dormir /
+    # écrire de _last_request_ts n'est pas atomique : mesuré, six
+    # sessions ont émis six requêtes en 0,51 s au lieu de 1,75 s,
+    # soit un débit instantané de 701 req/min — de quoi déclencher
+    # les 429, voire une suspension de compte.
+    _verrou_debit = threading.Lock()
+
     def __init__(self):
         self.api_key = APIKeys.RAPIDAPI_KEY
         self._intervalle = self.INTERVALLE_DEPART_S
@@ -135,6 +150,8 @@ class ApiFootballCollector:
         # inutile de retenter (et de payer la temporisation) à chaque
         # équipe de chaque match.
         self._abonnement_inactif = False
+        self._succes_consecutifs = 0
+        self._dernier_429 = 0.0
 
     # ─── CACHE DISQUE ───────────────────────────────
 
@@ -211,12 +228,12 @@ class ApiFootballCollector:
         # si l'API répond 429. Prudence assumée : le débit réel du plan
         # n'est pas mesuré, on ne fait donc pas confiance à la doc du
         # fournisseur — c'est la réponse de l'API qui décide.
-        now = time.time()
-        elapsed = now - getattr(self, "_last_request_ts", 0)
-        if elapsed < self._intervalle:
-            time.sleep(self._intervalle - elapsed)
-        self._last_request_ts = time.time()
-        self._last_was_ratelimit = False
+        with self._verrou_debit:
+            now = time.time()
+            elapsed = now - getattr(self, "_last_request_ts", 0)
+            if elapsed < self._intervalle:
+                time.sleep(self._intervalle - elapsed)
+            self._last_request_ts = time.time()
 
         self._request_count += 1
 
@@ -235,10 +252,19 @@ class ApiFootballCollector:
             # Rate limit : échec TRANSITOIRE — ne surtout pas le figer.
             # On ralentit pour la suite de la session : le plan réel
             # est plus lent que ce qu'on supposait.
-            self._last_was_ratelimit = True
-            ancien = self._intervalle
-            self._intervalle = min(self.INTERVALLE_MAX_S,
-                                   max(0.4, self._intervalle * 2))
+            with self._verrou_debit:
+                ancien = self._intervalle
+                self._intervalle = min(self.INTERVALLE_MAX_S,
+                                       max(0.4, self._intervalle * 2))
+                self._succes_consecutifs = 0
+            # Signal RENDU À L'APPELANT, pas stocké sur l'instance.
+            # `_last_was_ratelimit` était remis à False au début de
+            # chaque requête sur le singleton partagé : une requête
+            # réussie intercalée effaçait le 429 d'une autre équipe,
+            # et son échec transitoire était alors mémorisé 2 h comme
+            # une absence définitive de données. Mesuré : 29 collectes
+            # sur 400, sans manipulation de l'ordonnancement.
+            self._dernier_429 = time.time()
             print(f"      ⚠️ API-Football : limite de débit atteinte — "
                   f"espacement porté de {ancien:.2f} s à "
                   f"{self._intervalle:.2f} s")
@@ -259,6 +285,17 @@ class ApiFootballCollector:
             print(f"      ⚠️ API-Football indisponible : "
                   f"HTTP {response.status_code}")
             return None
+
+        # Série de succès → on réaccélère d'un cran. Sans cela, trois
+        # 429 dans un pic figeaient le processus à 6,5 s/requête.
+        with self._verrou_debit:
+            self._succes_consecutifs = getattr(
+                self, "_succes_consecutifs", 0) + 1
+            if (self._succes_consecutifs >= self.SUCCES_AVANT_ACCELERATION
+                    and self._intervalle > self.INTERVALLE_DEPART_S):
+                self._intervalle = max(self.INTERVALLE_DEPART_S,
+                                       self._intervalle / 2)
+                self._succes_consecutifs = 0
 
         try:
             return response.json()
@@ -355,10 +392,26 @@ class ApiFootballCollector:
 
     @staticmethod
     def _current_season() -> int:
-        """Saison en cours au sens API-Football (2025 = saison 2025-26)."""
+        """
+        Saison la plus recente POSSIBLE au sens API-Football.
 
-        now = datetime.now()
-        return now.year if now.month >= 7 else now.year - 1
+        On part toujours de l'annee civile en cours et on laisse la
+        descente de _fetch_last_fixtures trouver la bonne saison :
+        elle redescend tant qu'elle n'a pas MIN_FIXTURES matchs
+        officiels.
+
+        L'ancienne formule (annee - 1 avant juillet) supposait un
+        calendrier automne-printemps. Elle etait fausse de janvier a
+        juin pour les ligues a calendrier CIVIL — Scandinavie, Bresil,
+        Argentine, MLS — dont la saison en cours EST l'annee courante :
+        l'app y servait systematiquement la saison precedente.
+
+        Partir de l'annee courante est correct dans les deux cas :
+        une saison automne-printemps a peine commencee n'a pas assez
+        de matchs, la descente corrige d'elle-meme.
+        """
+
+        return datetime.now().year
 
     @staticmethod
     def _max_allowed_season(errors) -> Optional[int]:
@@ -773,7 +826,10 @@ class ApiFootballCollector:
         # Mémoriser même les échecs (stats=None) pour ne pas re-brûler
         # des requêtes à chaque analyse pendant 24h — SAUF si l'échec
         # vient du rate-limit (transitoire : réessayer plus tard)
-        if stats or not getattr(self, "_last_was_ratelimit", False):
+        # Un 429 survenu pendant CETTE collecte (fenêtre courte) rend
+        # l'échec transitoire : on ne le mémorise pas.
+        recent_429 = (time.time() - getattr(self, "_dernier_429", 0)) < 30
+        if stats or not recent_429:
             entry["ts"] = time.time()
             entry["stats"] = stats
             self.cache[key] = entry

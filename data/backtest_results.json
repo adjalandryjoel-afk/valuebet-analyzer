@@ -1,5 +1,5 @@
 {
-  "genere_le": "2026-08-06T00:23:22+00:00",
+  "genere_le": "2026-08-06T05:17:42+00:00",
   "source": "football-data.co.uk (B365 ouverture, Pinnacle clôture)",
   "saisons_train": [
     "2122",
@@ -95,6 +95,9 @@
     "marche_cloture": 0.96078
   },
   "n_matchs_compares": 2595,
+  "n_matchs_total": 3449,
+  "logloss_modele_tous": 0.97039,
+  "brier_modele_tous": 0.57743,
   "par_saison": {
     "2425": {
       "n": 1722,
@@ -248,22 +251,36 @@
     ]
   },
   "strategie": {
-    "n_paris": 1,
-    "mise_totale": 774.0,
-    "roi_pct": -100.0,
-    "profit": -774.0,
-    "win_rate": 0.0,
-    "cote_moyenne": 3.8,
-    "value_moyenne_pct": 8.67,
-    "clv_moyen_pct": -2.43,
-    "clv_positif_pct": 0.0,
-    "n_paris_avec_clv": 1,
+    "n_paris": 7,
+    "mise_totale": 7232.0,
+    "roi_pct": 102.33,
+    "roi_ic95": {
+      "bas": 12.8,
+      "haut": 166.0,
+      "zero_dedans": false,
+      "n": 7,
+      "fiable": false,
+      "avertissement": "IC calcule sur 7 paris seulement : NON FIABLE. Le bootstrap reechantillonne les memes issues et sous-estime gravement l'incertitude. Se fier au CLV, pas au ROI."
+    },
+    "profit": 7401.0,
+    "win_rate": 0.7143,
+    "cote_moyenne": 2.89,
+    "value_moyenne_pct": 7.59,
+    "clv_moyen_pct": -6.34,
+    "clv_positif_pct": 16.7,
+    "n_paris_avec_clv": 6,
     "par_seuil": {
+      "cotes_1.30-2.50_seuil_5pct": {
+        "n_paris": 3,
+        "roi_pct": 135.54,
+        "profit": 4137.0,
+        "win_rate": 1.0
+      },
       "cotes_2.50-4.00_seuil_8pct": {
-        "n_paris": 1,
-        "roi_pct": -100.0,
-        "profit": -774.0,
-        "win_rate": 0.0
+        "n_paris": 4,
+        "roi_pct": 78.07,
+        "profit": 3263.0,
+        "win_rate": 0.5
       }
     }
   },
@@ -321,5 +338,5 @@
       "n_matchs": 1678
     }
   },
-  "duree_backtest_s": 139.0
+  "duree_backtest_s": 143.2
 }

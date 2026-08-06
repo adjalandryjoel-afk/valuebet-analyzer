@@ -146,7 +146,17 @@ def main():
             continue
         a_chercher.append(key)
 
-    quota = None
+    # Quota : repris du dernier passage s'il n'est pas rafraîchi ici.
+    #
+    # Il n'était renseigné que dans la branche `if a_chercher:`. Or une
+    # affiche n'entre dans la fenêtre de capture que si son coup
+    # d'envoi est DÉJÀ en cache — et une affiche dont le coup d'envoi
+    # est en cache est justement sautée de `a_chercher`. Au moment de
+    # la capture payante, `quota` valait donc typiquement None et le
+    # garde-fou `int(quota) < MIN_QUOTA` était SAUTÉ. Mesuré à quota
+    # simulé de 3 crédits : capture annulée si l'état est vide, mais
+    # 2 crédits dépensés dès que le coup d'envoi est en cache.
+    quota = state.get("quota")
     if a_chercher:
         events_par_ligue = {}
         for ligue, sport_key in OddsAPICollector.LEAGUE_KEYS.items():
@@ -162,6 +172,8 @@ def main():
                 q = r.headers.get("x-requests-remaining")
                 if q is not None:
                     quota = q
+                    state["quota"] = q
+                    state["quota_ts"] = now.isoformat()
                 events_par_ligue[sport_key] = (
                     r.json() if r.status_code == 200 else []
                 )
@@ -195,9 +207,16 @@ def main():
                 # couvre pas ce match » de « le robot n'a pas tourné ».
                 # Mesuré : 12 recherches, 2 coups d'envoi trouvés,
                 # 10 échecs totalement muets.
+                # On dit ce qu'on OBSERVE, pas ce qu'on suppose : une
+                # affiche peut être absente parce que la compétition
+                # n'est pas couverte, mais aussi parce que le match
+                # est trop lointain, déjà joué, ou que les noms
+                # diffèrent. Affirmer « non couverte » était faux
+                # pour des ligues qui le sont.
                 say(f"Affiche introuvable chez The Odds API : "
-                    f"{key.replace('|', ' vs ')} — aucun CLV possible "
-                    f"(compétition non couverte)")
+                    f"{key.replace('|', ' vs ')} — pas de CLV pour "
+                    f"l'instant (compétition non couverte, match trop "
+                    f"lointain, ou noms d'équipes différents)")
 
     # ── Matchs dans la fenêtre de capture ──
     dus, ligues_dues = [], {}
@@ -222,7 +241,41 @@ def main():
                 f"{key.replace('|', ' vs ')}")
 
     if dus:
-        if quota is not None and int(quota) < MIN_QUOTA:
+        # Défaut INVERSÉ : sans quota connu et frais, on ne dépense
+        # rien. Un garde-fou qui s'efface quand l'information manque
+        # ne garde rien du tout.
+        def _quota_frais():
+            try:
+                qts = datetime.fromisoformat(state.get("quota_ts", ""))
+                return (now - qts) < timedelta(hours=24)
+            except (ValueError, TypeError):
+                return False
+
+        # Rafraîchissement GRATUIT avant toute dépense. /events est
+        # facturé 0 crédit — mesuré, en-tête x-requests-last = 0. Sans
+        # ce rappel, le quota pouvait rester inconnu pendant des jours
+        # (les recherches de coup d'envoi ont 6 h de refroidissement)
+        # et le garde-fou, désormais strict, aurait bloqué toutes les
+        # captures indéfiniment.
+        if quota is None or not _quota_frais():
+            try:
+                r = requests.get(
+                    "https://api.the-odds-api.com/v4/sports/"
+                    "soccer_epl/events",
+                    params={"apiKey": APIKeys.ODDS_API_KEY}, timeout=20)
+                q = r.headers.get("x-requests-remaining")
+                if q is not None:
+                    quota = q
+                    state["quota"] = q
+                    state["quota_ts"] = now.isoformat()
+            except Exception:
+                pass
+
+        if quota is None or not _quota_frais():
+            say("Quota The Odds API inconnu ou périmé — capture "
+                "annulée par prudence (aucune requête émise). Il sera "
+                "rafraîchi au prochain repérage de coup d'envoi.")
+        elif int(quota) < MIN_QUOTA:
             say(f"Quota trop bas ({quota} crédits) — capture annulée")
         elif not ligues_dues:
             # GARDE-FOU DE QUOTA. Sans lui, un match dont la
@@ -250,6 +303,16 @@ def main():
                 f"{res['ignores']} ignoré(s), "
                 f"{res['erreurs']} erreur(s) — "
                 f"quota restant {res['quota_restant']}")
+
+    if not dus:
+        # Deuxième battement de cœur : il y a des paris en attente,
+        # mais aucun match dans la fenêtre de capture. Sans cette
+        # ligne, un passage entier ne laissait AUCUNE trace et on ne
+        # pouvait pas distinguer « rien à capturer maintenant » de
+        # « le robot n'a pas tourné ».
+        say(f"{len(pending)} pari(s) en attente, aucun match dans la "
+            f"fenêtre de capture — rien à faire "
+            f"(quota connu : {quota or 'inconnu'})")
 
     # ── Sauvegarde de l'état ──
     try:

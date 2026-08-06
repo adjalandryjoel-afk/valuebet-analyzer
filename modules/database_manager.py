@@ -802,6 +802,13 @@ class DatabaseManager:
         capture, et son CLV était perdu pour toujours.
 
         Le critère correct est donc « clv_pct est vide », rien d'autre.
+
+        BORNE DE 21 JOURS : un pari dont la compétition n'est jamais
+        couverte par The Odds API resterait sinon dans la liste POUR
+        TOUJOURS, et le robot le re-chercherait quatre fois par jour
+        indéfiniment. Passé trois semaines, le coup d'envoi est loin
+        derrière : la cote de clôture n'existe plus, il n'y a plus
+        rien à capturer.
         """
 
         with self._get_connection() as conn:
@@ -811,6 +818,10 @@ class DatabaseManager:
                 FROM value_bets vb
                 JOIN matches m ON vb.match_id = m.id
                 WHERE vb.clv_pct IS NULL
+                  AND (
+                        vb.created_at IS NULL
+                        OR julianday('now') - julianday(vb.created_at) <= 21
+                      )
                 ORDER BY m.match_date DESC, vb.created_at DESC
             """).fetchall()
 
