@@ -1694,5 +1694,38 @@
   },
   "newcastle united": {
     "team_id": 7199
+  },
+  "hammarby ff": {
+    "team_id": 363
+  },
+  "bk hacken": {
+    "team_id": 367
+  },
+  "valerenga": {
+    "team_id": 326
+  },
+  "bodo glimt": {
+    "team_id": 327
+  },
+  "fulham": {
+    "team_id": 36
+  },
+  "jagiellonia": {
+    "team_id": 336
+  },
+  "pfc botev vratsa": {
+    "team_id": 859
+  },
+  "botev vratsa": {
+    "team_id": 859
+  },
+  "ludogorets": {
+    "team_id": 566
+  },
+  "brann": {
+    "team_id": 319
+  },
+  "rosenborg": {
+    "team_id": 331
   }
 }

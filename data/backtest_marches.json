@@ -1,102 +1,97 @@
 {
-  "genere_le": "2026-08-05T06:00:59+00:00",
+  "genere_le": "2026-08-06T00:23:38+00:00",
   "poids_app": 0.9,
   "top5": {
     "n_test": 3449,
     "over_under": {
       "n_compares": 2570,
       "brier": {
-        "modele": 0.24191,
-        "modele_marche_pur": 0.24164,
+        "modele": 0.24129,
+        "modele_marche_pur": 0.24092,
         "cote_ouverture": 0.24094,
         "cote_cloture": 0.23915
       },
       "logloss": {
-        "modele": 0.67686,
-        "modele_marche_pur": 0.67628,
+        "modele": 0.67552,
+        "modele_marche_pur": 0.67476,
         "cote_ouverture": 0.67479,
         "cote_cloture": 0.67114
       },
       "modele_vs_ouverture": {
         "n": 2570,
-        "ecart_moyen": -0.0020678,
-        "erreur_type": 0.0008242,
-        "t": -2.509,
-        "significatif": true
+        "ecart_moyen": -0.0007338,
+        "erreur_type": 0.0005783,
+        "t": -1.269,
+        "significatif": false
       },
       "modele_vs_cloture": {
         "n": 2570,
-        "ecart_moyen": -0.0057219,
-        "erreur_type": 0.0015241,
-        "t": -3.754,
+        "ecart_moyen": -0.0043879,
+        "erreur_type": 0.0014019,
+        "t": -3.13,
         "significatif": true
       },
       "stats_vs_marche_pur": {
         "n": 2570,
-        "ecart_moyen": -0.0005727,
-        "erreur_type": 0.0005911,
-        "t": -0.969,
+        "ecart_moyen": -0.0007679,
+        "erreur_type": 0.0005875,
+        "t": -1.307,
         "significatif": false
       },
       "courbe_logloss_test": {
-        "0.50": 0.68339,
-        "0.60": 0.68025,
-        "0.70": 0.67777,
-        "0.80": 0.67598,
-        "0.90": 0.67493,
-        "0.95": 0.67469,
-        "0.98": 0.67465,
-        "1.00": 0.67466
+        "0.50": 0.68283,
+        "0.60": 0.67954,
+        "0.70": 0.67689,
+        "0.80": 0.67491,
+        "0.90": 0.67365,
+        "0.95": 0.67331,
+        "0.98": 0.6732,
+        "1.00": 0.67316
       },
-      "meilleur_poids": 0.98,
+      "meilleur_poids": 1.0,
       "calibration": [
         {
           "tranche": "0.3-0.4",
-          "n": 199,
-          "predite": 0.3645,
-          "observee": 0.4271
+          "n": 196,
+          "predite": 0.365,
+          "observee": 0.4184
         },
         {
           "tranche": "0.4-0.5",
-          "n": 730,
+          "n": 729,
           "predite": 0.4557,
-          "observee": 0.4301
+          "observee": 0.4307
         },
         {
           "tranche": "0.5-0.6",
-          "n": 931,
-          "predite": 0.5492,
-          "observee": 0.5478
+          "n": 943,
+          "predite": 0.5498,
+          "observee": 0.5504
         },
         {
           "tranche": "0.6-0.7",
-          "n": 557,
+          "n": 550,
           "predite": 0.6417,
-          "observee": 0.6212
+          "observee": 0.6164
         },
         {
           "tranche": "0.7-0.8",
-          "n": 135,
-          "predite": 0.7273,
-          "observee": 0.6741
+          "n": 134,
+          "predite": 0.7266,
+          "observee": 0.6866
         }
       ],
       "strategie": {
-        "n_paris": 108,
-        "roi_pct": -14.9,
-        "mise_totale": 198189,
-        "profit": -29521,
-        "taux_reussite": 40.7,
-        "cote_moyenne": 2.08,
-        "clv_moyen_pct": -5.18,
-        "clv_positif_pct": 21.5,
-        "n_avec_clv": 65,
-        "roi_ic95": {
-          "bas": -34.1,
-          "haut": 4.5,
-          "zero_dedans": true,
-          "part_rejeux_negatifs": 0.935
-        }
+        "n_paris": 2,
+        "roi_pct": 1.91,
+        "mise_totale": 3143,
+        "profit": 60,
+        "taux_reussite": 50.0,
+        "cote_moyenne": 1.99,
+        "clv_moyen_pct": 1.08,
+        "clv_positif_pct": 50.0,
+        "n_avec_clv": 2,
+        "roi_ic95": null
       }
     },
     "btts": {
@@ -104,69 +99,69 @@
       "n": 3449,
       "taux_observe": 0.5465,
       "brier": {
-        "modele": 0.24602,
-        "modele_marche_pur": 0.24614,
+        "modele": 0.24541,
+        "modele_marche_pur": 0.24543,
         "taux_de_base": 0.24783
       },
       "logloss": {
-        "modele": 0.68518,
-        "modele_marche_pur": 0.68539,
+        "modele": 0.68394,
+        "modele_marche_pur": 0.68397,
         "taux_de_base": 0.68881
       },
       "stats_vs_marche_pur": {
         "n": 3449,
-        "ecart_moyen": 0.0002136,
-        "erreur_type": 0.0004031,
-        "t": 0.53,
+        "ecart_moyen": 2.32e-05,
+        "erreur_type": 0.0003991,
+        "t": 0.058,
         "significatif": false
       },
       "vs_taux_de_base": {
         "n": 3449,
-        "ecart_moyen": 0.0036289,
-        "erreur_type": 0.0024508,
-        "t": 1.481,
-        "significatif": false
+        "ecart_moyen": 0.0048658,
+        "erreur_type": 0.0024516,
+        "t": 1.985,
+        "significatif": true
       },
       "courbe_logloss_test": {
-        "0.50": 0.68908,
-        "0.60": 0.6875,
-        "0.70": 0.68629,
-        "0.80": 0.6855,
-        "0.90": 0.68518,
-        "0.95": 0.68522,
-        "0.98": 0.68531,
-        "1.00": 0.68539
+        "0.50": 0.68848,
+        "0.60": 0.68675,
+        "0.70": 0.6854,
+        "0.80": 0.68444,
+        "0.90": 0.68394,
+        "0.95": 0.68389,
+        "0.98": 0.68392,
+        "1.00": 0.68397
       },
-      "meilleur_poids": 0.9,
+      "meilleur_poids": 0.95,
       "calibration": [
         {
           "tranche": "0.3-0.4",
-          "n": 94,
-          "predite": 0.3779,
-          "observee": 0.4681
+          "n": 97,
+          "predite": 0.3784,
+          "observee": 0.4742
         },
         {
           "tranche": "0.4-0.5",
-          "n": 1005,
-          "predite": 0.4631,
-          "observee": 0.4876
+          "n": 996,
+          "predite": 0.463,
+          "observee": 0.4799
         },
         {
           "tranche": "0.5-0.6",
-          "n": 1694,
-          "predite": 0.5485,
-          "observee": 0.5502
+          "n": 1691,
+          "predite": 0.5488,
+          "observee": 0.5529
         },
         {
           "tranche": "0.6-0.7",
-          "n": 630,
-          "predite": 0.632,
-          "observee": 0.6397
+          "n": 639,
+          "predite": 0.6316,
+          "observee": 0.6416
         },
         {
           "tranche": "0.7-0.8",
           "n": 26,
-          "predite": 0.7205,
+          "predite": 0.7195,
           "observee": 0.6154
         }
       ]
@@ -174,16 +169,16 @@
     "apport_xg": {
       "over_under": {
         "n": 3449,
-        "ecart_moyen": 0.0001847,
-        "erreur_type": 0.0004003,
-        "t": 0.461,
+        "ecart_moyen": 0.0001547,
+        "erreur_type": 0.0003991,
+        "t": 0.388,
         "significatif": false
       },
       "btts": {
         "n": 3449,
-        "ecart_moyen": 0.0004862,
-        "erreur_type": 0.0003236,
-        "t": 1.503,
+        "ecart_moyen": 0.0004619,
+        "erreur_type": 0.0003225,
+        "t": 1.432,
         "significatif": false
       }
     }
@@ -193,91 +188,86 @@
     "over_under": {
       "n_compares": 616,
       "brier": {
-        "modele": 0.247,
-        "modele_marche_pur": 0.24632,
+        "modele": 0.24709,
+        "modele_marche_pur": 0.2464,
         "cote_ouverture": 0.24638,
         "cote_cloture": 0.2447
       },
       "logloss": {
-        "modele": 0.68701,
-        "modele_marche_pur": 0.6856,
+        "modele": 0.68721,
+        "modele_marche_pur": 0.68579,
         "cote_ouverture": 0.68573,
         "cote_cloture": 0.68238
       },
       "modele_vs_ouverture": {
         "n": 616,
-        "ecart_moyen": -0.0012759,
-        "erreur_type": 0.0012311,
-        "t": -1.036,
+        "ecart_moyen": -0.0014815,
+        "erreur_type": 0.0008844,
+        "t": -1.675,
         "significatif": false
       },
       "modele_vs_cloture": {
         "n": 616,
-        "ecart_moyen": -0.0046265,
-        "erreur_type": 0.0023912,
-        "t": -1.935,
-        "significatif": false
+        "ecart_moyen": -0.0048322,
+        "erreur_type": 0.0021813,
+        "t": -2.215,
+        "significatif": true
       },
       "stats_vs_marche_pur": {
         "n": 616,
-        "ecart_moyen": -0.0014044,
-        "erreur_type": 0.0008841,
-        "t": -1.589,
+        "ecart_moyen": -0.0014229,
+        "erreur_type": 0.0008769,
+        "t": -1.623,
         "significatif": false
       },
       "courbe_logloss_test": {
-        "0.50": 0.69164,
-        "0.60": 0.68902,
-        "0.70": 0.68684,
-        "0.80": 0.68509,
-        "0.90": 0.68378,
-        "0.95": 0.68327,
-        "0.98": 0.68302,
-        "1.00": 0.68288
+        "0.50": 0.69258,
+        "0.60": 0.69011,
+        "0.70": 0.68809,
+        "0.80": 0.68648,
+        "0.90": 0.6853,
+        "0.95": 0.68487,
+        "0.98": 0.68466,
+        "1.00": 0.68454
       },
       "meilleur_poids": 1.0,
       "calibration": [
         {
           "tranche": "0.3-0.4",
-          "n": 51,
-          "predite": 0.3768,
-          "observee": 0.4118
+          "n": 50,
+          "predite": 0.376,
+          "observee": 0.42
         },
         {
           "tranche": "0.4-0.5",
-          "n": 298,
-          "predite": 0.4546,
-          "observee": 0.4732
+          "n": 299,
+          "predite": 0.4542,
+          "observee": 0.4716
         },
         {
           "tranche": "0.5-0.6",
-          "n": 218,
-          "predite": 0.5431,
-          "observee": 0.5138
+          "n": 217,
+          "predite": 0.5426,
+          "observee": 0.5161
         },
         {
           "tranche": "0.6-0.7",
-          "n": 46,
-          "predite": 0.6394,
-          "observee": 0.6739
+          "n": 47,
+          "predite": 0.6388,
+          "observee": 0.6596
         }
       ],
       "strategie": {
-        "n_paris": 44,
-        "roi_pct": 19.04,
-        "mise_totale": 78508,
-        "profit": 14951,
-        "taux_reussite": 56.8,
-        "cote_moyenne": 2.04,
-        "clv_moyen_pct": -4.7,
-        "clv_positif_pct": 9.1,
-        "n_avec_clv": 11,
-        "roi_ic95": {
-          "bas": -12.4,
-          "haut": 49.7,
-          "zero_dedans": true,
-          "part_rejeux_negatifs": 0.119
-        }
+        "n_paris": 0,
+        "roi_pct": null,
+        "mise_totale": 0,
+        "profit": 0,
+        "taux_reussite": null,
+        "cote_moyenne": null,
+        "clv_moyen_pct": null,
+        "clv_positif_pct": null,
+        "n_avec_clv": 0,
+        "roi_ic95": null
       }
     },
     "btts": {
@@ -285,83 +275,83 @@
       "n": 1433,
       "taux_observe": 0.5408,
       "brier": {
-        "modele": 0.24749,
-        "modele_marche_pur": 0.2474,
+        "modele": 0.24795,
+        "modele_marche_pur": 0.2479,
         "taux_de_base": 0.24833
       },
       "logloss": {
-        "modele": 0.68812,
-        "modele_marche_pur": 0.68795,
+        "modele": 0.68904,
+        "modele_marche_pur": 0.68893,
         "taux_de_base": 0.68981
       },
       "stats_vs_marche_pur": {
         "n": 1433,
-        "ecart_moyen": -0.0001772,
-        "erreur_type": 0.0004196,
-        "t": -0.422,
+        "ecart_moyen": -0.0001086,
+        "erreur_type": 0.0004176,
+        "t": -0.26,
         "significatif": false
       },
       "vs_taux_de_base": {
         "n": 1433,
-        "ecart_moyen": 0.0016869,
-        "erreur_type": 0.0033503,
-        "t": 0.504,
+        "ecart_moyen": 0.0007688,
+        "erreur_type": 0.0033288,
+        "t": 0.231,
         "significatif": false
       },
       "courbe_logloss_test": {
-        "0.50": 0.69146,
-        "0.60": 0.69023,
-        "0.70": 0.68927,
-        "0.80": 0.68856,
-        "0.90": 0.68812,
-        "0.95": 0.688,
-        "0.98": 0.68796,
-        "1.00": 0.68795
+        "0.50": 0.69205,
+        "0.60": 0.69091,
+        "0.70": 0.69003,
+        "0.80": 0.68941,
+        "0.90": 0.68904,
+        "0.95": 0.68895,
+        "0.98": 0.68893,
+        "1.00": 0.68893
       },
-      "meilleur_poids": 1.0,
+      "meilleur_poids": 0.98,
       "calibration": [
         {
           "tranche": "0.3-0.4",
-          "n": 48,
-          "predite": 0.3693,
-          "observee": 0.3958
+          "n": 46,
+          "predite": 0.3696,
+          "observee": 0.3913
         },
         {
           "tranche": "0.4-0.5",
-          "n": 506,
-          "predite": 0.4661,
-          "observee": 0.5158
+          "n": 497,
+          "predite": 0.4663,
+          "observee": 0.5252
         },
         {
           "tranche": "0.5-0.6",
-          "n": 800,
-          "predite": 0.5412,
-          "observee": 0.565
+          "n": 806,
+          "predite": 0.5408,
+          "observee": 0.5571
         },
         {
           "tranche": "0.6-0.7",
-          "n": 79,
-          "predite": 0.6195,
-          "observee": 0.5443
+          "n": 83,
+          "predite": 0.6188,
+          "observee": 0.5663
         }
       ]
     },
     "apport_xg": {
       "over_under": {
         "n": 1433,
-        "ecart_moyen": 0.0002783,
-        "erreur_type": 0.0005055,
-        "t": 0.551,
+        "ecart_moyen": 0.0002759,
+        "erreur_type": 0.0005061,
+        "t": 0.545,
         "significatif": false
       },
       "btts": {
         "n": 1433,
-        "ecart_moyen": 8.2e-05,
-        "erreur_type": 0.0004096,
-        "t": 0.2,
+        "ecart_moyen": 7e-05,
+        "erreur_type": 0.00041,
+        "t": 0.171,
         "significatif": false
       }
     }
   },
-  "duree_s": 193.9
+  "duree_s": 199.8
 }

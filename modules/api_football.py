@@ -425,10 +425,30 @@ class ApiFootballCollector:
             return courante
         return season
 
-    # Compétitions amicales : exclues des moyennes. Un match de
-    # préparation d'août n'a ni l'intensité ni la composition d'un
-    # match officiel, et en début de saison il domine la fenêtre.
-    LIGUES_AMICALES = {667, 10, 666}
+    # Compétitions de PRÉPARATION : exclues des moyennes. Un match
+    # d'août n'a ni l'intensité ni la composition d'un match officiel,
+    # et en début de saison il domine la fenêtre.
+    #
+    # Les trois premiers identifiants ne suffisaient pas : API-Football
+    # range les tournois de pré-saison à part, en type Cup / pays
+    # World. Mesuré, Crystal Palace, Lens, Villarreal et Como
+    # recevaient chacun 3 matchs de Como Cup parmi leurs 15 matchs
+    # servis (0,24 but/match d'écart sur les encaissés pour Lens).
+    #
+    # ⚠️ NE PAS filtrer sur le pays « World » : la Coupe du monde des
+    # clubs (15), la Supercoupe UEFA (531) et les Jeux olympiques
+    # (480) y figurent aussi et sont de VRAIS matchs. Chaque
+    # identifiant ajouté ici doit être vérifié individuellement.
+    LIGUES_AMICALES = {
+        667,    # Friendlies Clubs
+        10,     # Friendlies (sélections)
+        666,    # Friendlies Women
+        26,     # International Champions Cup
+        769,    # Premier League Asia Trophy
+        937,    # Emirates Cup
+        940,    # COTIF Tournament
+        1236,   # Como Cup
+    }
 
     def _fetch_last_fixtures(self, team_id: int) -> List[Dict]:
         """
@@ -493,10 +513,20 @@ class ApiFootballCollector:
                       f"{self._errors_text(errors)}")
                 return []
 
+            # Mêmes exclusions que la voie `last` : sans elles, un
+            # simple incident sur `last` (timeout, 429, moins de 5
+            # matchs officiels) faisait basculer ici et ramenait des
+            # amicaux dans les moyennes. Mesuré sur Fenerbahçe : la
+            # voie normale donne 2.03/1.04, le repli avec 3 amicaux
+            # sur 6 matchs donne 2.48/0.33 encaissés — et comme ces
+            # stats portent data_source="api", elles rouvrent les
+            # marchés de buts avec un λ extérieur au plancher.
             fixtures = [
                 fx for fx in (data.get("response") or [])
                 if ((fx.get("fixture") or {}).get("status") or {})
                 .get("short") in self.FINISHED_STATUSES
+                and (fx.get("league") or {}).get("id")
+                not in self.LIGUES_AMICALES
             ]
 
             # Il faut ASSEZ de matchs, pas juste un. En tout début de

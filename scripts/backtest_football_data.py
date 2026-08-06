@@ -606,7 +606,21 @@ def prepare_matches(frames, xg_par_match=None, avec_xg=False,
                         data_completeness=70.0,
                     )
                     stats_lams = predictor._lambdas_from_stats(ctx)
-                    key = (o1, ox, o2, round(lg_avg, 3))
+                    # La clé DOIT inclure les cotes Over/Under :
+                    # _lambdas_from_market les lit aussi (elles sont
+                    # posées sur odds_ctx juste au-dessus, et les
+                    # omettre déviait λ_marché de 0.103).
+                    #
+                    # Sans elles, deux matchs au même 1X2 mais à
+                    # totaux différents partageaient le même λ.
+                    # Mesuré : 1322 collisions sur 8500 matchs
+                    # (15,6 %), erreur moyenne 0,159 sur λ total.
+                    # Le 1X2 restait presque intact — λ est ajusté
+                    # dessus — mais P(over 2.5) dérivait, et c'est
+                    # elle qui déclenche les paris Over/Under.
+                    key = (o1, ox, o2, round(lg_avg, 3),
+                           odds_ctx.get("over_2_5"),
+                           odds_ctx.get("under_2_5"))
                     if key not in market_cache:
                         market_cache[key] = predictor._lambdas_from_market(ctx)
                     market_lams = market_cache[key]

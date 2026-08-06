@@ -1,5 +1,5 @@
 {
-  "genere_le": "2026-08-05T15:03:45+00:00",
+  "genere_le": "2026-08-06T00:23:22+00:00",
   "source": "football-data.co.uk (B365 ouverture, Pinnacle clôture)",
   "saisons_train": [
     "2122",
@@ -21,46 +21,46 @@
   "n_matchs_test": 3449,
   "poids_marche": {
     "courbe_logloss_train": {
-      "0.50": 0.98236,
-      "0.60": 0.97875,
-      "0.70": 0.97584,
-      "0.80": 0.97362,
-      "0.90": 0.9721,
-      "0.95": 0.97161,
-      "0.98": 0.97141,
-      "1.00": 0.97131
+      "0.50": 0.98235,
+      "0.60": 0.97873,
+      "0.70": 0.97581,
+      "0.80": 0.97357,
+      "0.90": 0.97204,
+      "0.95": 0.97155,
+      "0.98": 0.97134,
+      "1.00": 0.97124
     },
     "meilleur": 1.0,
     "valeur_app": 0.9,
     "courbe_logloss_test_sans_xg": {
-      "0.50": 0.98676,
+      "0.50": 0.98677,
       "0.60": 0.9814,
-      "0.70": 0.97708,
-      "0.80": 0.9738,
-      "0.90": 0.97156,
-      "0.95": 0.97084,
-      "0.98": 0.97053,
-      "1.00": 0.97038
+      "0.70": 0.97709,
+      "0.80": 0.97381,
+      "0.90": 0.97157,
+      "0.95": 0.97085,
+      "0.98": 0.97054,
+      "1.00": 0.97039
     },
     "courbe_logloss_test_avec_xg": {
-      "0.50": 0.97832,
-      "0.60": 0.97551,
-      "0.70": 0.97329,
-      "0.80": 0.97166,
-      "0.90": 0.97068,
-      "0.95": 0.97044,
-      "0.98": 0.97038,
-      "1.00": 0.97038
+      "0.50": 0.97833,
+      "0.60": 0.97552,
+      "0.70": 0.9733,
+      "0.80": 0.97168,
+      "0.90": 0.97069,
+      "0.95": 0.97045,
+      "0.98": 0.97039,
+      "1.00": 0.97039
     },
     "courbe_logloss_train_sans_xg": {
-      "0.50": 0.99276,
-      "0.60": 0.98599,
-      "0.70": 0.98046,
-      "0.80": 0.97618,
-      "0.90": 0.97311,
-      "0.95": 0.97205,
-      "0.98": 0.97156,
-      "1.00": 0.97131
+      "0.50": 0.99277,
+      "0.60": 0.98598,
+      "0.70": 0.98044,
+      "0.80": 0.97615,
+      "0.90": 0.97306,
+      "0.95": 0.97199,
+      "0.98": 0.9715,
+      "1.00": 0.97124
     },
     "meilleur_test_sans_xg": 1.0,
     "meilleur_test_avec_xg": 0.98
@@ -69,28 +69,28 @@
     "description": "Écart de log-loss HORS ÉCHANTILLON entre le modèle sans xG et avec xG, à poids marché identique. Positif = le xG améliore.",
     "poids_compare": 0.9,
     "gain_logloss_test": 0.00088,
-    "brier_test_sans_xg": 0.5727,
-    "brier_test_avec_xg": 0.57202,
+    "brier_test_sans_xg": 0.57271,
+    "brier_test_avec_xg": 0.57204,
     "logloss_test_sans_xg": 0.96296,
     "logloss_test_avec_xg": 0.962,
     "n_matchs_test": 2595,
     "test_apparie": {
       "n_matchs": 3449,
-      "ecart_moyen": 0.0008824,
-      "erreur_type": 0.0003252,
-      "t": 2.713,
+      "ecart_moyen": 0.0008791,
+      "erreur_type": 0.0003249,
+      "t": 2.706,
       "significatif": true,
       "lecture": "positif = le xG ameliore la prediction ; |t| > 1.96 = significatif a 5 %"
     },
     "avertissement": "À w=1.00 la composante statistique ne pèse rien : sans xG et avec xG y donnent le MÊME chiffre, par construction. Toute comparaison doit se faire à poids < 1."
   },
   "brier": {
-    "modele": 0.57203,
+    "modele": 0.57205,
     "marche_b365": 0.57228,
     "marche_cloture": 0.57099
   },
   "logloss": {
-    "modele": 0.96189,
+    "modele": 0.96191,
     "marche_b365": 0.96288,
     "marche_cloture": 0.96078
   },
@@ -98,25 +98,25 @@
   "par_saison": {
     "2425": {
       "n": 1722,
-      "logloss_modele": 0.96146,
-      "logloss_marche_pur": 0.96194,
+      "logloss_modele": 0.9615,
+      "logloss_marche_pur": 0.96199,
       "logloss_b365": 0.96295,
       "logloss_cloture": 0.95896,
       "n_avec_cloture": 1722,
       "note": "modèle, marché pur et ouverture portent sur les mêmes matchs (n) ; la clôture sur n_avec_cloture, football-data ne l'ayant pas publiée partout",
-      "vs_marche_pur_t": 0.744,
+      "vs_marche_pur_t": 0.761,
       "bat_le_marche": false,
       "pire_que_le_marche": false
     },
     "2526": {
       "n": 1727,
-      "logloss_modele": 0.97988,
-      "logloss_marche_pur": 0.9788,
+      "logloss_modele": 0.97986,
+      "logloss_marche_pur": 0.97876,
       "logloss_b365": 0.97917,
       "logloss_cloture": 0.96438,
       "n_avec_cloture": 873,
       "note": "modèle, marché pur et ouverture portent sur les mêmes matchs (n) ; la clôture sur n_avec_cloture, football-data ne l'ayant pas publiée partout",
-      "vs_marche_pur_t": -1.699,
+      "vs_marche_pur_t": -1.736,
       "bat_le_marche": false,
       "pire_que_le_marche": false
     }
@@ -131,50 +131,50 @@
       },
       {
         "decile": "0.1-0.2",
-        "n": 344,
-        "p_pred_moyenne": 0.1609,
-        "freq_observee": 0.1308
+        "n": 345,
+        "p_pred_moyenne": 0.161,
+        "freq_observee": 0.1333
       },
       {
         "decile": "0.2-0.3",
-        "n": 433,
-        "p_pred_moyenne": 0.2554,
-        "freq_observee": 0.2425
+        "n": 430,
+        "p_pred_moyenne": 0.2551,
+        "freq_observee": 0.2442
       },
       {
         "decile": "0.3-0.4",
-        "n": 673,
+        "n": 675,
         "p_pred_moyenne": 0.3518,
-        "freq_observee": 0.3314
+        "freq_observee": 0.3304
       },
       {
         "decile": "0.4-0.5",
-        "n": 675,
-        "p_pred_moyenne": 0.4482,
-        "freq_observee": 0.443
+        "n": 671,
+        "p_pred_moyenne": 0.4481,
+        "freq_observee": 0.4456
       },
       {
         "decile": "0.5-0.6",
-        "n": 550,
+        "n": 557,
         "p_pred_moyenne": 0.5486,
-        "freq_observee": 0.5291
+        "freq_observee": 0.5224
       },
       {
         "decile": "0.6-0.7",
-        "n": 366,
-        "p_pred_moyenne": 0.6488,
-        "freq_observee": 0.6475
+        "n": 364,
+        "p_pred_moyenne": 0.6492,
+        "freq_observee": 0.6511
       },
       {
         "decile": "0.7-0.8",
-        "n": 264,
-        "p_pred_moyenne": 0.7442,
-        "freq_observee": 0.75
+        "n": 263,
+        "p_pred_moyenne": 0.7446,
+        "freq_observee": 0.749
       },
       {
         "decile": "0.8-0.9",
         "n": 89,
-        "p_pred_moyenne": 0.8384,
+        "p_pred_moyenne": 0.8388,
         "freq_observee": 0.9213
       },
       {
@@ -200,38 +200,38 @@
       {
         "decile": "0.2-0.3",
         "n": 22,
-        "p_pred_moyenne": 0.2813,
+        "p_pred_moyenne": 0.2805,
         "freq_observee": 0.2727
       },
       {
         "decile": "0.3-0.4",
-        "n": 264,
-        "p_pred_moyenne": 0.3629,
-        "freq_observee": 0.4356
+        "n": 256,
+        "p_pred_moyenne": 0.3628,
+        "freq_observee": 0.418
       },
       {
         "decile": "0.4-0.5",
-        "n": 1124,
-        "p_pred_moyenne": 0.4556,
-        "freq_observee": 0.444
+        "n": 1127,
+        "p_pred_moyenne": 0.4559,
+        "freq_observee": 0.4472
       },
       {
         "decile": "0.5-0.6",
-        "n": 1180,
-        "p_pred_moyenne": 0.5479,
-        "freq_observee": 0.5593
+        "n": 1189,
+        "p_pred_moyenne": 0.5485,
+        "freq_observee": 0.5601
       },
       {
         "decile": "0.6-0.7",
         "n": 667,
-        "p_pred_moyenne": 0.6388,
-        "freq_observee": 0.6357
+        "p_pred_moyenne": 0.6394,
+        "freq_observee": 0.6297
       },
       {
         "decile": "0.7-0.8",
-        "n": 187,
-        "p_pred_moyenne": 0.7347,
-        "freq_observee": 0.7059
+        "n": 183,
+        "p_pred_moyenne": 0.7349,
+        "freq_observee": 0.7268
       },
       {
         "decile": "0.8-0.9",
@@ -321,5 +321,5 @@
       "n_matchs": 1678
     }
   },
-  "duree_backtest_s": 133.5
+  "duree_backtest_s": 139.0
 }
